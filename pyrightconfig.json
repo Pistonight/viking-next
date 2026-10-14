@@ -1,5 +1,9 @@
 {
     "venvPath": ".",
     "venv": ".venv",
-    "ignore": ["src/viking/_core.pyi", "donor"]
+    "ignore": [
+        "src/viking/_core.pyi",
+        "src/viking/_core/**/*.pyi",
+        "donor"
+    ]
 }

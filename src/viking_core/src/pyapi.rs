@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use pyo3::prelude::*;
 
 use crate::config::{self, Config};
@@ -25,6 +27,8 @@ impl StateHandle {
         self.config.clone()
     }
 }
+
+/// Initialize the rust extension module
 #[pyfunction]
 pub fn init_core_state() -> PyResult<StateHandle> {
     let config = into_pyresult(config::load_config())?;
@@ -32,13 +36,20 @@ pub fn init_core_state() -> PyResult<StateHandle> {
     Ok(StateHandle(Box::into_raw(state) as usize))
 }
 
+/// Finalize the rust extension module
 #[pyfunction]
 pub fn fini_core_state(state: StateHandle) {
     let _ = unsafe { Box::from_raw(state.0 as *mut State) };
 }
 
+/// Find a tool based on repo config
+#[pyfunction]
+pub fn find_tool(state: StateHandle, tool: &str) -> PyResult<PathBuf> {
+    into_pyresult(state.config.repo.find_tool(tool))
+}
+
 pyo3::create_exception!(viking, CoreError, pyo3::exceptions::PyRuntimeError);
-fn into_pyresult<T>(result: cu::Result<T>) -> PyResult<T> {
+pub fn into_pyresult<T>(result: cu::Result<T>) -> PyResult<T> {
     result.map_err(|e| {
         use std::backtrace::BacktraceStatus;
         let error_string = match e.backtrace().status() {
@@ -58,7 +69,10 @@ fn into_pyresult<T>(result: cu::Result<T>) -> PyResult<T> {
                         continue;
                     }
                     // the entry point from python must be one of the __pyfunction bindings
-                    if found_stack_trace && line.contains("_core::__pyfunction") {
+                    if found_stack_trace
+                        && line.contains(": viking_core::")
+                        && line.contains("__pyfunction")
+                    {
                         lines.push("      <python interop frames are hidden>");
                         break;
                     }

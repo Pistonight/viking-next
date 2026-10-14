@@ -1,4 +1,7 @@
 # pyright: reportImportCycles=false
-from .main import main
+from .coreapi import find_tool, get_config
 
-__all__ = ["main"]
+__all__ = [
+    "find_tool",
+    "get_config",
+]
