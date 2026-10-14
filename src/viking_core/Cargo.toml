@@ -1,0 +1,17 @@
+[package]
+name = "viking-core"
+description = "Core implementation for viking"
+version = "0.0.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+cu = { package = "pistonite-cu", version = "0.9.8", features = ["fs", "toml", "derive"] }
+serde = { version = "1", features = ["rc"] }
+# "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
+# "abi3-py39" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.9
+pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py39", "experimental-inspect"] }
+clap = { version = "4.6.7", features = ["derive"] }
+itertools = "0.15.0"

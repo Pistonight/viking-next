@@ -1,0 +1,63 @@
+version: '3'
+
+tasks:
+  setup:
+    desc: Setup local development
+    cmds:
+      - uv sync
+      - task: gen-pyi
+
+  gen-pyi:
+    desc: (Re-)generate the _core.pyi interface module
+    sources:
+      - Cargo.toml
+      - Cargo.lock
+      - src/**/*.rs
+      - src/**/Cargo.toml
+    cmds:
+      - uv run --no-sync maturin generate-stubs --out src
+
+  build:
+    desc: Build the wheel
+    cmds:
+      - uv build
+
+  check:
+    desc: Check code for issues
+    cmds:
+      - task: gen-pyi
+      - uv run --no-sync basedpyright --warnings
+      - uv run --no-sync ruff check
+      - task: cargo-clippy
+      - uv run --no-sync ruff format src --check
+      - cargo fmt --check
+
+  fix:
+    desc: Fix code formatting
+    cmds:
+      - uv run --no-sync ruff format src
+      - cargo fmt
+
+  cargo-clippy:
+    vars:
+      CLIPPY_FLAGS: >
+        -D warnings
+        -D clippy::todo
+        -A clippy::manual_range_contains
+        -A clippy::collapsible_if
+        -A clippy::collapsible_else_if
+        -A clippy::collapsible_match
+    env:
+      RUSTDOCFLAGS: -D warnings
+    cmds:
+      - cargo clippy {{.FLAGS}} -- {{.CLIPPY_FLAGS}}
+
+  clean:
+    desc: Clean caches and outputs. Commands will run slower!
+    cmds:
+      - cargo clean
+      - rm -rf .venv dist .ruff_cache
+      - rm -rf src/**/__pycache__ src/**/*.so
+      - rm -f src/viking/_core.pyi
+
+
