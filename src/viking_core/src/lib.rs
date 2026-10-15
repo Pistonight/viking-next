@@ -7,6 +7,15 @@ static GLOBAL: MiMalloc = MiMalloc;
 /// The `check` command
 mod cmd_check;
 
+/// CPP demangle utils
+mod demangle;
+mod elf;
+/// File List util
+mod fl;
+
+/// Terminal UI utils
+mod ui;
+
 mod config;
 mod pyapi;
 

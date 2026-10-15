@@ -3,6 +3,10 @@ use std::path::{Path, PathBuf};
 use cu::pre::*;
 use pyo3::prelude::*;
 
+/// Used to optimize allocation when loading functions
+pub const FUNCTION_LEN_UPPER_BOUND: usize = 110_000;
+pub const FILE_LIST_UNKNOWN_FILE: &str = "UNKNOWN";
+
 /// Load the configuration TOML file.
 ///
 /// If `VIKING_CONFIG` environment variable is specified, it is used
@@ -105,6 +109,11 @@ pub struct ConfigRepo {
     #[pyo3(get)]
     pub default_version: Option<String>,
 
+    /// The address base used by data files and decompilation database
+    #[pyo3(get)]
+    #[serde(default = "ConfigRepo::default_address_base")]
+    pub address_base: u64,
+
     /// Path to the data directory, relative to `root_path`
     ///
     /// The data directory can be versioned:
@@ -117,15 +126,12 @@ pub struct ConfigRepo {
     ///
     /// A project may have more than 1 data symbol file. Each data symbol file
     /// should be a CSV with 2 columns: Address and Name (in this order without a header)
-    #[pyo3(get)]
-    #[serde(default)]
     pub data_symbols: Vec<PathBuf>,
 
     /// Name of the file or function listing inside the data or versioned data directory.
     ///
     /// If the name ends with `.csv`, it's assumed to use the old CSV listing format.
     /// Otherwise it's assumed to be the new YAML format.
-    #[pyo3(get)]
     pub file_list: PathBuf,
 
     /// Name of the original game elf inside the data or versioned data directory.
@@ -158,6 +164,9 @@ pub struct ConfigRepo {
 }
 
 impl ConfigRepo {
+    fn default_address_base() -> u64 {
+        0x71_0000_0000
+    }
     fn default_original_elf() -> PathBuf {
         "main.elf".into()
     }
@@ -205,27 +214,63 @@ impl ConfigRepo {
 }
 #[pymethods]
 impl ConfigRepo {
+    /// Get the path to the versionless file list file.
+    pub fn file_list(&self) -> PathBuf {
+        self.data_path.join(&self.file_list)
+    }
+    /// Get the path to the optionally-versioned file list file.
+    pub fn file_list_with_version(&self, version: Option<&str>) -> PathBuf {
+        match version {
+            Some(v) => cu::path!(&(&self.data_path) / v / self.file_list),
+            None => self.file_list(),
+        }
+    }
+    /// Get the paths to the versionless data symbol list files.
+    pub fn data_symbols(&self) -> Vec<PathBuf> {
+        self.data_symbols
+            .iter()
+            .map(|x| self.data_path.join(x))
+            .collect()
+    }
+
+    /// Get the paths to the optionally-versioned data symbol list files.
+    pub fn data_symbols_with_version(&self, version: Option<&str>) -> Vec<PathBuf> {
+        match version {
+            Some(v) => self
+                .data_symbols
+                .iter()
+                .map(|x| cu::path!(&(&self.data_path) / v / x))
+                .collect(),
+            None => self.data_symbols(),
+        }
+    }
+    /// Get the path to the versionless original game elf
     pub fn original_elf(&self) -> PathBuf {
         self.data_path.join(&self.original_elf)
     }
+    /// Get the path to the optionally-versioned original game elf
     pub fn original_elf_with_version(&self, version: Option<&str>) -> PathBuf {
         match version {
             Some(v) => cu::path!(&(&self.data_path) / v / self.original_elf),
             None => self.original_elf(),
         }
     }
+    /// Get the path to the versionless decomp elf
     pub fn decomp_elf(&self) -> PathBuf {
         self.build_path.join(&self.build_target)
     }
+    /// Get the path to the optionally-versioned decomp elf
     pub fn decomp_elf_with_version(&self, version: Option<&str>) -> PathBuf {
         match version {
             Some(v) => cu::path!(&(&self.build_path) / v / self.build_target),
             None => self.decomp_elf(),
         }
     }
+    /// Get the path to the versionless build.ninja build file
     pub fn build_ninja(&self) -> PathBuf {
         self.build_path.join(&self.build_ninja)
     }
+    /// Get the path to the optionally-versioned build.ninja build file
     pub fn build_ninja_with_version(&self, version: Option<&str>) -> PathBuf {
         match version {
             Some(v) => cu::path!(&(&self.build_path) / v / self.build_ninja),
@@ -248,7 +293,13 @@ pub struct ConfigCheckMismatch {
     #[pyo3(get)]
     pub no_object_check_for: Option<Vec<String>>,
     #[pyo3(get)]
-    pub check_unimplemented_references: Option<bool>,
+    #[serde(default = "ConfigCheckMismatch::default_check_unimplemented_references")]
+    pub check_unimplemented_references: bool,
+}
+impl ConfigCheckMismatch {
+    fn default_check_unimplemented_references() -> bool {
+        true
+    }
 }
 
 /// asm_differ options

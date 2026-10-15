@@ -31,6 +31,10 @@ impl StateHandle {
 /// Initialize the rust extension module
 #[pyfunction]
 pub fn init_core_state() -> PyResult<StateHandle> {
+    // this isn't per-module state but not really anything we can do
+    // since it's in 3rd party state, but shouldn't really matter
+    crate::ui::init_prompt_settings();
+
     let config = into_pyresult(config::load_config())?;
     let state = Box::new(State { config });
     Ok(StateHandle(Box::into_raw(state) as usize))

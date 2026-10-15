@@ -8,8 +8,9 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-cu = { package = "pistonite-cu", version = "0.9.8", features = ["fs", "toml", "derive"] }
+cu = { package = "pistonite-cu", version = "0.9.8", features = ["fs", "yaml", "toml", "derive"] }
 serde = { version = "1", features = ["rc"] }
+serde-tuple-vec-map = "1.0.1"
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
 # "abi3-py39" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.9
 pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py39", "experimental-inspect"] }
@@ -17,3 +18,16 @@ clap = { version = "4.6.7", features = ["derive"] }
 itertools = "0.15.0"
 mimalloc = "0.1.52"
 lexopt = "0.3.2"
+rustc-hash = "2.1.3"
+cpp_demangle = "0.4.0"
+csv = "1.1.0"
+rayon = "1.12.0"
+owning_ref = "0.4.1"
+memmap = "0.7.0"
+goblin = "0.8.0"
+inquire = "0.7.4"
+capstone = { git = "https://github.com/leoetlino/capstone-rs", rev = "f5aa278e1982bca86a67ac8b8550ab1dd70f7d9d" }
+lazy-init = "0.5.0"
+colored = "2"
+textwrap = "0.16.4"
+crossterm = "0.27.0"

@@ -30,9 +30,9 @@ pub struct Args {
 }
 
 impl Args {
-    // pub fn version(&self) -> Option<&str> {
-    //     self.version.as_deref()
-    // }
+    pub fn version(&self) -> Option<&str> {
+        self.version.as_deref()
+    }
 }
 
 pub fn parse_args(config: &Config, cli_args: &[String]) -> cu::Result<Args> {
