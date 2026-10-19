@@ -35,6 +35,13 @@ mod _core {
         fn parse_args(state: StateHandle, args: Vec<String>) -> PyResult<Args> {
             crate::pyapi::into_pyresult(crate::cmd_check::parse_args(&state.config, &args))
         }
+        #[pyfunction]
+        fn run(state: StateHandle, args: Args) -> crate::pyapi::PyCmdHostHandle {
+            crate::pyapi::execute_with_cmd_host(move |python| {
+                let config = &state.config;
+                crate::cmd_check::run(config, &args, python)
+            })
+        }
     }
 
     #[pymodule_export]
@@ -44,7 +51,7 @@ mod _core {
     };
 
     #[pymodule_export]
-    use crate::pyapi::StateHandle;
+    use crate::pyapi::{StateHandle, PyCmd, PyCmdHostHandle};
     #[pymodule_export]
     use crate::pyapi::{find_tool, fini_core_state, init_core_state};
 }

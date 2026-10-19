@@ -30,11 +30,11 @@ pub fn load_from(config: &Config, path: impl AsRef<Path>) -> cu::Result<fl::File
 }
 
 fn load_from_impl(config: &Config, path: &Path) -> cu::Result<fl::FileList> {
-    if path.ends_with(".csv") {
+    // if path.extension().is_some_and(|x| x == ".csv") {
         fl::load_csv_file_list(config, path)
-    } else {
-        fl::load_yml_file_list(config, path)
-    }
+    // } else {
+        // fl::load_yml_file_list(config, path)
+    // }
 }
 
 /// Write the versionless CSV file list file.

@@ -5,9 +5,9 @@ use pyo3::prelude::*;
 use crate::config::Config;
 
 /// Args for the `check` command
-#[derive(Default, Debug, Display)]
+#[derive(Default, Clone, Debug, Display)]
 #[display("{self:#?}")]
-#[pyclass(str)]
+#[pyclass(str, from_py_object)]
 pub struct Args {
     #[pyo3(get)]
     version: Option<String>,

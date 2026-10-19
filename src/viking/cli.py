@@ -8,7 +8,7 @@ import typing
 
 from ._core import cmd_check
 from .asm_differ import asm_differ_optional_arguments_help
-from .coreapi import core
+from .coreapi import core, run_cmd_host_loop
 
 
 def _commands():
@@ -55,7 +55,8 @@ def check(args: list[str]) -> typing.NoReturn:
         print(asm_differ_optional_arguments_help())
         sys.exit(0)
 
-    raise RuntimeError("not implemented")
+    run_cmd_host_loop(cmd_check.run(core, parsed_args))
+    sys.exit(0)
 
 
 def decompme(_args: list[str]) -> typing.NoReturn:
