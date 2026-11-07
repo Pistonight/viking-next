@@ -216,28 +216,27 @@ impl elf::OwnedElf {
             "could not get linked section"
         )
     }
+    pub fn get_function_by_name<'a>(
+        &'a self,
+        symbols: &elf::SymbolTableByName,
+        name: &str,
+    ) -> cu::Result<elf::Function<'a>> {
+        let symbol = cu::check!(symbols.get(&name), "unknown function: {name}")?;
+        self.get_function(symbol.st_value, symbol.st_size)
+    }
+
+pub fn get_function(&self, addr: u64, size: u64) -> cu::Result<elf::Function<'_>> {
+    Ok(elf::Function {
+        owner_elf: self,
+        addr,
+        code: self.get_elf_bytes(addr, size)?,
+    })
+}
 }
 
 //
 //
-// pub fn get_function(elf: &OwnedElf, addr: u64, size: u64) -> Result<Function<'_>> {
-//     Ok(Function {
-//         owner_elf: elf,
-//         addr,
-//         code: get_elf_bytes(elf, addr, size)?,
-//     })
-// }
 //
-// pub fn get_function_by_name<'a>(
-//     elf: &'a OwnedElf,
-//     symbols: &SymbolTableByName,
-//     name: &str,
-// ) -> Result<Function<'a>> {
-//     let symbol = symbols
-//         .get(&name)
-//         .ok_or_else(|| anyhow!("unknown function: {}", name))?;
-//     get_function(elf, symbol.st_value, symbol.st_size)
-// }
 //
 // pub type Addr2LineContext =
 //     addr2line::Context<addr2line::gimli::EndianRcSlice<addr2line::gimli::RunTimeEndian>>;

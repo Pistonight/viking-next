@@ -2,11 +2,11 @@ use std::fmt::Write;
 use std::ops::Deref;
 use std::sync::Arc;
 
+use colored::Colorize;
 use cu::pre::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
-use crate::config::Config;
 use crate::demangle;
 use crate::fl;
 use crate::ui;
@@ -23,13 +23,16 @@ impl InfoList {
         }
         known_functions
     }
-    pub fn interactive_fuzzy_select(&self, name: &str) -> cu::Result<Info> {
+    pub fn interactive_fuzzy_select(&self, name: &str, description: &str) -> cu::Result<Info> {
         let candidates = self.fuzzy_search(name);
-        let selected = ui::interactive_select(name, &candidates, |info| {
+        self.interactive_select(name, &candidates, description)
+    }
+    pub fn interactive_select(&self, query: &str, candidates: &[Info], description: &str) -> cu::Result<Info> {
+        let selected = ui::interactive_select(query, description, candidates, |info| {
             ui::format_symbol_name(info.name())
         })?;
         match selected {
-            None => cu::bail!("no match for {}", ui::format_symbol_name(name)),
+            None => cu::bail!("no match for {} in {}", ui::format_symbol_name(query), description.red()),
             Some(info) => Ok(info.clone()),
         }
     }
@@ -51,9 +54,7 @@ impl InfoList {
             .0
             .par_iter()
             .filter(|function| {
-                demangle::demangle_str(function.name())
-                    .is_ok_and(|demangled| demangled.contains(name))
-                    || function.name().contains(name)
+                demangle::raw_or_demangled_contains(function.name(), name)
             })
             .cloned()
             .collect();

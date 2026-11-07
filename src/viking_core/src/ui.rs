@@ -79,6 +79,7 @@ pub fn clear_terminal() {
 
 pub fn interactive_select<'a, T, FnFormat: Fn(&T) -> String>(
     query: &str,
+    description: &str,
     options: &'a [T],
     fn_format: FnFormat,
 ) -> cu::Result<Option<&'a T>> {
@@ -88,8 +89,9 @@ pub fn interactive_select<'a, T, FnFormat: Fn(&T) -> String>(
         _ => {}
     }
     let prompt = format!(
-        "{} is ambiguous (found {} matches); did you mean:",
+        "{} is ambiguous in {} (found {} matches); did you mean:",
         query.dimmed(),
+        description.red(),
         options.len()
     );
     clear_terminal();
