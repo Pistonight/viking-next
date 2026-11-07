@@ -51,7 +51,7 @@ mod _core {
     };
 
     #[pymodule_export]
-    use crate::pyapi::{StateHandle, PyCmd, PyCmdHostHandle};
+    use crate::pyapi::{PyCmd, PyCmdHostHandle, StateHandle};
     #[pymodule_export]
     use crate::pyapi::{find_tool, fini_core_state, init_core_state};
 }

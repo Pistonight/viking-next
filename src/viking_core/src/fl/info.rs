@@ -11,7 +11,7 @@ use crate::demangle;
 use crate::fl;
 use crate::ui;
 
-#[derive(Clone, Constructor, Into, Debug, Deref, DerefMut)]
+#[derive(Clone, Default, Constructor, Into, Debug, Deref, DerefMut)]
 #[repr(transparent)]
 pub struct InfoList(Vec<Info>);
 impl InfoList {
@@ -27,12 +27,21 @@ impl InfoList {
         let candidates = self.fuzzy_search(name);
         self.interactive_select(name, &candidates, description)
     }
-    pub fn interactive_select(&self, query: &str, candidates: &[Info], description: &str) -> cu::Result<Info> {
+    pub fn interactive_select(
+        &self,
+        query: &str,
+        candidates: &[Info],
+        description: &str,
+    ) -> cu::Result<Info> {
         let selected = ui::interactive_select(query, description, candidates, |info| {
             ui::format_symbol_name(info.name())
         })?;
         match selected {
-            None => cu::bail!("no match for {} in {}", ui::format_symbol_name(query), description.red()),
+            None => cu::bail!(
+                "no match for {} in {}",
+                ui::format_symbol_name(query),
+                description.red()
+            ),
             Some(info) => Ok(info.clone()),
         }
     }
@@ -53,9 +62,7 @@ impl InfoList {
         let mut candidates: Vec<Info> = self
             .0
             .par_iter()
-            .filter(|function| {
-                demangle::raw_or_demangled_contains(function.name(), name)
-            })
+            .filter(|function| demangle::raw_or_demangled_contains(function.name(), name))
             .cloned()
             .collect();
 
@@ -210,6 +217,13 @@ impl InfoData {
             AddressLabel::Single(label) => label,
             // unwrap: when FileList is loaded, it is validated to be non-empty
             AddressLabel::Multi(labels) => labels.first().unwrap(),
+        }
+    }
+    /// Check if any name of the function entry matches the input name
+    pub fn contains_name(&self, name: &str) -> bool {
+        match &self.label {
+            AddressLabel::Single(label) => label == name,
+            AddressLabel::Multi(labels) => labels.iter().any(|x| x == name),
         }
     }
 

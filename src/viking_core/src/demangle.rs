@@ -14,6 +14,5 @@ pub fn demangle_str(name: &str) -> cu::Result<String> {
 /// - `function_name` contains `query`, or
 /// - `demangle(function_name)` contains `query`
 pub fn raw_or_demangled_contains(function_name: &str, query: &str) -> bool {
-    function_name.contains(query)
-    || demangle_str(function_name).is_ok_and(|x| x.contains(query))
+    function_name.contains(query) || demangle_str(function_name).is_ok_and(|x| x.contains(query))
 }

@@ -32,6 +32,7 @@ pub struct FunctionChecker<'a, 'orig_elf, 'decomp_elf> {
 }
 
 impl<'a, 'orig_elf, 'decomp_elf> FunctionChecker<'a, 'orig_elf, 'decomp_elf> {
+    #[cu::context("failed to construct FunctionChecker")]
     pub fn new(
         config: &Config,
         orig_elf: &'orig_elf elf::OwnedElf,

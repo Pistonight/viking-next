@@ -1,9 +1,9 @@
 use std::path::PathBuf;
-use std::thread::{self, JoinHandle};
 use std::sync::mpsc;
+use std::thread::{self, JoinHandle};
 
-use pyo3::prelude::*;
 use cu::pre::*;
+use pyo3::prelude::*;
 
 use crate::config::{self, Config};
 
@@ -174,28 +174,35 @@ pub enum PyCmd {
 }
 
 /// Wrap an execution with a handle to send Python commands
-pub fn execute_with_cmd_host<F: FnOnce(PyCmdApi) -> cu::Result<()> + Send + 'static>(f: F) -> PyCmdHostHandle {
+pub fn execute_with_cmd_host<F: FnOnce(PyCmdApi) -> cu::Result<()> + Send + 'static>(
+    f: F,
+) -> PyCmdHostHandle {
     let (cmd_send, cmd_recv) = mpsc::channel();
     let (err_send, err_recv) = mpsc::channel();
-    let task_thread = Some(thread::spawn(move || {
-        f(PyCmdApi{cmd_send, err_recv})
-    }));
-    let cmd_host = PyCmdHost { cmd_recv, err_send, task_thread  };
+    let task_thread = Some(thread::spawn(move || f(PyCmdApi { cmd_send, err_recv })));
+    let cmd_host = PyCmdHost {
+        cmd_recv,
+        err_send,
+        task_thread,
+    };
     PyCmdHostHandle(Box::into_raw(Box::new(cmd_host)) as usize)
 }
 
 /// Sender facade for Rust to dispatch PyCmd. Dropping
 /// the sender marks the end of the API lifetime
-pub struct PyCmdApi{
+pub struct PyCmdApi {
     cmd_send: mpsc::Sender<PyCmd>,
     err_recv: mpsc::Receiver<Option<String>>,
 }
 impl PyCmdApi {
-    pub fn asm_differ(&self, args: impl IntoIterator<Item=impl Into<String>>) -> cu::Result<()> {
+    pub fn asm_differ(&self, args: impl IntoIterator<Item = impl Into<String>>) -> cu::Result<()> {
         let args = args.into_iter().map(Into::into).collect();
         let args_debug = format!("{args:?}");
         let cmd = PyCmd::AsmDiffer(args);
-        cu::check!(self.do_send(cmd), "ams-differ command failed, args: {args_debug}")
+        cu::check!(
+            self.do_send(cmd),
+            "ams-differ command failed, args: {args_debug}"
+        )
     }
 
     fn do_send(&self, cmd: PyCmd) -> cu::Result<()> {
@@ -209,8 +216,7 @@ impl PyCmdApi {
             Ok(Some(t)) => {
                 cu::bail!("python cmd returned error: {t}")
             }
-            Ok(None) => Ok(())
+            Ok(None) => Ok(()),
         }
     }
 }
-

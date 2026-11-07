@@ -225,13 +225,13 @@ impl elf::OwnedElf {
         self.get_function(symbol.st_value, symbol.st_size)
     }
 
-pub fn get_function(&self, addr: u64, size: u64) -> cu::Result<elf::Function<'_>> {
-    Ok(elf::Function {
-        owner_elf: self,
-        addr,
-        code: self.get_elf_bytes(addr, size)?,
-    })
-}
+    pub fn get_function(&self, addr: u64, size: u64) -> cu::Result<elf::Function<'_>> {
+        Ok(elf::Function {
+            owner_elf: self,
+            addr,
+            code: self.get_elf_bytes(addr, size)?,
+        })
+    }
 }
 
 //

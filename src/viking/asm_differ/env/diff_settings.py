@@ -33,11 +33,11 @@ def apply(config: dict[str, typing.Any], args: typing.Any):  # pyright: ignore[r
         version = viking_config.repo.default_version
 
     config["arch"] = "aarch64"
-    config["baseimg"] = viking_config.repo.original_elf_with_version(version)
-    config["myimg"] = viking_config.repo.decomp_elf_with_version(version)
+    config["baseimg"] = str(viking_config.repo.original_elf_with_version(version))
+    config["myimg"] = str(viking_config.repo.decomp_elf_with_version(version))
     source_directories = viking_config.check_mismatch.asm_differ.source_directories
     config["source_directories"] = [str(root / x) for x in source_directories]
-    config["objdump_executable"] = find_tool("llvm-objdump")
+    config["objdump_executable"] = str(find_tool("llvm-objdump"))
     # ill-suited to C++ projects (and too slow for large executables)
     config["show_line_numbers_default"] = False
 

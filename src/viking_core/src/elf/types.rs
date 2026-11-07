@@ -71,22 +71,34 @@ impl<'a> SymbolTableByName<'a> {
         }
 
         // all-substring/demangle search
-        self.0.par_iter().filter_map(|(name, info)| {
-            if demangle::raw_or_demangled_contains(name, query) {
-                Some((*name, info))
-            } else {
-                None
-            }
-        }).collect()
+        self.0
+            .par_iter()
+            .filter_map(|(name, info)| {
+                if demangle::raw_or_demangled_contains(name, query) {
+                    Some((*name, info))
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 
     /// Interactively select from a list of symtab matches
-    pub fn interactive_select<'s>(&'s self, query: &str, candidates: &[(&'a str, &'s Sym)], description: &str) -> cu::Result<(&'a str, &'s Sym)> {
+    pub fn interactive_select<'s>(
+        &'s self,
+        query: &str,
+        candidates: &[(&'a str, &'s Sym)],
+        description: &str,
+    ) -> cu::Result<(&'a str, &'s Sym)> {
         let selected = ui::interactive_select(query, description, candidates, |(name, _)| {
             ui::format_symbol_name(name)
         })?;
         match selected {
-            None => cu::bail!("no match for {} in {}", ui::format_symbol_name(query), description.red()),
+            None => cu::bail!(
+                "no match for {} in {}",
+                ui::format_symbol_name(query),
+                description.red()
+            ),
             Some(info) => Ok(info.clone()),
         }
     }

@@ -25,21 +25,13 @@ pub fn load_yml_file_list(config: &Config, path: &Path) -> cu::Result<FileList> 
         }
     }
     data.sort_by_key(|(_, obj)| obj.offset());
-    let mut info_list = Vec::with_capacity(config::FUNCTION_LEN_UPPER_BOUND);
-    let mut num_names = 0;
 
-    for (_, object) in &data {
-        for info in &object.text_section {
-            num_names += info.num_names();
-        }
-        info_list.extend(object.text_section.iter().cloned());
-    }
-    info_list.sort_by_key(|x| x.offset);
-
-    let file_list = FileList {
+    let mut file_list = FileList {
         data,
-        info_list: fl::InfoList::new(info_list),
+        info_list: fl::InfoList::default(),
     };
+
+    let num_names = file_list.reload_info_list();
     file_list.validate(num_names)?;
     Ok(file_list)
 }
@@ -88,7 +80,11 @@ impl FileList {
         Ok(())
     }
     fn check_names(&self, num_names: usize) -> cu::Result<()> {
-        let mut seen_names = FxHashSet::with_capacity_and_hasher(num_names, Default::default());
+        let mut seen_names = if num_names == 0 {
+            Default::default()
+        } else {
+            FxHashSet::with_capacity_and_hasher(num_names, Default::default())
+        };
         let mut duplicates = Vec::new();
 
         for entry in self.info_list.iter() {
@@ -141,7 +137,7 @@ impl FileList {
                 first.get_end(),
                 second.get_start(),
                 second.get_end(),
-            );
+            )?;
         }
 
         Ok(())
@@ -155,6 +151,22 @@ impl FileList {
     }
     pub fn into_data(self) -> Vec<(String, Object)> {
         self.data
+    }
+
+    /// Reload the in-memory info list to be synced with the file list data
+    pub fn reload_info_list(&mut self) -> usize {
+        let mut num_names = 0;
+        let mut info_list = Vec::with_capacity(config::FUNCTION_LEN_UPPER_BOUND);
+        for (_, object) in &self.data {
+            for info in &object.text_section {
+                num_names += info.num_names();
+            }
+            info_list.extend(object.text_section.iter().cloned());
+        }
+        info_list.sort_by_key(|x| x.offset);
+        self.info_list = fl::InfoList::new(info_list);
+
+        num_names
     }
 
     pub fn make_known_function_map(&self) -> FxHashMap<u32, fl::Info> {
@@ -187,6 +199,25 @@ impl FileList {
         }
 
         known_functions
+    }
+
+    /// Update a single symbol at offset
+    ///
+    /// The update will NOT be reflected in the in-memory flatten function list (info_list)
+    pub fn update<F: FnOnce(&mut fl::InfoData)>(
+        &mut self,
+        offset: u32,
+        update_fn: F,
+    ) -> cu::Result<()> {
+        for (_, object) in self.data.iter_mut() {
+            for function in object.text_section.iter_mut() {
+                if function.offset == offset {
+                    update_fn(function.data_mut());
+                    return Ok(());
+                }
+            }
+        }
+        cu::bail!("could not find function to update: offset = 0x{offset:08x}");
     }
 }
 
