@@ -43,6 +43,7 @@ pub enum MismatchCause {
     BranchTarget,
     FunctionCall(ReferenceDiff),
     DataReference(ReferenceDiff),
+    #[allow(unused)] // enum exists before the rewrite
     Immediate,
     Unknown,
     InternalError(String),
@@ -67,6 +68,7 @@ impl std::fmt::Display for MismatchCause {
 #[derive(Debug)]
 pub struct Mismatch {
     pub addr_orig: u64,
+    #[allow(unused)] // field exists before the rewrite
     pub addr_decomp: u64,
     pub cause: MismatchCause,
 }

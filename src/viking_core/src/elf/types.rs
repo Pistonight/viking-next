@@ -50,17 +50,6 @@ impl<'a> SymbolTableByName<'a> {
         fl::DataSymbolMap::new_unchecked(symbols.collect())
     }
 
-    /// Filter a list of functions to only functions that appear in the symbol table
-    pub fn filter_functions(&self, info_list: &fl::InfoList) -> fl::InfoList {
-        fl::InfoList::new(
-            info_list
-                .iter()
-                .filter(|function| self.contains_key(function.name()))
-                .cloned()
-                .collect(),
-        )
-    }
-
     /// Search for an exact match for the query (as a mangled symbol),
     /// or find all entries whose mangled or demangled name contains the query
     /// as substring.
@@ -123,3 +112,6 @@ impl<'elf> SymbolStringTable<'elf> {
         }
     }
 }
+
+pub type Addr2LineContext =
+    addr2line::Context<addr2line::gimli::EndianRcSlice<addr2line::gimli::RunTimeEndian>>;

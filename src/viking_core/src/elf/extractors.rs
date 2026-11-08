@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use addr2line::LookupResult;
+use addr2line::fallible_iterator::FallibleIterator;
 use cu::pre::*;
 use goblin::elf::program_header::PT_LOAD;
 use goblin::elf::reloc::{R_AARCH64_GLOB_DAT, R_AARCH64_RELATIVE};
@@ -232,43 +234,30 @@ impl elf::OwnedElf {
             code: self.get_elf_bytes(addr, size)?,
         })
     }
-}
+    pub fn create_addr2line_ctx(&self) -> cu::Result<elf::Addr2LineContext> {
+        let data: &[u8] = &self.as_owner().1;
+        let file = addr2line::object::read::File::parse(data)?;
+        Ok(addr2line::Context::new(&file)?)
+    }
 
-//
-//
-//
-//
-// pub type Addr2LineContext =
-//     addr2line::Context<addr2line::gimli::EndianRcSlice<addr2line::gimli::RunTimeEndian>>;
-//
-// pub fn create_addr2line_ctx_for(elf: &OwnedElf) -> Result<Addr2LineContext> {
-//     let data: &[u8] = &elf.as_owner().1;
-//     let file = addr2line::object::read::File::parse(data)?;
-//     Ok(addr2line::Context::new(&file)?)
-// }
-//
-// pub fn find_file_and_line_by_symbol(
-//     elf: &OwnedElf,
-//     ctx: &Addr2LineContext,
-//     sym: &str,
-// ) -> Result<(String, u32)> {
-//     let symbol = find_function_symbol_by_name(elf, sym)?;
-//
-//     let LookupResult::Output(frames) = ctx.find_frames(symbol.st_value) else {
-//         bail!("unexpect LookupResult (maybe input elf has split dwarf?)");
-//     };
-//
-//     let frame = frames
-//         .context("failed to parse dwarf")?
-//         .last()
-//         .context("no frame found")?
-//         .context("frame is invalid")?;
-//
-//     // Grab the location of the last frame (we choose the last frame to ignore inline function frames).
-//     let loc = frame.location.context("no location found")?;
-//     let file = loc.file.context("no file found")?;
-//     let line = loc.line.context("no line found")?;
-//     Ok((file.to_string(), line))
-// }
-//
-//
+    pub fn find_file_and_line_by_symbol(
+        &self,
+        ctx: &elf::Addr2LineContext,
+        sym: &str,
+    ) -> cu::Result<(String, u32)> {
+        let symbol = self.find_function_symbol_by_name(sym)?;
+
+        let LookupResult::Output(frames) = ctx.find_frames(symbol.st_value) else {
+            cu::bail!("unexpect LookupResult (maybe input elf has split dwarf?)");
+        };
+        let frames = cu::check!(frames, "failed to parse dwarf")?;
+        let frame = cu::check!(frames.last(), "no frame found")?;
+        let frame = cu::check!(frame, "frame is invalid")?;
+
+        // Grab the location of the last frame (we choose the last frame to ignore inline function frames).
+        let loc = frame.location.context("no location found")?;
+        let file = loc.file.context("no file found")?;
+        let line = loc.line.context("no line found")?;
+        Ok((file.to_string(), line))
+    }
+}

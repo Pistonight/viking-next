@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::path::Path;
 
-use cu::pre::*;
 use goblin::elf::dynamic::DT_RELA;
 use goblin::elf::section_header::SHT_SYMTAB;
 use goblin::elf::{Dynamic, Elf, ProgramHeader, RelocSection, SectionHeader, Symtab};

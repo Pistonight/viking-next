@@ -45,7 +45,7 @@ def run_cmd_host_loop(cmd_host: PyCmdHostHandle):
                         cmd_host.send_result(None)
                     else:
                         cmd_host.send_result(f"asm-differ exited with code {e.code}")
-                except Exception: # noqa: BLE001
+                except Exception:  # noqa: BLE001
                     traceback.print_exc()
                     cmd_host.send_result("an exception occured within asm-differ")
             case _:

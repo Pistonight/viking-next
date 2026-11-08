@@ -287,11 +287,29 @@ pub struct ConfigCheckMismatch {
     /// asm_differ options
     #[pyo3(get)]
     pub asm_differ: ConfigCheckMismatchAsmDiffer,
-    // TODO - add documentation to these
+    /// Treat the object paths in the YAML file list as relative to one of
+    /// these paths (relative to project root). If not specified or empty,
+    /// the object paths should be treated as relative to the project root
+    /// itself.
+    ///
+    /// This is useful to have to avoid changing the file list when refactoring the project
+    /// in the future.
+    ///
+    /// For example, suppose a source file is `<root>/src/Foo/fooBar.cpp`,
+    /// usually this would require the object path be `src/Foo/fooBar.o`.
+    /// You can set this config to `["src/"]`, and the object path can be
+    /// listed as `Foo/fooBar.o` in the file list.
     #[pyo3(get)]
-    pub file_list_removed_prefixes: Option<Vec<String>>,
+    #[serde(default)]
+    pub file_list_object_path_relative_to: Vec<String>,
+    /// Skip the "object checks" for object names starting with these prefixes.
+    ///
+    /// "object checks" are checks other than the asm-matching check, such as
+    /// placement, link order, NON_MATCHING comment...
     #[pyo3(get)]
-    pub no_object_check_for: Option<Vec<String>>,
+    #[serde(default)]
+    pub no_object_check_for: Vec<String>,
+    /// TODO - documentation - what is this??
     #[pyo3(get)]
     #[serde(default = "ConfigCheckMismatch::default_check_unimplemented_references")]
     pub check_unimplemented_references: bool,

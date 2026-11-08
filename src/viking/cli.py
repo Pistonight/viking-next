@@ -4,6 +4,7 @@ Usage: viking COMMAND [ARGS...]
 """
 
 import sys
+import traceback
 import typing
 
 from ._core import cmd_check
@@ -26,7 +27,17 @@ def print_help():
 
 def main() -> typing.NoReturn:
     """Main entrypoint parsing args from sys.argv"""
-    main_argv(sys.argv[1:])
+    try:
+        main_argv(sys.argv[1:])
+    except SystemExit as e:
+        sys.exit(e.code)
+    except Exception as e:  # noqa: BLE001
+        # hide this frame
+        if e.__traceback__:
+            e.__traceback__ = e.__traceback__.tb_next
+        # colorize=True is an internal argument
+        traceback.print_exception(e, colorize=True)  # pyright: ignore[reportCallIssue]
+        sys.exit(1)
 
 
 def main_argv(args: list[str]) -> typing.NoReturn:
@@ -37,7 +48,13 @@ def main_argv(args: list[str]) -> typing.NoReturn:
     command_name = args[0]
     for command in _commands():
         if command_name == command.__name__:
-            command(args[1:])
+            try:
+                command(args[1:])
+            except Exception as e:
+                # hide this frame
+                if e.__traceback__:
+                    e.__traceback__ = e.__traceback__.tb_next
+                raise
             # in case command returns because of bad implementation
             sys.exit(126)  # pyright: ignore[reportUnreachable]
 

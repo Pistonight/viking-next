@@ -2,7 +2,7 @@ use std::fmt::Write;
 use std::path::Path;
 
 use cu::pre::*;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 use crate::config::{self, Config};
 use crate::fl;
@@ -143,14 +143,26 @@ impl FileList {
         Ok(())
     }
 
+    /// Get the name of the object containing the offset
+    ///
+    /// If the offset is larger than all objects, the last object is returned.
+    pub fn object_name_for(&self, offset: u32) -> Option<&str> {
+        match self
+            .data
+            .binary_search_by_key(&offset, |(_, obj)| obj.offset())
+        {
+            Ok(i) => Some(&self.data[i].0),
+            Err(i) => {
+                // if i == 0 then the offset to search for is less than
+                // the first object
+                let i = i.checked_sub(1)?;
+                Some(&self.data[i].0)
+            }
+        }
+    }
+
     pub fn info_list(&self) -> &fl::InfoList {
         &self.info_list
-    }
-    pub fn into_info_list(self) -> fl::InfoList {
-        self.info_list
-    }
-    pub fn into_data(self) -> Vec<(String, Object)> {
-        self.data
     }
 
     /// Reload the in-memory info list to be synced with the file list data
@@ -167,38 +179,6 @@ impl FileList {
         self.info_list = fl::InfoList::new(info_list);
 
         num_names
-    }
-
-    pub fn make_known_function_map(&self) -> FxHashMap<u32, fl::Info> {
-        let mut known_functions =
-            FxHashMap::with_capacity_and_hasher(self.info_list.len(), Default::default());
-        for function in self.info_list.iter() {
-            known_functions.insert(function.offset, function.clone());
-        }
-        known_functions
-    }
-
-    pub fn make_known_function_name_map(&self) -> FxHashMap<&str, fl::Info> {
-        let mut known_functions =
-            FxHashMap::with_capacity_and_hasher(self.info_list.len(), Default::default());
-
-        for function in self.info_list.iter() {
-            match &function.label {
-                fl::AddressLabel::Single(label) => {
-                    if label.is_empty() {
-                        continue;
-                    }
-                    known_functions.insert(label.as_str(), function.clone());
-                }
-                fl::AddressLabel::Multi(labels) => {
-                    for label in labels {
-                        known_functions.insert(label.as_str(), function.clone());
-                    }
-                }
-            }
-        }
-
-        known_functions
     }
 
     /// Update a single symbol at offset

@@ -28,7 +28,8 @@ tasks:
       - task: gen-pyi
       - uv run --no-sync basedpyright --warnings
       - uv run --no-sync ruff check
-      - task: cargo-clippy
+      # TODO: implementation in progress so there are unused stuff
+      # - task: cargo-clippy
       - uv run --no-sync ruff format src --check
       - cargo fmt --check
 

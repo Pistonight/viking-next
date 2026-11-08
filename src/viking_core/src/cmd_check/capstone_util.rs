@@ -38,6 +38,7 @@ pub fn is_id_in_range(start: Arm64Insn, end: Arm64Insn, id: Arm64Insn) -> bool {
 }
 
 /// Used to make accessing arch-specific data less cumbersome.
+#[allow(unused)] // exists before the rewrite 
 pub trait CsArchOperandUtil {
     fn arm64(&self) -> &Arm64Operand;
 }
@@ -56,6 +57,7 @@ pub trait CsArm64OperandTypeUtil {
     fn reg(&self) -> RegId;
     fn imm(&self) -> i64;
     fn try_mem(&self) -> Option<Arm64OpMem>;
+    #[allow(unused)] // exists before the rewrite 
     fn mem(&self) -> Arm64OpMem;
 }
 

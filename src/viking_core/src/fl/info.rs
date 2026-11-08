@@ -101,6 +101,9 @@ impl Info {
     pub fn data_mut(&mut self) -> &mut InfoData {
         Arc::make_mut(&mut self.0)
     }
+    pub fn clone_data(&self) -> InfoData {
+        self.0.as_ref().clone()
+    }
 }
 
 /// Information about an address
