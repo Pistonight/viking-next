@@ -24,7 +24,6 @@ pub fn run_check_single(
 
     let resolve_fn_to_check =
         fuzzy_resolve_function(fn_to_check, &file_list, checker.decomp_symtab)?;
-    // let filtered_functions = checker.decomp_symtab.filter_functions(functions);
     let name = &resolve_fn_to_check.name;
     let function = &resolve_fn_to_check.info;
 

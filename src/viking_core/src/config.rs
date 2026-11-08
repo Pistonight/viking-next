@@ -286,6 +286,18 @@ impl ConfigRepo {
             None => self.build_ninja(),
         }
     }
+
+    /// Get the path to the versionless compilation database JSON file
+    pub fn compilation_database(&self) -> PathBuf {
+        self.build_path.join(&self.compilation_database)
+    }
+    /// Get the path to the optionally-versioned compilation database JSON file
+    pub fn compilation_database_with_version(&self, version: Option<&str>) -> PathBuf {
+        match version {
+            Some(v) => cu::path!(&(&self.build_path) / v / self.compilation_database),
+            None => self.compilation_database(),
+        }
+    }
 }
 
 /// Configuration for checking mismatches
@@ -350,9 +362,15 @@ pub struct ConfigDecompMe {
     #[serde(flatten)]
     pub target: ConfigDecompMeTarget,
 
-    /// Toggle overriding of default flags with database flags. (True by default)
+    /// Toggle overriding of default flags with flags discovered in compilation database. (True by default)
     #[pyo3(get)]
-    pub override_compile_flags: Option<bool>,
+    #[serde(default = "ConfigDecompMe::default_override_compile_flags")]
+    pub override_compile_flags: bool,
+}
+impl ConfigDecompMe {
+    fn default_override_compile_flags() -> bool {
+        true
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Display)]
@@ -360,14 +378,14 @@ pub struct ConfigDecompMe {
 #[pyclass(from_py_object, str)]
 #[serde(untagged, deny_unknown_fields)]
 pub enum ConfigDecompMeTarget {
+    Preset {
+        /// Preset ID used for categorizing. Requires registering preset with compiler and flags.
+        preset_id: String,
+    },
     CompilerAndFlags {
         /// Name of the compiler used to compile the code
         compiler_name: String,
         /// Compilation flags that are used for creating scratches.
         default_compile_flags: String,
-    },
-    Preset {
-        /// Preset ID used for categorizing. Requires registering preset with compiler and flags.
-        preset_id: String,
     },
 }

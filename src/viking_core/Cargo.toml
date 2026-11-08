@@ -8,7 +8,7 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-cu = { package = "pistonite-cu", version = "0.9.8", features = ["fs", "yaml", "toml", "derive", "cli"] }
+cu = { package = "pistonite-cu", version = "0.9.8", features = ["fs", "yaml", "toml", "json", "derive", "cli"] }
 serde = { version = "1", features = ["rc"] }
 serde-tuple-vec-map = "1.0.1"
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
@@ -33,3 +33,6 @@ crossterm = "0.27.0"
 addr2line = "0.22.0"
 json_compilation_db = "0.3.0"
 reqwest = { version = "0.12.3", features = ["blocking", "json"] }
+bad64 = "0.9.0"
+tempfile = "3.20.0"
+clang = { version = "2.0.0", features = ["runtime", "clang_10_0"] }

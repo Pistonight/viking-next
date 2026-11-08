@@ -7,7 +7,7 @@ import sys
 import traceback
 import typing
 
-from ._core import cmd_check, cmd_listsym
+from ._core import cmd_check, cmd_decompme, cmd_listsym
 from .asm_differ import asm_differ_optional_arguments_help
 from .coreapi import core, run_cmd_host_loop
 
@@ -77,9 +77,10 @@ def check(args: list[str]) -> typing.NoReturn:
     sys.exit(0)
 
 
-def decompme(_args: list[str]) -> typing.NoReturn:
+def decompme(args: list[str]) -> typing.NoReturn:
     """Upload a function to decomp.me"""
-    raise RuntimeError("not implemented")
+    ec = cmd_decompme.run(core, args)
+    sys.exit(ec)
 
 
 def listsym(args: list[str]) -> typing.NoReturn:

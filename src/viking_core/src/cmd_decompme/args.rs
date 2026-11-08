@@ -8,10 +8,10 @@ pub struct Args {
     pub version: Option<String>,
 
     /// API endpoint base for decomp.me
-    #[clap(long, default_value = r#""https://decomp.me".to_string()"#)]
+    #[clap(long, default_value = r#"https://decomp.me"#)]
     pub decomp_me_api: String,
 
-    /// Path to compilation database
+    /// Override the path to compilation database
     #[clap(short = 'p', long)]
     pub compilation_database: Option<String>,
 
@@ -23,7 +23,6 @@ pub struct Args {
     /// Name of the function to upload
     pub function_name: String,
 }
-
 
 /// Parse the arg. If None is returned, the help or error message
 /// is already printed
