@@ -23,6 +23,28 @@ impl InfoList {
         }
         known_functions
     }
+    pub fn make_known_function_name_map(&self) -> FxHashMap<&str, fl::Info> {
+        let mut known_functions =
+            FxHashMap::with_capacity_and_hasher(self.len(), Default::default());
+
+        for function in self.iter() {
+            match &function.label {
+                fl::AddressLabel::Single(label) => {
+                    if label.is_empty() {
+                        continue;
+                    }
+                    known_functions.insert(label.as_str(), function.clone());
+                }
+                fl::AddressLabel::Multi(labels) => {
+                    for label in labels {
+                        known_functions.insert(label.as_str(), function.clone());
+                    }
+                }
+            }
+        }
+
+        known_functions
+    }
     pub fn interactive_fuzzy_select(&self, name: &str, description: &str) -> cu::Result<Info> {
         let candidates = self.fuzzy_search(name);
         self.interactive_select(name, &candidates, description)

@@ -58,6 +58,14 @@ pub fn parse_args(config: &Config, cli_args: &[String]) -> cu::Result<Args> {
                 args.check_mismatch_comments = true;
             }
 
+            Arg::Long("check-placement") | Arg::Short('p') => {
+                args.check_placement = true;
+            }
+
+            Arg::Long("check-object-ordering") => {
+                args.check_object_ordering = true;
+            }
+
             Arg::Long("help") | Arg::Short('h') => {
                 args.print_help = true;
             }

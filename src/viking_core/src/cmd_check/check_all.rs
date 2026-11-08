@@ -340,8 +340,7 @@ fn check_placement(
     failed: &cu::Atomic<bool, bool>,
     args: &Args,
 ) -> cu::Result<()> {
-    let demangled_name =
-        demangle::demangle_str(function.name()).unwrap_or(function.name().to_string());
+    let demangled_name = demangle::demangle_or_as_is(function.name());
     let location_info = checker
         .decomp_elf
         .find_file_and_line_by_symbol(addr2line_ctx, function.name());

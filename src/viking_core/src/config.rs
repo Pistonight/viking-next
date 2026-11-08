@@ -309,7 +309,8 @@ pub struct ConfigCheckMismatch {
     #[pyo3(get)]
     #[serde(default)]
     pub no_object_check_for: Vec<String>,
-    /// TODO - documentation - what is this??
+    /// Check function call targets even when the branch target is in the PLT
+    /// section
     #[pyo3(get)]
     #[serde(default = "ConfigCheckMismatch::default_check_unimplemented_references")]
     pub check_unimplemented_references: bool,

@@ -6,6 +6,8 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 /// The `check` command
 mod cmd_check;
+/// The `listsym` command
+mod cmd_listsym;
 
 /// CPP demangle utils
 mod demangle;
@@ -41,6 +43,22 @@ mod _core {
                 let config = &state.config;
                 crate::cmd_check::run(config, &args, python)
             })
+        }
+    }
+
+    #[pymodule]
+    mod cmd_listsym {
+        use super::*;
+        #[pyfunction]
+        fn run(state: StateHandle, args: Vec<String>) -> PyResult<u32> {
+            // cu::cli::level("vv");
+            match crate::cmd_listsym::parse_args(&args) {
+                None => Ok(127),
+                Some(args) => match crate::cmd_listsym::run(&state.config, args) {
+                    Err(e) => crate::pyapi::into_pyresult(Err(e)),
+                    Ok(_) => Ok(0),
+                },
+            }
         }
     }
 

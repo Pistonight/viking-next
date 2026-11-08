@@ -7,7 +7,7 @@ import sys
 import traceback
 import typing
 
-from ._core import cmd_check
+from ._core import cmd_check, cmd_listsym
 from .asm_differ import asm_differ_optional_arguments_help
 from .coreapi import core, run_cmd_host_loop
 
@@ -72,7 +72,8 @@ def check(args: list[str]) -> typing.NoReturn:
         print(asm_differ_optional_arguments_help())
         sys.exit(0)
 
-    run_cmd_host_loop(cmd_check.run(core, parsed_args))
+    cmd_host = cmd_check.run(core, parsed_args)
+    run_cmd_host_loop(cmd_host)
     sys.exit(0)
 
 
@@ -81,6 +82,7 @@ def decompme(_args: list[str]) -> typing.NoReturn:
     raise RuntimeError("not implemented")
 
 
-def listsym(_args: list[str]) -> typing.NoReturn:
+def listsym(args: list[str]) -> typing.NoReturn:
     """Print symbols in the output ELF"""
-    raise RuntimeError("not implemented")
+    ec = cmd_listsym.run(core, args)
+    sys.exit(ec)

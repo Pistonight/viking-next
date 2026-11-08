@@ -1,7 +1,6 @@
 use std::io::{StderrLock, Write};
 
 use colored::*;
-use cu::pre::*;
 
 use crate::demangle;
 
@@ -44,9 +43,10 @@ pub fn print_error_ex(lock: &mut StderrLock, msg: &str) {
 }
 
 pub fn format_symbol_name(name: &str) -> String {
-    demangle::demangle_str(name).map_or(name.blue().to_string(), |demangled| {
-        format!("{} ({})", demangled.blue(), name.blue().dimmed(),)
-    })
+    match demangle::demangle_str(name) {
+        Ok(demangled) => format!("{} ({})", demangled.blue(), name.blue().dimmed()),
+        Err(_) => name.blue().to_string(),
+    }
 }
 
 pub fn format_address(addr: u64) -> String {
