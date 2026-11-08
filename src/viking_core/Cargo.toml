@@ -14,7 +14,6 @@ serde-tuple-vec-map = "1.0.1"
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
 # "abi3-py39" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.9
 pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py39", "experimental-inspect"] }
-clap = { version = "4.6.7", features = ["derive"] }
 itertools = "0.15.0"
 mimalloc = "0.1.52"
 lexopt = "0.3.2"
@@ -32,3 +31,5 @@ colored = "2"
 textwrap = "0.16.4"
 crossterm = "0.27.0"
 addr2line = "0.22.0"
+json_compilation_db = "0.3.0"
+reqwest = { version = "0.12.3", features = ["blocking", "json"] }

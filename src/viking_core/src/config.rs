@@ -90,6 +90,8 @@ pub struct Config {
     #[pyo3(get)]
     pub check_mismatch: ConfigCheckMismatch,
     /// The `[decomp_me]` section
+    ///
+    /// Required to use the decompme tool
     #[pyo3(get)]
     pub decomp_me: Option<ConfigDecompMe>,
 }
@@ -154,6 +156,10 @@ pub struct ConfigRepo {
     #[serde(default = "ConfigRepo::default_build_ninja")]
     pub build_ninja: PathBuf,
 
+    /// Path to the compilation database file (`compile_commands.json`), relative to the build or versioned build directory
+    #[serde(default = "ConfigRepo::default_compilation_database")]
+    pub compilation_database: PathBuf,
+
     /// Paths to find tools, relative to `root_path`.
     pub toolchain_bin_paths: Vec<PathBuf>,
 
@@ -172,6 +178,9 @@ impl ConfigRepo {
     }
     fn default_build_ninja() -> PathBuf {
         "build.ninja".into()
+    }
+    fn default_compilation_database() -> PathBuf {
+        "compile_commands.json".into()
     }
     #[cu::context("failed to find tool: {tool}")]
     pub fn find_tool(&self, tool: &str) -> cu::Result<PathBuf> {

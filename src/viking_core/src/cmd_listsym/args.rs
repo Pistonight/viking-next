@@ -1,10 +1,7 @@
 use cu::pre::*;
-use pyo3::prelude::*;
 
 /// Print symbols in the output ELF.
-#[derive(Default, Clone, Debug, Display, clap::Parser)]
-#[display("{self:#?}")]
-#[pyclass(str, from_py_object)]
+#[derive(Debug, clap::Parser)]
 pub struct Args {
     /// Show symbols that are undefined (e.g. unimplemented functions)
     #[clap(short = 'u', long)]
