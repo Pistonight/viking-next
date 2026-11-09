@@ -12,6 +12,7 @@ use crate::fl;
 use crate::ui;
 
 use crate::cmd_decompme::Args;
+use crate::cmd_decompme::preprocessor::{self, PreprocessedIncludes};
 
 /// decomp.me rejects JSON body larger than 2.5MB.
 /// This is the limit for the context so set it a little smaller
@@ -60,8 +61,12 @@ pub fn prepare_source_info(
     );
 
     let mut context = {
-        let mut expanded_source = run_preprocessor(&entry)?;
-        match extract_function_from_source(&mut expanded_source, function_info.name()) {
+        let mut preprocessor_output = run_preprocessor(args, &entry)?;
+        match extract_function_from_source(
+            &mut preprocessor_output.source,
+            function_info.name(),
+            &preprocessor_output.system_include_dirs,
+        ) {
             Ok(function_source) => {
                 output_source.push_str(&function_source);
             }
@@ -76,16 +81,27 @@ pub fn prepare_source_info(
                 );
             }
         }
-        expanded_source
+        preprocessor_output.source
     };
 
     if context.len() >= CONTEXT_MAX_LEN {
-        ui::print_warning(&format!("context is too large ({} bytes), trying to compact it...", context.len()));
+        ui::print_warning(&format!(
+            "context is too large ({} bytes), trying to compact it...",
+            context.len()
+        ));
         context = compact_context(&context);
         if context.len() >= CONTEXT_MAX_LEN {
-            ui::print_warning(&format!("context is still too large after compacting ({} bytes), decomp.me has a 2.5MB limit on the JSOn body and might reject the request!", context.len()));
+            ui::print_warning(&format!(
+                "context is still large after compacting ({} bytes), decomp.me has a 2.5MB limit on the JSON body and might reject the request!",
+                context.len()
+            ));
         }
     }
+    println!(
+        "context: {} lines ({} bytes)",
+        context.lines().count(),
+        context.len()
+    );
 
     let mut command = entry.arguments;
     // Remove the compiler command name.
@@ -161,40 +177,54 @@ fn remove_output_flags(command: &mut Vec<String>) {
 
 /// Run the preprocessor to get the expanded source file
 #[cu::context("failed to run preprocessor for entry: {entry:?}")]
-fn run_preprocessor(entry: &CompDbEntry) -> cu::Result<String> {
+fn run_preprocessor(args: &Args, entry: &CompDbEntry) -> cu::Result<PreprocessedIncludes> {
     let command = &entry.arguments;
 
-    let output = Command::new(&command[0])
-        .current_dir(&entry.directory)
-        .args(&command[1..])
-        .arg("-E")
-        .arg("-C")
-        .arg("-v")
-        .output()?;
+    if args.real_preprocessor {
+        // we really want to do -fdirectives-only but older clang doesn't have
+        // it... so right now we have an AI generated preprocessor that does
+        // the same.
+        let output = Command::new(&command[0])
+            .current_dir(&entry.directory)
+            .arg("-E")
+            .args(&command[1..])
+            .arg("-C")
+            .arg("-v")
+            .output()?;
 
-    // Yes, we're assuming the source code uses UTF-8.
-    // No, we don't care about other encodings like SJIS.
-    let stdout = str::from_utf8(&output.stdout)?;
-    let stderr = str::from_utf8(&output.stderr)?;
+        // Yes, we're assuming the source code uses UTF-8.
+        // No, we don't care about other encodings like SJIS.
+        let stdout = str::from_utf8(&output.stdout)?;
+        let stderr = str::from_utf8(&output.stderr)?;
 
-    // Post-process the preprocessed output to make it smaller by un-including
-    // system headers (e.g. C and C++ standard library headers).
-    let include_paths = get_system_include_paths(stderr);
-    let result = uninclude_includes(stdout, &include_paths);
+        if !output.status.success() {
+            eprintln!("{stderr}");
+            cu::bail!("preprocessor command exited unsuccessfully");
+        }
 
-    Ok(result)
+        // Post-process the preprocessed output to make it smaller by un-including
+        // system headers (e.g. C and C++ standard library headers).
+        let system_include_dirs = get_system_include_paths(stderr);
+        let source = uninclude_includes(stdout, &system_include_dirs);
+        Ok(PreprocessedIncludes {
+            source,
+            system_include_dirs,
+        })
+    } else {
+        preprocessor::preprocess_includes(&command[0], &command[1..], &entry.directory, &entry.file)
+    }
 }
 
-fn get_system_include_paths(stderr: &str) -> Vec<&str> {
+fn get_system_include_paths(stderr: &str) -> Vec<String> {
     stderr
         .lines()
         .skip_while(|&line| line != "#include <...> search starts here:")
         .take_while(|&line| line != "End of search list.")
-        .map(|line| line.split_whitespace().next().unwrap())
-        .filter(|&path| Path::new(path).is_dir())
+        .map(|line| line.split_whitespace().next().unwrap().to_string())
+        .filter(|path| Path::new(path).is_dir())
         .collect()
 }
-fn uninclude_includes(stdout: &str, include_paths: &[&str]) -> String {
+fn uninclude_includes(stdout: &str, include_paths: &[String]) -> String {
     let mut result = String::with_capacity(stdout.len());
 
     // The current include stack.
@@ -269,6 +299,8 @@ fn uninclude_includes(stdout: &str, include_paths: &[&str]) -> String {
 }
 
 /// Strip unnecessary stuff in the context to reduce the size of the request
+///
+/// This makes the context around 85~92% of what uncompacted context is.
 fn compact_context(context: &str) -> String {
     let context = strip_comments(context);
     let mut out = String::new();
@@ -278,8 +310,65 @@ fn compact_context(context: &str) -> String {
         if line.is_empty() || line.starts_with("# ") {
             continue;
         }
-        out.push_str(line);
-        out.push('\n');
+        if line.starts_with('#') && !out.ends_with('\n') {
+            out.push('\n');
+        }
+        // if there are quotes in the line it's trickier to process
+        if !line.contains(['\'', '"']) {
+            let mut line_compact = String::new();
+            let mut is_space = true;
+            for c in line.chars() {
+                if c == ' ' {
+                    if is_space {
+                        continue;
+                    }
+                    is_space = true;
+                } else {
+                    is_space = false;
+                }
+                line_compact.push(c);
+            }
+            let l = line_compact
+                .replace("if (", "if(")
+                .replace("for (", "for(")
+                .replace("while (", "while(")
+                .replace("do {", "do{")
+                // cannot do it on the left side because it might combine to
+                // form other operators
+                .replace("== ", "==")
+                .replace("= ", "=")
+                .replace(" + ", "+")
+                .replace(" - ", "-")
+                .replace(" * ", "*")
+                .replace(" / ", "/")
+                .replace(" % ", "%")
+                .replace(" > ", ">")
+                .replace(" < ", "<")
+                .replace(" << ", "<<")
+                .replace(" >> ", ">>")
+                .replace(" ^ ", "^")
+                .replace("{ ", "{")
+                .replace("( ", "(")
+                .replace("[ ", "[")
+                // these are not safe to replace because
+                // C99 requires a space after macro name
+                // .replace(" {", "{")
+                // .replace(" (", "(")
+                // .replace(" [", "[")
+                .replace(" }", "}")
+                .replace(" )", ")")
+                .replace(" ]", "]")
+                .replace("} ", "}")
+                .replace(") ", ")")
+                .replace("] ", "]");
+            out.push_str(&l);
+        } else {
+            out.push_str(line);
+        }
+        // optimize out unnecessary new lines
+        if !line.ends_with([';', '{', '[', '(', ',']) {
+            out.push('\n');
+        }
     }
     out
 }
@@ -335,24 +424,18 @@ fn strip_comments(source: &str) -> String {
     out
 }
 
-// /// Strip more syntax away!
-// fn compact_context_aggressive(context: &str) -> String {
-//     let mut out = String::new();
-//     for line in context.lines() {
-//     }
-// }
-
 /// Extract a function from the preprocessed source, splitting it to just the function as the
 /// source, with the remaining being the context
 fn extract_function_from_source(
     expanded_source: &mut String,
     function_name: &str,
+    system_include_dirs: &[String],
 ) -> cu::Result<String> {
     let FunctionTextInfo {
         mut range_start,
         range_end,
         namespace,
-    } = find_function_with_libclang(expanded_source, function_name)?;
+    } = find_function_with_libclang(expanded_source, function_name, system_include_dirs)?;
 
     // Expand function text range to nearest newline before the function to include comments and/or
     // a template assosiated with the function
@@ -373,6 +456,7 @@ fn extract_function_from_source(
 fn find_function_with_libclang(
     expanded_source: &str,
     function_name: &str,
+    system_include_dirs: &[String],
 ) -> cu::Result<FunctionTextInfo> {
     use std::io::Write;
 
@@ -388,9 +472,18 @@ fn find_function_with_libclang(
         Ok(x) => x,
         Err(e) => cu::bail!("failed to create clang instance: {e}"),
     };
+    // System headers are kept as #include in the source, so libclang needs
+    // the system include dirs to resolve them
+    let args: Vec<&str> = system_include_dirs
+        .iter()
+        .flat_map(|dir| ["-isystem", dir.as_str()])
+        .collect();
     let index = ClangIndex::new(&clang, false, false);
     let tu = cu::check!(
-        index.parser(temp_preprocessed_file.path()).parse(),
+        index
+            .parser(temp_preprocessed_file.path())
+            .arguments(&args)
+            .parse(),
         "failed to parse expanded source with libclang"
     )?;
     cu::check!(

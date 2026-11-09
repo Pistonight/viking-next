@@ -1,6 +1,7 @@
 use colored::Colorize;
 use cu::pre::*;
 use reqwest::blocking::Client;
+use reqwest::header::CONTENT_TYPE;
 
 use crate::config::{ConfigDecompMe, ConfigDecompMeTarget};
 use crate::ui;
@@ -88,10 +89,20 @@ pub fn run_upload(
 
     let api_base = &args.decomp_me_api;
 
+    let request_json = json::stringify(&request)?;
+    if request_json.len() > 2_621_440 {
+        ui::confirm(
+            "Request size > 2.5MB, decomp.me will reject it; Try anyway?",
+            false,
+            None,
+        )?;
+    }
+
     let response = cu::check!(
         client
             .post(format!("{api_base}/api/scratch"))
-            .json(&request)
+            .header(CONTENT_TYPE, "application/json")
+            .body(request_json)
             .send(),
         "failed to send request"
     )?;

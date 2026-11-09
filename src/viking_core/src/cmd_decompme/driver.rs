@@ -46,7 +46,6 @@ pub fn run(config: &Config, args: Args) -> cu::Result<()> {
     let target_asm = disassembly::create_disassembly(&function_info, &function)?;
     let source_info = create_source_info(config, &args, &decomp_elf, &function_info)?;
 
-    println!("context: {} lines", source_info.context.lines().count());
     if let Some(flags_str) = &source_info.compiler_flags {
         println!("compile flags: {flags_str}");
     }
@@ -55,14 +54,11 @@ pub fn run(config: &Config, args: Args) -> cu::Result<()> {
     }
     println!("offset: {:#x}", function_info.offset);
 
-    cu::fs::write("out", &source_info.context)?;
-
-    let confirm = inquire::Confirm::new("Upload?")
-        .with_default(true)
-        .with_help_message("note that your source file paths will be revealed if you continue");
-    if !confirm.prompt()? {
-        cu::bail!("cancelled");
-    }
+    ui::confirm(
+        "Upload?",
+        true,
+        Some("note that your source file paths will be revealed if you continue"),
+    )?;
 
     println!("uploading...");
     let diff_flags = vec![format!("--adjust-vma={:#x}", function_info.offset)];
@@ -137,12 +133,13 @@ fn create_source_info(
             }
             // Without the source context, the context needs to be manually
             // filled once uploaded. Confirm if that's what the user wants
-            let confirm = inquire::Confirm::new("Continue without source/context?")
-                .with_default(false)
-                .with_help_message("You will have to manually run the preprocessor and fill in the source/context on decomp.me");
-            if !confirm.prompt()? {
-                cu::bail!("cancelled");
-            }
+            ui::confirm(
+                "Continue without source/context?",
+                false,
+                Some(
+                    "You will have to manually run the preprocessor and fill in the source/context on decomp.me",
+                ),
+            )?;
             // empty source/context info
             Default::default()
         }

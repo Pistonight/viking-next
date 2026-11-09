@@ -20,6 +20,11 @@ pub struct Args {
     #[clap(short = 's', long)]
     pub source_file: Option<String>,
 
+    /// Force the real preprocessor instead of our own implementation. This will make the request
+    /// larger since macros are expanded. You should only use it if our implementation doesn't behave correctly.
+    #[clap(short = 'R', long)]
+    pub real_preprocessor: bool,
+
     /// Name of the function to upload
     pub function_name: String,
 }

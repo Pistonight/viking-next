@@ -105,3 +105,14 @@ pub fn interactive_select<'a, T, FnFormat: Fn(&T) -> String>(
         .index;
     Ok(Some(&options[i]))
 }
+
+pub fn confirm(prompt: &str, default_value: bool, help: Option<&str>) -> cu::Result<()> {
+    let mut confirm = inquire::Confirm::new(prompt).with_default(default_value);
+    if let Some(help) = help {
+        confirm = confirm.with_help_message(help);
+    }
+    if !confirm.prompt()? {
+        cu::bail!("Operation was cancelled by the user");
+    }
+    Ok(())
+}

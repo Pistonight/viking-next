@@ -117,6 +117,8 @@ impl elf::OwnedElf {
         }
         Ok(elf::SymbolTableByName::new(map))
     }
+
+    #[allow(unused)] // was here before the rewrite
     pub fn make_symbol_map_by_addr(&self) -> elf::SymbolTableByAddr {
         let mut map = elf::SymbolTableByAddr::with_capacity_and_hasher(
             self.iter_useful_syms().count(),
