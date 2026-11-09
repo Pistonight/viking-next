@@ -67,10 +67,10 @@ pub fn run(config: &Config, args: &Args, python: PyCmdApi) -> cu::Result<()> {
             &all_functions,
             file_list,
             func,
-            &args,
+            args,
         )?;
     } else {
-        check_all::run_check_all(config, version, &checker, file_list, &args)?;
+        check_all::run_check_all(config, version, &checker, file_list, args)?;
     }
 
     Ok(())

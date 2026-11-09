@@ -112,7 +112,7 @@ pub fn run_upload(
         Err(e) => {
             ui::print_note(&format!(
                 "server response:\n{}\n",
-                &response.normal().yellow()
+                response.normal().yellow()
             ));
             cu::rethrow!(e, "failed to upload function");
         }

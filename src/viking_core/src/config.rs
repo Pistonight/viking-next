@@ -59,6 +59,11 @@ fn load_config_at_impl(path: &Path) -> cu::Result<Config> {
         "invalid repo.root_path in config: '{}' (must be relative to the containing directory of the config file)",
         config.repo.root_path.display()
     )?;
+    config.repo.toolchain_install_path = config
+        .repo
+        .root_path
+        .join(&config.repo.toolchain_install_path)
+        .normalize()?;
     config.repo.data_path = config
         .repo
         .root_path
@@ -106,6 +111,11 @@ pub struct ConfigRepo {
     /// the root path.
     #[pyo3(get)]
     pub root_path: PathBuf,
+
+    /// Path relative to root for setup to install toolchains
+    #[pyo3(get)]
+    #[serde(default = "ConfigRepo::default_toolchain_install_path")]
+    pub toolchain_install_path: PathBuf,
 
     /// Default version to use when selecting versioned data or build directory/file.
     #[pyo3(get)]
@@ -170,6 +180,9 @@ pub struct ConfigRepo {
 }
 
 impl ConfigRepo {
+    fn default_toolchain_install_path() -> PathBuf {
+        "toolchain".into()
+    }
     fn default_address_base() -> u64 {
         0x71_0000_0000
     }

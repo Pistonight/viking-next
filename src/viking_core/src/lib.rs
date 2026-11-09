@@ -18,18 +18,26 @@ mod elf;
 mod fl;
 
 /// Terminal UI utils
-mod ui;
+pub mod ui;
 
-mod config;
+/// Configuration file
+pub mod config;
+
+/// Python interop utils
 mod pyapi;
 
 /// The pieces exposed to Python
+///
+/// In python, please use the `_core`-prefixed module to call and reference
+/// bindings, so it's obvious you are calling into Rust
 #[pymodule]
 mod _core {
+    use std::path::PathBuf;
+
     use pyo3::prelude::*;
 
     #[pymodule]
-    mod cmd_check {
+    mod _core_cmd_check {
         use super::*;
         #[pymodule_export]
         use crate::cmd_check::Args;
@@ -49,7 +57,7 @@ mod _core {
     }
 
     #[pymodule]
-    mod cmd_decompme {
+    mod _core_cmd_decompme {
         use super::*;
         #[pyfunction]
         fn run(state: StateHandle, args: Vec<String>) -> PyResult<u32> {
@@ -64,7 +72,7 @@ mod _core {
     }
 
     #[pymodule]
-    mod cmd_listsym {
+    mod _core_cmd_listsym {
         use super::*;
         #[pyfunction]
         fn run(state: StateHandle, args: Vec<String>) -> PyResult<u32> {
@@ -78,6 +86,22 @@ mod _core {
         }
     }
 
+    #[pymodule]
+    mod _core_ui {
+        use super::*;
+        #[pymodule_export]
+        use crate::ui::{
+            clear_terminal, format_address, format_symbol_name, print_error,
+            print_error_with_detail, print_note, print_step, print_warning,
+            print_warning_with_detail,
+        };
+
+        #[pyfunction]
+        fn confirm(prompt: &str, default_value: bool, help: Option<&str>) -> PyResult<()> {
+            crate::pyapi::into_pyresult(crate::ui::confirm(prompt, default_value, help))
+        }
+    }
+
     #[pymodule_export]
     use crate::config::{
         Config, ConfigCheckMismatch, ConfigCheckMismatchAsmDiffer, ConfigDecompMe,
@@ -87,5 +111,11 @@ mod _core {
     #[pymodule_export]
     use crate::pyapi::{PyCmd, PyCmdHostHandle, StateHandle};
     #[pymodule_export]
-    use crate::pyapi::{find_tool, fini_core_state, init_core_state};
+    use crate::pyapi::{fini_core_state, init_core_state};
+
+    /// Find a tool based on repo config
+    #[pyfunction]
+    pub fn find_tool(state: StateHandle, tool: &str) -> PyResult<PathBuf> {
+        crate::pyapi::into_pyresult(state.config.repo.find_tool(tool))
+    }
 }

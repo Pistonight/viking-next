@@ -1,38 +1,51 @@
+"""APIs backed by Rust
+
+This is a thin layer that exposes Python API that calls
+into Rust with the global state
+"""
+
 import atexit
 import traceback
 
 from . import _core
-from ._core import PyCmd, PyCmdHostHandle
 
-core = _core.init_core_state()
+# While we could use process-wide static singleton in Rust,
+# it will not play nicely going forward with Python's
+# multi-interpreter. See pyapi.rs for more information
+
+# Any Rust code that needs this global state should
+# take core_state (StateHandle in Rust) as the first parameter
+# of the _core.* API
+
+core_state = _core.init_core_state()
 
 
 @atexit.register
 def _fint_core():
-    _core.fini_core_state(core)
+    _core.fini_core_state(core_state)
 
 
-config = None
+_config = None
 
 
 def get_config():
     """Get the config object loaded from the project configuration file"""
-    global config
-    if config is None:
+    global _config
+    if _config is None:
         # config is immutable once loaded
-        config = core.config()
-    return config
+        _config = core_state.config()
+    return _config
 
 
 def find_tool(tool: str):
     """Find a tool binary. Returns the absolute path"""
-    return _core.find_tool(core, tool)
+    return _core.find_tool(core_state, tool)
 
 
-def run_cmd_host_loop(cmd_host: PyCmdHostHandle):
+def run_cmd_host_loop(cmd_host: _core.PyCmdHostHandle):
     while cmd := cmd_host.recv():
         match cmd:
-            case PyCmd.AsmDiffer(args):
+            case _core.PyCmd.AsmDiffer(args):
                 # need this here to avoid circular import
                 from .asm_differ import asm_differ
 

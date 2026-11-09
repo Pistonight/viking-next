@@ -1,4 +1,3 @@
-use std::path::PathBuf;
 use std::sync::mpsc;
 use std::thread::{self, JoinHandle};
 
@@ -10,7 +9,7 @@ use crate::config::{self, Config};
 /// Global (per-module) state of the module
 ///
 /// Pyo3 does not yet support per-module state (for multi-interpreter),
-/// so we leak a pointer to let python hold the
+/// so we leak a pointer to let python hold it as a module scope variable.
 pub struct State {
     /// Configuration file
     pub config: Config,
@@ -47,12 +46,6 @@ pub fn init_core_state() -> PyResult<StateHandle> {
 #[pyfunction]
 pub fn fini_core_state(state: StateHandle) {
     let _ = unsafe { Box::from_raw(state.0 as *mut State) };
-}
-
-/// Find a tool based on repo config
-#[pyfunction]
-pub fn find_tool(state: StateHandle, tool: &str) -> PyResult<PathBuf> {
-    into_pyresult(state.config.repo.find_tool(tool))
 }
 
 pyo3::create_exception!(viking, CoreError, pyo3::exceptions::PyRuntimeError);

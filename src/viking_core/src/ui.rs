@@ -1,18 +1,53 @@
 use std::io::{StderrLock, Write};
 
 use colored::*;
+use pyo3::prelude::*;
 
 use crate::demangle;
 
+/// Initialize inquire prompt settings
 pub fn init_prompt_settings() {
     let mut config = inquire::ui::RenderConfig::default();
     config.prompt.att |= inquire::ui::Attributes::BOLD;
     inquire::set_global_render_config(config);
 }
+
+/// Macro for [`print_step`]
+macro_rules! step {
+    ($($arg:tt)*) => { $crate::ui::print_step(&format!($($arg)*)) };
+}
+pub(crate) use step;
+
+/// Print a message using the step formatting
+///
+/// ## Format
+/// ```
+/// [bright green]>>> {msg}
+/// ```
+#[pyfunction]
+pub fn print_step(msg: &str) {
+    println!("{} {}", ">>>".bright_green(), msg.bright_green())
+}
+
+/// Macro for [`print_note`]
+macro_rules! note {
+    ($($arg:tt)*) => { $crate::ui::print_note(&format!($($arg)*)) };
+}
+pub(crate) use note;
+
+/// Print a message using the note formatting
+///
+/// ## Format
+/// ```
+/// [bold cyan]note: [bold]{msg}
+/// ```
+#[pyfunction]
 pub fn print_note(msg: &str) {
     eprintln!("{}{}{}", "note".bold().cyan(), ": ".bold(), msg.bold())
 }
 
+/// Print either a warning or an error
+#[pyfunction]
 pub fn print_warn_or_error(msg: &str, is_error: bool) {
     if is_error {
         print_error(msg);
@@ -21,17 +56,91 @@ pub fn print_warn_or_error(msg: &str, is_error: bool) {
     }
 }
 
+/// Macro for [`print_warning`]
+macro_rules! warn_ {
+    ($($arg:tt)*) => { $crate::ui::print_warning(&format!($($arg)*)) };
+}
+pub(crate) use warn_ as warn;
+
+/// Print a message using warning formatting
+///
+/// ## Format
+/// ```
+/// [bold yellow]warning: [bold]{msg}
+/// ```
+#[pyfunction]
 pub fn print_warning(msg: &str) {
-    eprintln!("{}{}{}", "warning".bold().yellow(), ": ".bold(), msg.bold())
+    let stderr = std::io::stderr();
+    let mut lock = stderr.lock();
+    print_warning_locked(&mut lock, msg);
 }
 
+/// Print a message using warning formatting plus details
+///
+/// ## Format
+/// ```
+/// [bold yellow]warning: [bold]{msg}
+///   |  detail...
+///   |  detail...
+///   |  detail...
+/// ```
+#[pyfunction]
+pub fn print_warning_with_detail(msg: &str, detail: &str) {
+    let stderr = std::io::stderr();
+    let mut lock = stderr.lock();
+    print_warning_locked(&mut lock, msg);
+    print_detail_locked(&mut lock, detail);
+}
+
+fn print_warning_locked(lock: &mut StderrLock, msg: &str) {
+    writeln!(
+        lock,
+        "{}{}{}",
+        "warning".bold().yellow(),
+        ": ".bold(),
+        msg.bold()
+    )
+    .unwrap();
+}
+
+/// Macro for [`print_error`]
+#[macro_export]
+macro_rules! error {
+    ($($arg:tt)*) => { $crate::ui::print_error(&format!($($arg)*)) };
+}
+pub(crate) use error;
+
+/// Print a message using error formatting
+///
+/// ## Format
+/// ```
+/// [bold red]error: [bold]{msg}
+/// ```
+#[pyfunction]
 pub fn print_error(msg: &str) {
     let stderr = std::io::stderr();
     let mut lock = stderr.lock();
-    print_error_ex(&mut lock, msg);
+    print_error_locked(&mut lock, msg);
 }
 
-pub fn print_error_ex(lock: &mut StderrLock, msg: &str) {
+/// Print a message using error formatting plus details
+///
+/// ## Format
+/// ```
+/// [bold red]error: [bold]{msg}
+///   |  detail...
+///   |  detail...
+///   |  detail...
+/// ```
+#[pyfunction]
+pub fn print_error_with_detail(msg: &str, detail: &str) {
+    let stderr = std::io::stderr();
+    let mut lock = stderr.lock();
+    print_error_locked(&mut lock, msg);
+    print_detail_locked(&mut lock, detail);
+}
+
+fn print_error_locked(lock: &mut StderrLock, msg: &str) {
     writeln!(
         lock,
         "{}{}{}",
@@ -42,24 +151,7 @@ pub fn print_error_ex(lock: &mut StderrLock, msg: &str) {
     .unwrap();
 }
 
-pub fn format_symbol_name(name: &str) -> String {
-    match demangle::demangle_str(name) {
-        Ok(demangled) => format!("{} ({})", demangled.blue(), name.blue().dimmed()),
-        Err(_) => name.blue().to_string(),
-    }
-}
-
-pub fn format_address(addr: u64) -> String {
-    format!("{addr:#x}").green().to_string()
-}
-
-pub fn print_detail(msg: &str) {
-    let stderr = std::io::stderr();
-    let mut lock = stderr.lock();
-    print_detail_ex(&mut lock, msg);
-}
-
-pub fn print_detail_ex(lock: &mut StderrLock, msg: &str) {
+fn print_detail_locked(lock: &mut StderrLock, msg: &str) {
     writeln!(
         lock,
         "{}\n",
@@ -68,6 +160,20 @@ pub fn print_detail_ex(lock: &mut StderrLock, msg: &str) {
     .unwrap();
 }
 
+#[pyfunction]
+pub fn format_symbol_name(name: &str) -> String {
+    match demangle::demangle_str(name) {
+        Ok(demangled) => format!("{} ({})", demangled.blue(), name.blue().dimmed()),
+        Err(_) => name.blue().to_string(),
+    }
+}
+
+#[pyfunction]
+pub fn format_address(addr: u64) -> String {
+    format!("{addr:#x}").green().to_string()
+}
+
+#[pyfunction]
 pub fn clear_terminal() {
     crossterm::execute!(
         std::io::stdout(),
@@ -83,7 +189,7 @@ pub fn interactive_select<'a, T, FnFormat: Fn(&T) -> String>(
     options: &'a [T],
     fn_format: FnFormat,
 ) -> cu::Result<Option<&'a T>> {
-    match &options[..] {
+    match options {
         [] => return Ok(None),
         [_only_match] => return Ok(Some(&options[0])),
         _ => {}

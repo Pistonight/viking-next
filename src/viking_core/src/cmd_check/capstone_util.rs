@@ -65,14 +65,14 @@ impl CsArm64OperandTypeUtil for Arm64OperandType {
     fn reg(&self) -> RegId {
         match self {
             Self::Reg(x) => *x,
-            _ => panic!("expected Reg, got {:#?}", &self),
+            _ => panic!("expected Reg, got {self:#?}"),
         }
     }
 
     fn imm(&self) -> i64 {
         match self {
             Self::Imm(x) => *x,
-            _ => panic!("expected Imm, got {:#?}", &self),
+            _ => panic!("expected Imm, got {self:#?}"),
         }
     }
 
@@ -86,7 +86,7 @@ impl CsArm64OperandTypeUtil for Arm64OperandType {
     fn mem(&self) -> Arm64OpMem {
         match self {
             Self::Mem(x) => *x,
-            _ => panic!("expected Mem, got {:#?}", &self),
+            _ => panic!("expected Mem, got {self:#?}"),
         }
     }
 }

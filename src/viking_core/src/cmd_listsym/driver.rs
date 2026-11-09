@@ -91,7 +91,7 @@ pub fn run(config: &Config, args: Args) -> cu::Result<()> {
             "unknown".yellow().bold()
         };
 
-        println!("{} {} ({})", status, &demangled_name, name.dimmed());
+        println!("{} {} ({})", status, demangled_name, name.dimmed());
     }
 
     Ok(())

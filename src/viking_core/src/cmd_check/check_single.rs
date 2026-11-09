@@ -53,7 +53,7 @@ pub fn run_check_single(
     let mut should_show_diff = args.always_diff;
 
     if let Some(mismatch) = &maybe_mismatch {
-        eprintln!("{}\n{}", "mismatch".red().bold(), &mismatch);
+        eprintln!("{}\n{}", "mismatch".red().bold(), mismatch);
         should_show_diff = true;
     } else {
         eprintln!("{}", "OK".green().bold());
@@ -75,25 +75,26 @@ pub fn run_check_single(
     let new_status = match maybe_mismatch {
         Option::None => fl::Status::Matching,
         _ if function.status == fl::Status::NotDecompiled => fl::Status::Wip,
-        _ => function.status.clone(),
+        _ => function.status,
     };
 
     // Update the function entry if needed.
     let status_changed = function.status != new_status;
     if status_changed {
-        ui::print_note(&format!(
+        ui::note!(
             "changing status from {:?} to {:?}",
-            function.status, new_status
-        ));
+            function.status,
+            new_status
+        );
     }
 
     let name_needs_update = !function.contains_name(name);
     if name_needs_update {
-        ui::print_note(&format!(
+        ui::note!(
             "changing name from {} to {}",
             function.name().dimmed(),
             ui::format_symbol_name(name)
-        ));
+        );
     }
 
     if status_changed || name_needs_update {
@@ -129,40 +130,44 @@ fn fuzzy_resolve_function(
     let (function, name) = match (file_list_candidates.len(), decomp_elf_candidates.len()) {
         (0, 0) => {
             // inform user the dual no-match
-            ui::print_error(&format!(
+            ui::error!(
                 "no match for {} in either the {} or the {}!",
                 ui::format_symbol_name(query),
                 "file list".red(),
                 "decomp elf".red()
-            ));
+            );
             cu::bail!("failed to resolve {query} in the file list and the decomp elf");
         }
         (0, x) => {
-            ui::print_error(&format!(
-                "no match for {} in {}!",
-                ui::format_symbol_name(query),
-                "file list".red()
-            ));
-            ui::print_note(&format!(
-                "but, found {} match for {} in {}",
-                x,
-                ui::format_symbol_name(query),
-                "decomp elf".red()
-            ));
+            ui::print_error_with_detail(
+                &format!(
+                    "no match for {} in {}!",
+                    ui::format_symbol_name(query),
+                    "file list".red()
+                ),
+                &format!(
+                    "but, found {} match for {} in {}",
+                    x,
+                    ui::format_symbol_name(query),
+                    "decomp elf".red()
+                ),
+            );
             cu::bail!("failed to resolve {query} in the file list");
         }
         (x, 0) => {
-            ui::print_error(&format!(
-                "no match for {} in {}!",
-                ui::format_symbol_name(query),
-                "decomp elf".red()
-            ));
-            ui::print_note(&format!(
-                "but, found {} match for {} in {}",
-                x,
-                ui::format_symbol_name(query),
-                "file list".red()
-            ));
+            ui::print_error_with_detail(
+                &format!(
+                    "no match for {} in {}!",
+                    ui::format_symbol_name(query),
+                    "decomp elf".red()
+                ),
+                &format!(
+                    "but, found {} match for {} in {}",
+                    x,
+                    ui::format_symbol_name(query),
+                    "file list".red()
+                ),
+            );
             cu::bail!("failed to resolve {query} in the decomp elf");
         }
         (1, 1) => {
@@ -320,16 +325,16 @@ fn rediff_function_after_differ(
         version,
     )?;
     let now_check_result = cu::check!(
-        checker.check(&mut check_util::make_cs()?, &orig_fn, &decomp_fn),
+        checker.check(&mut check_util::make_cs()?, orig_fn, &decomp_fn),
         "re-checking {name}"
     )?;
 
     match (&previous_check_result, &now_check_result) {
         (Some(_), Some(mismatch)) => {
-            eprintln!("{}\n{}", "still mismatching".red().bold(), &mismatch);
+            eprintln!("{}\n{}", "still mismatching".red().bold(), mismatch);
         }
         (None, Some(mismatch)) => {
-            eprintln!("{}\n{}", "mismatching now".red().bold(), &mismatch);
+            eprintln!("{}\n{}", "mismatching now".red().bold(), mismatch);
         }
         (Some(_), None) => {
             eprintln!("{}", "OK now".green().bold());

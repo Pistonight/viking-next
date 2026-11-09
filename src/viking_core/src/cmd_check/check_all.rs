@@ -52,12 +52,10 @@ pub fn run_check_all(
             let next = e[1];
             let ordering = current.to_lowercase().cmp(&next.to_lowercase());
             match ordering {
-                Greater => ui::print_warning(&format!(
+                Greater => ui::warn!(
                     "Object {current} is placed before {next}, breaking the alphabetical ordering"
-                )),
-                Equal => ui::print_warning(&format!(
-                    "Found multiple objects with the same name {current}"
-                )),
+                ),
+                Equal => ui::warn!("Found multiple objects with the same name {current}"),
                 Less => {} // Ordering is correct
             }
         });
@@ -91,7 +89,7 @@ pub fn run_check_all(
             match check_function(config, checker, &file_list, ctx, function, &mut new_function, &mut changed, args, &failed) {
                 Err(e) => {
                     let name = function.name();
-                    ui::print_error(&format!("error while checking function {name}: {e:?}"));
+                    ui::error!("error while checking function {name}: {e:?}");
                     failed.set(true);
                     cu::bail!("there were fatal errors checking functions!");
                 }
@@ -137,6 +135,7 @@ struct PerThreadCheckContext {
 }
 
 /// Check a single function in check_all mode
+#[allow(clippy::too_many_arguments)]
 fn check_function(
     config: &Config,
     checker: &FunctionChecker,
@@ -238,11 +237,11 @@ fn check_match(
     let decomp_fn = match decomp_fn {
         Ok(x) => x,
         Err(error) => {
-            ui::print_warning(&format!(
+            ui::warn!(
                 "couldn't check {}: {}",
                 ui::format_symbol_name(name),
                 error.to_string().dimmed(),
-            ));
+            );
             if args.warnings_as_errors {
                 return Err(error);
             }
@@ -264,15 +263,13 @@ fn check_match(
         fl::Status::Library => unreachable!(),
         fl::Status::Matching => {
             if let Some(mismatch) = result {
-                let mut lock = std::io::stderr().lock();
-                ui::print_error_ex(
-                    &mut lock,
+                ui::print_error_with_detail(
                     &format!(
                         "function {} is marked as matching but does not match",
                         ui::format_symbol_name(name),
                     ),
+                    &mismatch.to_string(),
                 );
-                ui::print_detail_ex(&mut lock, &mismatch.to_string());
                 return Ok(CheckResult::MismatchError);
             }
         }
@@ -282,11 +279,11 @@ fn check_match(
         | fl::Status::NonMatchingMajor
         | fl::Status::Wip => {
             if result.is_none() {
-                ui::print_note(&format!(
+                ui::note!(
                     "function {} is marked as {} but matches",
                     ui::format_symbol_name(name),
                     function.status.description(),
-                ));
+                );
                 return Ok(CheckResult::MatchWarn);
             }
 
@@ -318,11 +315,11 @@ fn check_match(
             }
 
             if function.status == fl::Status::NotDecompiled {
-                ui::print_note(&format!(
+                ui::note!(
                     "function {} is marked as {} but exists (and mismatches) in the decomp elf",
                     ui::format_symbol_name(name),
                     function.status.description(),
-                ));
+                );
                 return Ok(CheckResult::MismatchWarn);
             }
         }
@@ -399,7 +396,7 @@ fn check_placement(
         return Ok(());
     }
 
-    if &object_path != object_name_in_file_list {
+    if object_path != object_name_in_file_list {
         ui::print_warn_or_error(
             &format!(
                 "Found function implemented in the wrong file: {:?}, implemented in: {:?}, should be implemented in: {:?}",
@@ -469,14 +466,14 @@ fn check_mismatch_comment_imp(
 
     let function_signature_and_comments = rfind_function_metadata_block(function_symbol, &content)?;
     if !function_signature_and_comments.contains("NON_MATCHING") {
-        ui::print_warning(&format!(
+        ui::warn!(
             "Function at line {line} of {file_display} mismatches and should have a `NON_MATCHING` comment above it with a `decomp.me` link"
-        ));
+        );
     } else if !function_signature_and_comments.contains("decomp.me") {
         // Not the full https://decomp.me/scratch to allow for comments like "Same mismatch as above, no decomp.me needed"
-        ui::print_warning(&format!(
+        ui::warn!(
             "NON_MATCHING comment for function at line {line} of {file_display} should have a `decomp.me` link",
-        ));
+        );
     }
 
     Ok(())

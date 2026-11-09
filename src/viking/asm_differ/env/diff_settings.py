@@ -1,7 +1,7 @@
 import typing
 from argparse import ArgumentParser
 
-from viking import find_tool, get_config
+from viking.core import find_tool, get_config
 
 
 def add_custom_arguments(parser: ArgumentParser):

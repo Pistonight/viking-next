@@ -1,9 +1,7 @@
-use crossterm::style::Stylize;
+use colored::Colorize;
 use cu::pre::*;
 
-use crate::cmd_decompme::source_info::PreprocessedSource;
-use crate::config::Config;
-use crate::config::ConfigDecompMeTarget;
+use crate::config::{Config, ConfigDecompMeTarget};
 use crate::demangle;
 use crate::elf;
 use crate::fl;
@@ -11,7 +9,7 @@ use crate::ui;
 
 use crate::cmd_decompme::Args;
 use crate::cmd_decompme::disassembly;
-use crate::cmd_decompme::source_info;
+use crate::cmd_decompme::source_info::{self, PreprocessedSource};
 use crate::cmd_decompme::upload_scratch::{self, ScratchSource};
 
 /// Entry point for the decompme command
@@ -27,7 +25,7 @@ pub fn run(config: &Config, args: Args) -> cu::Result<()> {
     let functions = file_list.info_list();
     let decomp_symtab = decomp_elf.make_symbol_map_by_name()?;
 
-    let filtered_functions = decomp_symtab.filter_functions(&functions);
+    let filtered_functions = decomp_symtab.filter_functions(functions);
     let function_info = filtered_functions.interactive_fuzzy_select(
         &args.function_name,
         "functions that exist in both the file list and the decomp elf",
@@ -47,12 +45,12 @@ pub fn run(config: &Config, args: Args) -> cu::Result<()> {
     let source_info = create_source_info(config, &args, &decomp_elf, &function_info)?;
 
     if let Some(flags_str) = &source_info.compiler_flags {
-        println!("compile flags: {flags_str}");
+        ui::step!("compile flags: {}", flags_str.as_str().clear().dimmed());
     }
     if let ConfigDecompMeTarget::Preset { preset_id } = &decomp_me_config.target {
-        println!("preset id: {preset_id}");
+        ui::step!("preset id: {preset_id}");
     }
-    println!("offset: {:#x}", function_info.offset);
+    ui::step!("offset: {:#x}", function_info.offset);
 
     ui::confirm(
         "Upload?",
@@ -60,7 +58,7 @@ pub fn run(config: &Config, args: Args) -> cu::Result<()> {
         Some("note that your source file paths will be revealed if you continue"),
     )?;
 
-    println!("uploading...");
+    ui::print_step("uploading...");
     let diff_flags = vec![format!("--adjust-vma={:#x}", function_info.offset)];
 
     let source = ScratchSource {
@@ -74,12 +72,14 @@ pub fn run(config: &Config, args: Args) -> cu::Result<()> {
     };
     let urls = upload_scratch::run_upload(decomp_me_config, &args, source)?;
 
-    ui::print_note(&format!(
+    ui::note!(
         "created scratch for \'{}\'.\n\n\
         Claim: {}\n\
         Direct: {}",
-        demangled_name, urls.claim_url, urls.base_url
-    ));
+        demangled_name,
+        urls.claim_url,
+        urls.base_url
+    );
 
     Ok(())
 }
@@ -92,12 +92,12 @@ fn create_source_info(
 ) -> cu::Result<PreprocessedSource> {
     let source_file = match &args.source_file {
         Some(s) => {
-            ui::print_note("source file is specified, skipping automatic source deduction");
+            ui::note!("source file is specified, skipping automatic source deduction");
             Some(s.to_string())
         }
-        None => match deduce_source_file_from_debug_info(&decomp_elf, function_info.name()) {
+        None => match deduce_source_file_from_debug_info(decomp_elf, function_info.name()) {
             Err(e) => {
-                ui::print_warning(&format!("failed to deduce source file: {e:?}"));
+                ui::warn!("failed to deduce source file: {e:?}");
                 None
             }
             Ok(x) => Some(x),
@@ -106,11 +106,10 @@ fn create_source_info(
     let source_info = match source_file {
         None => None,
         Some(source_file) => {
-            let info =
-                source_info::prepare_source_info(config, &args, &source_file, &function_info);
+            let info = source_info::prepare_source_info(config, args, &source_file, function_info);
             match info {
                 Err(e) => {
-                    ui::print_warning(&format!("{e:?}"));
+                    ui::warn!("{e:?}");
                     None
                 }
                 Ok(x) => Some(x),
@@ -123,11 +122,11 @@ fn create_source_info(
         None => {
             println!();
             if args.source_file.is_some() {
-                ui::print_warning(
+                ui::warn!(
                     "failed to get the context from the source file specified in args - is that the correct cpp file?\n",
                 );
             } else {
-                ui::print_note(
+                ui::note!(
                     "failed to get the context from the inferred source file, consider passing -s [.cpp source] to manually specify a source file.\n",
                 );
             }

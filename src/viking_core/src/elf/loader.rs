@@ -36,7 +36,10 @@ pub fn load_elf(path: &Path, address_base: u64) -> cu::Result<elf::OwnedElf> {
         cu::Ok(Box::new(elf))
     })?;
 
-    Ok(elf::OwnedElf::new(handle, address_base))
+    Ok(elf::OwnedElf {
+        handle,
+        address_base,
+    })
 }
 
 /// A stripped down version of `goblin::elf::Elf::parse`, parsing only the sections that we need.
@@ -71,7 +74,7 @@ fn parse_elf_faster(bytes: &[u8]) -> cu::Result<Elf<'_>> {
     for shdr in &elf.section_headers {
         if shdr.sh_type == SHT_SYMTAB {
             let size = shdr.sh_entsize;
-            let count = if size == 0 { 0 } else { shdr.sh_size / size };
+            let count = shdr.sh_size.checked_div(size).unwrap_or(0);
             elf.syms = Symtab::parse(bytes, shdr.sh_offset as usize, count as usize, ctx)?;
         }
     }

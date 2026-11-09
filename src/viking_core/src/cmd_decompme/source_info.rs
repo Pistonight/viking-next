@@ -33,7 +33,7 @@ pub fn prepare_source_info(
     source_file: &str,
     function_info: &fl::Info,
 ) -> cu::Result<PreprocessedSource> {
-    println!("source file: {}", source_file.dimmed());
+    ui::step!("source file: {}", source_file.dimmed());
 
     let (entry, source_path) = {
         let compilation_db = load_compilation_database(config, args)?;
@@ -71,10 +71,8 @@ pub fn prepare_source_info(
                 output_source.push_str(&function_source);
             }
             Err(e) => {
-                ui::print_error(&format!("{e:?}"));
-                ui::print_warning(&format!(
-                    "Unable to automatically move function to \"Source code\" tab!"
-                ));
+                ui::error!("{e:?}");
+                ui::print_warning("Unable to automatically move function to \"Source code\" tab!");
                 output_source.push_str(
                     "// the source function was not found when creating this scratch\n\
                     // please manually move it from the \"Context\" tab to the \"Source code\" tab",
@@ -85,19 +83,19 @@ pub fn prepare_source_info(
     };
 
     if context.len() >= CONTEXT_MAX_LEN {
-        ui::print_warning(&format!(
+        ui::warn!(
             "context is too large ({} bytes), trying to compact it...",
             context.len()
-        ));
+        );
         context = compact_context(&context);
         if context.len() >= CONTEXT_MAX_LEN {
-            ui::print_warning(&format!(
+            ui::warn!(
                 "context is still large after compacting ({} bytes), decomp.me has a 2.5MB limit on the JSON body and might reject the request!",
                 context.len()
-            ));
+            );
         }
     }
-    println!(
+    ui::step!(
         "context: {} lines ({} bytes)",
         context.lines().count(),
         context.len()
@@ -135,7 +133,7 @@ fn load_compilation_database(config: &Config, args: &Args) -> cu::Result<CompDbE
     // json_compilation_db::from_file is terribly slow.
     let data_str = match &args.compilation_database {
         Some(p) => {
-            ui::print_note("overriding compilation database path from args!");
+            ui::note!("overriding compilation database path from args!");
             let p = Path::new(p);
             if p.is_dir() {
                 cu::fs::read_string(p.join("compile_commands.json"))?
@@ -153,7 +151,7 @@ fn load_compilation_database(config: &Config, args: &Args) -> cu::Result<CompDbE
             cu::fs::read_string(path)?
         }
     };
-    Ok(json::parse::<CompDbEntries>(&data_str)?)
+    json::parse::<CompDbEntries>(&data_str)
 }
 
 /// remove -c and -o flags

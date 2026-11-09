@@ -100,7 +100,9 @@ impl elf::OwnedElf {
 
                 let start = table_hdr.sh_offset as usize;
                 let end = start + table_hdr.sh_size as usize;
-                return Ok(elf::SymbolStringTable::new(&bytes[start..end]));
+                return Ok(elf::SymbolStringTable {
+                    bytes: &bytes[start..end],
+                });
             }
         }
         cu::bail!("couldn't find symbol string table")
@@ -180,8 +182,7 @@ impl elf::OwnedElf {
         let reloc_idx = self.pltrelocs.iter().position(|reloc| {
             self.dynsyms
                 .get(reloc.r_sym)
-                .map(|s| self.dynstrtab.get_at(s.st_name))
-                .flatten()
+                .and_then(|s| self.dynstrtab.get_at(s.st_name))
                 == Some(func_name)
         })?;
 
@@ -201,7 +202,7 @@ impl elf::OwnedElf {
     fn parse_symtab<'a>(&'a self, shdr: &'a SectionHeader) -> cu::Result<Symtab<'a>> {
         let bytes = &self.as_owner().1;
         let size = shdr.sh_entsize;
-        let count = if size == 0 { 0 } else { shdr.sh_size / size };
+        let count = shdr.sh_size.checked_div(size).unwrap_or(0);
 
         let syms = Symtab::parse(
             bytes,

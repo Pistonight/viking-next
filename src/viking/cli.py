@@ -3,13 +3,23 @@
 Usage: viking COMMAND [ARGS...]
 """
 
+# This is the CLI entry point
+#
+# To invoke programmatically from python:
+# ```
+# import viking.cli
+# viking.cli.main_argv(["check", "MyFunction"])
+# # or use each tool directly
+# viking.cli.check(["MyFunction"])
+# ```
+
 import sys
 import traceback
 import typing
 
-from ._core import cmd_check, cmd_decompme, cmd_listsym
+from ._core import _core_cmd_check, _core_cmd_decompme, _core_cmd_listsym
 from .asm_differ import asm_differ_optional_arguments_help
-from .coreapi import core, run_cmd_host_loop
+from .core import core_state, run_cmd_host_loop
 
 
 def _commands():
@@ -65,25 +75,25 @@ def main_argv(args: list[str]) -> typing.NoReturn:
 
 def check(args: list[str]) -> typing.NoReturn:
     """Check compiled bytecode of a function matches the assembly found within the game"""
-    parsed_args = cmd_check.parse_args(core, args)
+    parsed_args = _core_cmd_check.parse_args(core_state, args)
     if parsed_args.print_help:
-        cmd_check.print_help()
+        _core_cmd_check.print_help()
         print("asm-differ arguments:")
         print(asm_differ_optional_arguments_help())
         sys.exit(0)
 
-    cmd_host = cmd_check.run(core, parsed_args)
+    cmd_host = _core_cmd_check.run(core_state, parsed_args)
     run_cmd_host_loop(cmd_host)
     sys.exit(0)
 
 
 def decompme(args: list[str]) -> typing.NoReturn:
     """Upload a function to decomp.me"""
-    ec = cmd_decompme.run(core, args)
-    sys.exit(ec)
+    exit_status = _core_cmd_decompme.run(core_state, args)
+    sys.exit(exit_status)
 
 
 def listsym(args: list[str]) -> typing.NoReturn:
     """Print symbols in the output ELF"""
-    ec = cmd_listsym.run(core, args)
-    sys.exit(ec)
+    exit_status = _core_cmd_listsym.run(core_state, args)
+    sys.exit(exit_status)

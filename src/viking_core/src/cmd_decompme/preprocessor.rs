@@ -87,10 +87,10 @@ pub fn preprocess_includes(
                 processor.push_line(&format!("// -include {}", forced.display()));
                 processor.process_file(path, None, 0)?;
             }
-            Err(_) => ui::print_warning(&format!(
+            Err(_) => ui::warn!(
                 "cannot find forced include '{}', skipping it",
                 forced.display()
-            )),
+            ),
         }
     }
     processor.process_file(source_path, None, 0)?;
@@ -232,7 +232,7 @@ fn get_builtin_include_paths(
         .filter(|path| path.is_dir())
         .collect();
     if paths.is_empty() {
-        ui::print_warning("compiler did not report any built-in include paths");
+        ui::warn!("compiler did not report any built-in include paths");
     }
     Ok(paths)
 }
@@ -374,7 +374,7 @@ impl Preprocessor<'_> {
             let physical = &lines[i..=end];
             i = end + 1;
 
-            let active = conditionals.last().map_or(true, |c| c.active);
+            let active = conditionals.last().is_none_or(|c| c.active);
             if !is_directive {
                 if active {
                     self.push_line(physical[0]);
@@ -437,11 +437,9 @@ impl Preprocessor<'_> {
                         Some((name, m)) => {
                             self.macros.insert(name, m);
                         }
-                        None => ui::print_warning(&format!(
-                            "cannot parse #define at {}: {}",
-                            location(),
-                            logical.trim()
-                        )),
+                        None => {
+                            ui::warn!("cannot parse #define at {}: {}", location(), logical.trim())
+                        }
                     }
                     self.push_directive(physical, &logical);
                 }
@@ -478,7 +476,7 @@ impl Preprocessor<'_> {
             }
         }
         if !conditionals.is_empty() {
-            ui::print_warning(&format!("unterminated #if in '{}'", path.display()));
+            ui::warn!("unterminated #if in '{}'", path.display());
         }
         Ok(())
     }
@@ -492,18 +490,15 @@ impl Preprocessor<'_> {
         depth: usize,
     ) -> cu::Result<()> {
         let Some((spec, quoted)) = self.parse_include_spec(rest)? else {
-            ui::print_warning(&format!(
-                "cannot parse include, keeping it as is: {}",
-                logical.trim()
-            ));
+            ui::warn!("cannot parse include, keeping it as is: {}", logical.trim());
             self.push_lines(physical);
             return Ok(());
         };
         let Some(resolved) = self.resolve(&spec, quoted, next_from) else {
-            ui::print_warning(&format!(
+            ui::warn!(
                 "cannot find included file, keeping it as is: {}",
                 logical.trim()
-            ));
+            );
             self.push_lines(physical);
             return Ok(());
         };
@@ -589,7 +584,7 @@ impl Preprocessor<'_> {
         match first_identifier(rest) {
             Some(name) => self.is_defined(name),
             None => {
-                ui::print_warning(&format!("missing macro name at {}", location()));
+                ui::warn!("missing macro name at {}", location());
                 false
             }
         }
@@ -1158,6 +1153,7 @@ fn tokenize(s: &str) -> Vec<Token> {
             i += 1;
             while i < len {
                 let d = chars[i];
+                #[allow(clippy::if_same_then_else)]
                 if d.is_ascii_alphanumeric() || d == '_' || d == '.' {
                     i += 1;
                 } else if (d == '+' || d == '-') && matches!(chars[i - 1], 'e' | 'E' | 'p' | 'P') {
@@ -1398,10 +1394,7 @@ impl ExprParser<'_> {
 
     fn parse_binary(&mut self, min_prec: u8) -> Result<i64, String> {
         let mut lhs = self.parse_unary()?;
-        loop {
-            let Some(op) = self.peek_punct() else {
-                break;
-            };
+        while let Some(op) = self.peek_punct() {
             let Some(prec) = binary_precedence(op) else {
                 break;
             };

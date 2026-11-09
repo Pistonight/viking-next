@@ -13,10 +13,10 @@ use rustc_hash::FxHashMap;
 
 use crate::{demangle, fl, ui};
 
-#[derive(Constructor, Deref)]
+#[derive(Deref)]
 pub struct OwnedElf {
     #[deref]
-    handle: OwningHandle<Box<(File, Mmap)>, Box<Elf<'static>>>,
+    pub(crate) handle: OwningHandle<Box<(File, Mmap)>, Box<Elf<'static>>>,
     pub address_base: u64,
 }
 
@@ -99,7 +99,7 @@ impl<'a> SymbolTableByName<'a> {
                 ui::format_symbol_name(query),
                 description.red()
             ),
-            Some(info) => Ok(info.clone()),
+            Some(info) => Ok(*info),
         }
     }
 }
@@ -108,9 +108,8 @@ pub type SymbolTableByAddr = FxHashMap<u64, Sym>;
 pub type AddrToNameMap<'a> = FxHashMap<u64, &'a str>;
 pub type GlobDataTable = FxHashMap<u64, u64>;
 
-#[derive(Constructor)]
 pub struct SymbolStringTable<'elf> {
-    bytes: &'elf [u8],
+    pub bytes: &'elf [u8],
 }
 
 impl<'elf> SymbolStringTable<'elf> {
