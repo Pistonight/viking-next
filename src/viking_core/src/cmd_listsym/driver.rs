@@ -18,7 +18,7 @@ pub fn run(config: &Config, args: Args) -> cu::Result<()> {
 
     let version = args.version.as_deref();
 
-    let file_list = fl::load_with_version(config, version)?;
+    let file_list = fl::load(config, version)?;
     let functions = file_list.info_list();
     let known_funcs = functions.make_known_function_name_map();
 

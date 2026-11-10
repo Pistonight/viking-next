@@ -5,14 +5,18 @@ use cu::pre::*;
 use crate::config::Config;
 use crate::fl;
 
-/// Load the optionally-versioned file list
-pub fn load_with_version(config: &Config, version: Option<&str>) -> cu::Result<fl::FileList> {
-    load_from(config, config.repo.file_list_with_version(version))
+/// Check if the versioned/versionless file list file is CSV
+pub fn is_csv(config: &Config, version: Option<&str>) -> bool {
+    config
+        .repo
+        .file_list_with_version(version)
+        .extension()
+        .is_some_and(|x| x == "csv")
 }
 
-/// Load the versionless file list.
-pub fn load(config: &Config) -> cu::Result<fl::FileList> {
-    load_from(config, config.repo.file_list())
+/// Load the optionally-versioned file list
+pub fn load(config: &Config, version: Option<&str>) -> cu::Result<fl::FileList> {
+    load_from(config, config.repo.file_list_with_version(version))
 }
 
 /// Load the file list from the path.
@@ -37,22 +41,8 @@ fn load_from_impl(config: &Config, path: &Path) -> cu::Result<fl::FileList> {
     }
 }
 
-/// Check if the versioned/versionless file list file is CSV
-pub fn is_csv(config: &Config, version: Option<&str>) -> bool {
-    config
-        .repo
-        .file_list_with_version(version)
-        .extension()
-        .is_some_and(|x| x == "csv")
-}
-
-/// Write the versionless CSV file list file.
-pub fn write_csv(config: &Config, info_list: &[fl::Info]) -> cu::Result<()> {
-    fl::write_csv_file_list(&config.repo.file_list(), info_list)
-}
-
 /// Write the optionally-versioned CSV file list file.
-pub fn write_csv_with_version(
+pub fn write_csv(
     config: &Config,
     info_list: &[fl::Info],
     version: Option<&str>,
@@ -60,13 +50,8 @@ pub fn write_csv_with_version(
     fl::write_csv_file_list(&config.repo.file_list_with_version(version), info_list)
 }
 
-/// Write the versionless YAML file list file.
-pub fn write_yml(config: &Config, data: &[(String, fl::Object)]) -> cu::Result<()> {
-    fl::write_yml_file_list(&config.repo.file_list(), data)
-}
-
 /// Write the optionally-versioned YAML file list file.
-pub fn write_yml_with_version(
+pub fn write_yml(
     config: &Config,
     data: &[(String, fl::Object)],
     version: Option<&str>,

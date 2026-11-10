@@ -77,7 +77,7 @@ fn parse_csv_record(config: &Config, record: &CsvStringRecord) -> cu::Result<fl:
     cu::ensure!(record.len() == 4, "invalid record")?;
 
     let addr = fl::parse_abs_address_as_offset(config, &record[0])?;
-    let status = fl::Status::from_str(&record[1])?;
+    let status = fl::Status::from_code(&record[1])?;
     let size = record[2].parse::<u32>()?;
     let decomp_name = record[3].to_string();
 

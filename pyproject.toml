@@ -1,7 +1,7 @@
 [project]
 name = "viking"
 version = "0.1.0"
-description = "Add your description here"
+description = "Rewrite of nx-decomp-tools and viking tools for NX matching reimplementation projects"
 readme = "README.md"
 authors = [
     { name = "Pistonight", email = "pistonknight@outlook.com" }
@@ -41,6 +41,6 @@ build-backend = "maturin"
 [dependency-groups]
 dev = [
     "basedpyright>=1.40.2",
-    "maturin>=1.15.0",
+    "maturin[patchelf]>=1.16.0",
     "ruff>=0.17.0",
 ]

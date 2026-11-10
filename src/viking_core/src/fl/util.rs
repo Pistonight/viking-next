@@ -4,11 +4,14 @@ use cu::pre::*;
 
 use crate::config::Config;
 
+/// Parse an absolute address (offset + base address). The value is checked
+/// to ensure the offset is a valid U32.
 pub fn parse_abs_address(config: &Config, hex_value: &str) -> cu::Result<u64> {
     Ok(parse_abs_address_as_offset(config, hex_value)? as u64 + config.repo.address_base)
 }
 
-/// Parse an absolute address (offset + base address) to just the offset.
+/// Parse an absolute address (offset + base address) to just the offset
+/// according to the base address in the config
 pub fn parse_abs_address_as_offset(config: &Config, hex_value: &str) -> cu::Result<u32> {
     let hex_value = hex_value.strip_prefix("0x").unwrap_or(hex_value);
     let hex = cu::check!(

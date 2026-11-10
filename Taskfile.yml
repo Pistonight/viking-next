@@ -1,31 +1,32 @@
 version: '3'
 
+vars:
+  # Setting a different cargo target-dir for maturin builds,
+  # because maturin injects different RUSTFLAGS for its cargo invocation.
+  # Sharing the default target/ means maturin builds and raw cargo builds
+  # (such as rust-analyzer/cargo-clippy) steps on each other and causes
+  # unnecessary rebuilds. This speeds up local dev workflows at the cost
+  # of double the disk usage
+  MATURIN_DEV_TARGET: target/maturin-dev
+
 tasks:
-  setup:
-    desc: Setup local development
+  # --- workflows ---
+  install:
+    desc: Install dependencies
     cmds:
-      - uv sync
-      - task: gen-pyi
+      - task: install-uv
+      - task: py-bindgen
 
-  gen-pyi:
-    desc: (Re-)generate the _core.pyi interface module
-    sources:
-      - Cargo.toml
-      - Cargo.lock
-      - src/**/*.rs
-      - src/**/Cargo.toml
+  run:
+    desc: Run the viking CLI (pass the args to viking after -- )
     cmds:
-      - uv run --no-sync maturin generate-stubs --out src
-
-  build:
-    desc: Build the wheel
-    cmds:
-      - uv build
+      - task: build-dev
+      - uv run --no-sync viking {{.CLI_ARGS}}
 
   check:
     desc: Check code for issues
     cmds:
-      - task: gen-pyi
+      - task: py-bindgen
       - uv run --no-sync basedpyright --warnings
       # TODO: implementation in progress so there are unused stuff
       - task: cargo-clippy
@@ -37,8 +38,52 @@ tasks:
     desc: Fix code formatting
     cmds:
       - uv run --no-sync ruff format src
-      - uv run --no-sync ruff check --fix
+      - uv run --no-sync ruff check --fix --fixable I001 # only format imports
       - cargo fmt
+
+  build:
+    desc: Build the wheel
+    cmds:
+      - uv build
+
+  # --- helpers ---
+
+  install-uv:
+    sources:
+      - Taskfile.yml
+      - pyproject.toml
+      - uv.lock
+    cmds:
+      # --no-install-project skips building and installing viking
+      # which is slow because UV has to rebuild all the Rust side
+      # from scratch
+      - uv sync --no-install-project
+
+  py-bindgen:
+    internal: true # Just run the install task to regenerate the binding
+    desc: (Re-)generate the _core.pyi interface module
+    sources:
+      - Taskfile.yml
+      - Cargo.toml
+      - Cargo.lock
+      - src/**/*.rs
+      - src/**/Cargo.toml
+    cmds:
+      - uv run --no-sync maturin generate-stubs --out src --target-dir {{.MATURIN_DEV_TARGET}}
+
+  build-dev:
+    # This builds the dev profile and installs it into the uv environment.
+    # Then we can run it with 'uv run --no-sync viking'
+    # Running 'uv run viking' directly requires buiding from scratch each time
+    sources:
+      - Taskfile.yml
+      - Cargo.toml
+      - Cargo.lock
+      - src/**/*.rs
+      - src/**/Cargo.toml
+    cmds:
+      - uv run --no-sync maturin develop --uv --target-dir {{.MATURIN_DEV_TARGET}}
+
 
   cargo-clippy:
     vars:

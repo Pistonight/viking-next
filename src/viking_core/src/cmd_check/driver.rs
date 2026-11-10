@@ -3,11 +3,11 @@ use cu::pre::*;
 use crate::config::Config;
 use crate::elf;
 use crate::fl;
-use crate::pyapi::PyCmdApi;
+use crate::interop::PyCmdSender;
 
 use crate::cmd_check::{Args, FunctionChecker, check_all, check_single};
 
-pub fn run(config: &Config, args: &Args, python: PyCmdApi) -> cu::Result<()> {
+pub fn run(config: &Config, args: &Args, python: PyCmdSender) -> cu::Result<()> {
     let version = args.version();
 
     let orig_elf = elf::load_original_elf(config, version)?;
@@ -23,7 +23,7 @@ pub fn run(config: &Config, args: &Args, python: PyCmdApi) -> cu::Result<()> {
         s.spawn(|_| decomp_symtab = Some(decomp_elf.make_symbol_map_by_name()));
         s.spawn(|_| decomp_glob_data_table = Some(decomp_elf.build_glob_data_table()));
         s.spawn(|_| plt_functions = Some(orig_elf.get_plt_functions()));
-        s.spawn(|_| file_list = Some(fl::load_with_version(config, version)));
+        s.spawn(|_| file_list = Some(fl::load(config, version)));
     });
 
     let decomp_symtab = cu::check!(

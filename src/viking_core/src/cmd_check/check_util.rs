@@ -28,9 +28,9 @@ pub fn validate_and_save_file_list(
         "failed to validate file list before write-back"
     )?;
     if fl::is_csv(config, version) {
-        fl::write_csv_with_version(config, file_list.info_list(), version)?;
+        fl::write_csv(config, file_list.info_list(), version)?;
     } else {
-        fl::write_yml_with_version(config, file_list, version)?;
+        fl::write_yml(config, file_list, version)?;
     }
     Ok(())
 }

@@ -18,8 +18,8 @@ import traceback
 import typing
 
 from ._core import _core_cmd_check, _core_cmd_decompme, _core_cmd_listsym
-from .asm_differ import asm_differ_optional_arguments_help
 from .core import core_state, run_cmd_host_loop
+from .asm_differ import asm_differ_optional_arguments_help
 
 
 def _commands():

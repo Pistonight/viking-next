@@ -4,7 +4,7 @@ use cu::pre::*;
 use crate::config::Config;
 use crate::elf;
 use crate::fl;
-use crate::pyapi::PyCmdApi;
+use crate::interop::PyCmdSender;
 use crate::ui;
 
 use crate::cmd_check::check_util;
@@ -13,7 +13,7 @@ use crate::cmd_check::{Args, FunctionChecker};
 
 pub fn run_check_single(
     config: &Config,
-    python: &PyCmdApi,
+    python: &PyCmdSender,
     checker: &FunctionChecker,
     all_functions: &fl::InfoList,
     mut file_list: fl::FileList,
@@ -249,7 +249,7 @@ struct FunctionToCheck {
 
 /// Invoke asm-differ with Python Cmd API
 fn show_asm_differ(
-    python: &PyCmdApi,
+    python: &PyCmdSender,
     function: &fl::Info,
     name: &str,
     differ_args: &[String],

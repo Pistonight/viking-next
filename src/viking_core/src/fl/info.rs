@@ -6,10 +6,12 @@ use colored::Colorize;
 use cu::pre::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
+use pyo3::prelude::*;
 
 use crate::demangle;
 use crate::fl;
 use crate::ui;
+use crate::interop;
 
 #[derive(Clone, Default, Constructor, Into, Debug, Deref, DerefMut)]
 #[repr(transparent)]
@@ -262,7 +264,9 @@ impl InfoData {
 }
 
 /// Decompilation status of a function/symbol
-#[derive(Clone, Copy, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Serialize, Deserialize, Debug, Display, PartialEq, Eq)]
+#[display("{}", self.description())]
+#[pyclass(from_py_object, str)]
 pub enum Status {
     /// Decompiled and matching
     Matching,
@@ -277,37 +281,70 @@ pub enum Status {
     /// Library function - out of scope for decompilation
     Library,
 }
-
 impl Status {
+    /// Parse status string into enum
     pub fn from_str(s: &str) -> cu::Result<Self> {
         Ok(match s.trim() {
+            "NonMatchingMinor" => Self::NonMatchingMinor,
+            "NonMatchingMajor" => Self::NonMatchingMajor,
+            "Matching" => Self::Matching,
+            "NotDecompiled" => Self::NotDecompiled,
+            "Wip" => Self::Wip,
+            "Library" => Self::Library,
+            other => cu::bail!("unexpected status string: {other}"),
+        })
+    }
+    /// Parse status code into enum
+    pub fn from_code(s: &str) -> cu::Result<Self> {
+        Ok(match s.trim() {
             "m" => Self::NonMatchingMinor,
-            "M" => Status::NonMatchingMajor,
-            "O" => Status::Matching,
-            "U" => Status::NotDecompiled,
-            "W" => Status::Wip,
-            "L" => Status::Library,
+            "M" => Self::NonMatchingMajor,
+            "O" => Self::Matching,
+            "U" => Self::NotDecompiled,
+            "W" => Self::Wip,
+            "L" => Self::Library,
             other => cu::bail!("unexpected status code: {other}"),
         })
     }
+    /// Get the single-character code representation
     pub fn code(self) -> char {
         match self {
-            Status::Matching => 'O',
-            Status::NonMatchingMinor => 'm',
-            Status::NonMatchingMajor => 'M',
-            Status::NotDecompiled => 'U',
-            Status::Wip => 'W',
-            Status::Library => 'L',
+            Self::Matching => 'O',
+            Self::NonMatchingMinor => 'm',
+            Self::NonMatchingMajor => 'M',
+            Self::NotDecompiled => 'U',
+            Self::Wip => 'W',
+            Self::Library => 'L',
         }
     }
-    pub fn description(&self) -> &'static str {
-        match &self {
-            Status::Matching => "matching",
-            Status::NonMatchingMinor => "non-matching (minor)",
-            Status::NonMatchingMajor => "non-matching (major)",
-            Status::NotDecompiled => "not decompiled",
-            Status::Wip => "WIP",
-            Status::Library => "library function",
+    /// Get descriptive string
+    pub fn description(self) -> &'static str {
+        match self {
+            Self::Matching => "matching",
+            Self::NonMatchingMinor => "non-matching (minor)",
+            Self::NonMatchingMajor => "non-matching (major)",
+            Self::NotDecompiled => "not decompiled",
+            Self::Wip => "WIP",
+            Self::Library => "library function",
         }
     }
+}
+
+#[rustfmt::skip]
+#[pymethods]
+impl Status {
+    /// Parse status string into enum
+    #[pyo3(name = "from_str")]
+    #[staticmethod]
+    pub fn py_from_str(s: &str) -> PyResult<Self> { interop::into_pyresult(Self::from_str(s)) }
+    /// Parse status code into enum
+    #[pyo3(name = "from_code")]
+    #[staticmethod]
+    pub fn py_from_code(s: &str) -> PyResult<Self> { interop::into_pyresult(Self::from_code(s)) }
+    /// Get the single-character code representation
+    #[pyo3(name = "code")]
+    pub fn py_code(&self) -> char { self.code() }
+    /// Get descriptive string
+    #[pyo3(name = "description")]
+    pub fn py_description(&self) -> &'static str { self.description() }
 }

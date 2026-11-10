@@ -21,7 +21,7 @@ pub fn run(config: &Config, args: Args) -> cu::Result<()> {
     let version = args.version.as_deref();
 
     let decomp_elf = elf::load_decomp_elf(config, version)?;
-    let file_list = fl::load_with_version(config, version)?;
+    let file_list = fl::load(config, version)?;
     let functions = file_list.info_list();
     let decomp_symtab = decomp_elf.make_symbol_map_by_name()?;
 
