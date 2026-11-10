@@ -7,20 +7,19 @@ use pyo3::prelude::*;
 use crate::interop;
 
 /// Wrap an execution with a handle to send Python commands
-pub fn execute_with_cmd_host<F: FnOnce(PyCmdSender) -> cu::Result<()> + Send + 'static>(
+pub fn execute_with_cmd_host<F: FnOnce(PyCmdSender) -> cu::Result<u32> + Send + 'static>(
     f: F,
 ) -> PyCmdHostHandle {
     let (cmd_send, cmd_recv) = mpsc::channel();
-    let (err_send, err_recv) = mpsc::channel();
-    let task_thread = Some(thread::spawn(move || f(PyCmdSender { cmd_send, err_recv })));
+    let (res_send, res_recv) = mpsc::channel();
+    let task_thread = Some(thread::spawn(move || f(PyCmdSender { cmd_send, res_recv })));
     let cmd_host = RustPyCmdHost {
         cmd_recv,
-        err_send,
+        res_send,
         task_thread,
     };
-    PyCmdHostHandle(Box::into_raw(Box::new(cmd_host)) as usize)
+    PyCmdHostHandle::new(cmd_host)
 }
-
 
 /// State for sending commands to Python to run.
 ///
@@ -33,9 +32,9 @@ pub struct RustPyCmdHost {
     /// Channel for python thread to receive commands
     cmd_recv: mpsc::Receiver<PyCmd>,
     /// Channel for python to send result back
-    err_send: mpsc::Sender<Option<String>>,
+    res_send: mpsc::Sender<(bool, String)>,
     /// Thread running Rust that may send commands to python
-    task_thread: Option<JoinHandle<cu::Result<()>>>,
+    task_thread: Option<JoinHandle<cu::Result<u32>>>,
 }
 interop::make_handle_class!(RustPyCmdHost, PyCmdHostHandle mut);
 
@@ -52,18 +51,18 @@ impl PyCmdHostHandle {
 
     /// Send a result back to Rust. None means success, otherwise
     /// sends an error message string
-    pub fn send_result(&self, result: Option<String>) {
-        let _ = self.err_send.send(result);
+    pub fn send_result(&self, success: bool, result: String) {
+        let _ = self.res_send.send((success, result));
     }
 
-    pub fn join(&mut self) -> PyResult<()> {
+    pub fn join(&mut self) -> PyResult<u32> {
         if self.0 == 0 {
-            return Ok(());
+            return Ok(0);
         }
         let Some(thread) = self.task_thread.take() else {
-            return Ok(());
+            return Ok(0);
         };
-        fn join_imp(thread: JoinHandle<cu::Result<()>>) -> cu::Result<()> {
+        fn join_imp(thread: JoinHandle<cu::Result<u32>>) -> cu::Result<u32> {
             match thread.join() {
                 Ok(x) => x,
                 Err(e) => {
@@ -86,15 +85,24 @@ impl PyCmdHostHandle {
 pub enum PyCmd {
     /// Run asm-differ with the given arguments
     AsmDiffer(Vec<String>),
+    /// Print optional arguments of asm-differ
+    AsmDifferOptionalArgsHelp(),
 }
 
 /// Sender facade for Rust to dispatch PyCmd. Dropping
 /// the sender marks the end of the API lifetime
 pub struct PyCmdSender {
     cmd_send: mpsc::Sender<PyCmd>,
-    err_recv: mpsc::Receiver<Option<String>>,
+    res_recv: mpsc::Receiver<(bool, String)>,
 }
 impl PyCmdSender {
+    /// Format help for optional arguments for asm-differ
+    pub fn asm_differ_optional_arguments_help(&self) -> cu::Result<String> {
+        cu::check!(
+            self.do_send(PyCmd::AsmDifferOptionalArgsHelp()),
+            "failed to format asm-differ optional arguments help"
+        )
+    }
     /// Call asm-differ with the given args
     pub fn asm_differ(&self, args: impl IntoIterator<Item = impl Into<String>>) -> cu::Result<()> {
         let args = args.into_iter().map(Into::into).collect();
@@ -102,22 +110,26 @@ impl PyCmdSender {
         let cmd = PyCmd::AsmDiffer(args);
         cu::check!(
             self.do_send(cmd),
-            "ams-differ command failed, args: {args_debug}"
-        )
+            "asm-differ command failed, args: {args_debug}"
+        )?;
+        Ok(())
     }
 
-    fn do_send(&self, cmd: PyCmd) -> cu::Result<()> {
+    fn do_send(&self, cmd: PyCmd) -> cu::Result<String> {
         if self.cmd_send.send(cmd).is_err() {
             cu::bail!("unexpected: python cmd host's command channel is disconnected");
         }
-        match self.err_recv.recv() {
+        match self.res_recv.recv() {
             Err(_) => {
                 cu::bail!("unexpected: python cmd host's result channel is disconnected");
             }
-            Ok(Some(t)) => {
-                cu::bail!("python cmd returned error: {t}")
+            Ok((ok, response)) => {
+                if !ok {
+                    cu::bail!("python cmd returned error: {response}")
+                } else {
+                    Ok(response)
+                }
             }
-            Ok(None) => Ok(()),
         }
     }
 }

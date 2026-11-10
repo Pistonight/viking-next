@@ -1,4 +1,3 @@
-
 macro_rules! make_handle_class {
     (__impl $inner_type:ident, $handle_type:ident) => {
     };

@@ -58,25 +58,24 @@ mod _core {
 
     // ======= command =======
     #[pymodule_export]
-    use crate::interop::{PyCmdHostHandle as PyCmdHost, PyCmd};
+    use crate::interop::{PyCmd, PyCmdHostHandle as PyCmdHost};
 
     // ======= cli =======
 
     #[pymodule]
     mod _core_cmd_check {
         use super::*;
-        #[pymodule_export]
-        use crate::cmd_check::Args;
-        #[pymodule_export]
-        use crate::cmd_check::print_help;
+        /// Entry point for the `check` command
         #[pyfunction]
-        fn parse_args(state: State, args: Vec<String>) -> PyResult<Args> {
-            interop::into_pyresult(crate::cmd_check::parse_args(&state.config, &args))
-        }
-        #[pyfunction]
-        fn run(state: State, args: Args) -> PyCmdHost {
+        fn run(state: State, args: Vec<String>) -> PyCmdHost {
             interop::execute_with_cmd_host(move |python| {
-                crate::cmd_check::run(&state.config, &args, python)
+                match crate::cmd_check::parse_args(&state.config, &args, &python) {
+                    None => Ok(127),
+                    Some(args) => {
+                        crate::cmd_check::run(&state.config, &args, python)?;
+                        Ok(0)
+                    }
+                }
             })
         }
     }
@@ -84,6 +83,7 @@ mod _core {
     #[pymodule]
     mod _core_cmd_decompme {
         use super::*;
+        /// Entry point for the `decompme` command
         #[pyfunction]
         fn run(state: State, args: Vec<String>) -> PyResult<u32> {
             match crate::cmd_decompme::parse_args(&args) {
@@ -99,6 +99,7 @@ mod _core {
     #[pymodule]
     mod _core_cmd_listsym {
         use super::*;
+        /// Entry point for the `listsym` command
         #[pyfunction]
         fn run(state: State, args: Vec<String>) -> PyResult<u32> {
             match crate::cmd_listsym::parse_args(&args) {
@@ -132,7 +133,10 @@ mod _core {
         /// according to the base address in the config
         #[pyfunction]
         fn parse_abs_address_as_offset(state: State, hex_value: &str) -> PyResult<u32> {
-            interop::into_pyresult(crate::fl::parse_abs_address_as_offset(&state.config, hex_value))
+            interop::into_pyresult(crate::fl::parse_abs_address_as_offset(
+                &state.config,
+                hex_value,
+            ))
         }
 
         /// Parse an absolute address (offset + base address). The value is checked
@@ -158,6 +162,7 @@ mod _core {
             print_warning_with_detail,
         };
 
+        /// Show a confirmation prompt. Raises exception on cancel
         #[pyfunction]
         fn confirm(prompt: &str, default_value: bool, help: Option<&str>) -> PyResult<()> {
             interop::into_pyresult(crate::ui::confirm(prompt, default_value, help))
@@ -177,10 +182,4 @@ mod _core {
     pub fn find_tool(state: State, tool: &str) -> PyResult<PathBuf> {
         interop::into_pyresult(state.config.repo.find_tool(tool))
     }
-
 }
-
-
-
-
-

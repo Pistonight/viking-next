@@ -160,6 +160,7 @@ fn print_detail_locked(lock: &mut StderrLock, msg: &str) {
     .unwrap();
 }
 
+/// Format a mangled symbol name. Show as `<demangled> (<mangled>)
 #[pyfunction]
 pub fn format_symbol_name(name: &str) -> String {
     match demangle::demangle_str(name) {
@@ -173,6 +174,7 @@ pub fn format_address(addr: u64) -> String {
     format!("{addr:#x}").green().to_string()
 }
 
+/// Clear the terminal
 #[pyfunction]
 pub fn clear_terminal() {
     crossterm::execute!(
@@ -212,6 +214,7 @@ pub fn interactive_select<'a, T, FnFormat: Fn(&T) -> String>(
     Ok(Some(&options[i]))
 }
 
+/// Show a confirmation prompt. Ok(()) means user chooses to proceed
 pub fn confirm(prompt: &str, default_value: bool, help: Option<&str>) -> cu::Result<()> {
     let mut confirm = inquire::Confirm::new(prompt).with_default(default_value);
     if let Some(help) = help {

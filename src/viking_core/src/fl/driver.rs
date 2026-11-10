@@ -42,11 +42,7 @@ fn load_from_impl(config: &Config, path: &Path) -> cu::Result<fl::FileList> {
 }
 
 /// Write the optionally-versioned CSV file list file.
-pub fn write_csv(
-    config: &Config,
-    info_list: &[fl::Info],
-    version: Option<&str>,
-) -> cu::Result<()> {
+pub fn write_csv(config: &Config, info_list: &[fl::Info], version: Option<&str>) -> cu::Result<()> {
     fl::write_csv_file_list(&config.repo.file_list_with_version(version), info_list)
 }
 

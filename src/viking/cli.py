@@ -17,9 +17,9 @@ import sys
 import traceback
 import typing
 
+from . import interop
 from ._core import _core_cmd_check, _core_cmd_decompme, _core_cmd_listsym
-from .core import core_state, run_cmd_host_loop
-from .asm_differ import asm_differ_optional_arguments_help
+from .core import core_state
 
 
 def _commands():
@@ -75,16 +75,9 @@ def main_argv(args: list[str]) -> typing.NoReturn:
 
 def check(args: list[str]) -> typing.NoReturn:
     """Check compiled bytecode of a function matches the assembly found within the game"""
-    parsed_args = _core_cmd_check.parse_args(core_state, args)
-    if parsed_args.print_help:
-        _core_cmd_check.print_help()
-        print("asm-differ arguments:")
-        print(asm_differ_optional_arguments_help())
-        sys.exit(0)
-
-    cmd_host = _core_cmd_check.run(core_state, parsed_args)
-    run_cmd_host_loop(cmd_host)
-    sys.exit(0)
+    check_cmd = _core_cmd_check.run(core_state, args)
+    exit_status = interop.run_cmd_host_loop(check_cmd)
+    sys.exit(exit_status)
 
 
 def decompme(args: list[str]) -> typing.NoReturn:

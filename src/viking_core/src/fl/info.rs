@@ -4,14 +4,14 @@ use std::sync::Arc;
 
 use colored::Colorize;
 use cu::pre::*;
+use pyo3::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
-use pyo3::prelude::*;
 
 use crate::demangle;
 use crate::fl;
-use crate::ui;
 use crate::interop;
+use crate::ui;
 
 #[derive(Clone, Default, Constructor, Into, Debug, Deref, DerefMut)]
 #[repr(transparent)]
@@ -263,24 +263,29 @@ impl InfoData {
     }
 }
 
-/// Decompilation status of a function/symbol
-#[derive(Clone, Copy, Serialize, Deserialize, Debug, Display, PartialEq, Eq)]
-#[display("{}", self.description())]
-#[pyclass(from_py_object, str)]
-pub enum Status {
-    /// Decompiled and matching
-    Matching,
-    /// Decompiled and not matching due to minor mismatches
-    NonMatchingMinor,
-    /// Decompiled and not matching due to major mismatches
-    NonMatchingMajor,
-    /// Unnamed or not decompiled
-    NotDecompiled,
-    /// Working in progress
-    Wip,
-    /// Library function - out of scope for decompilation
-    Library,
+#[allow(clippy::clone_on_copy)] // pyo3 didn't suppress warnings in there generated code
+mod status_imp {
+    use super::*;
+    /// Decompilation status of a function/symbol
+    #[derive(Clone, Copy, Serialize, Deserialize, Debug, Display, PartialEq, Eq)]
+    #[display("{}", self.description())]
+    #[pyclass(from_py_object, str)]
+    pub enum Status {
+        /// Decompiled and matching
+        Matching,
+        /// Decompiled and not matching due to minor mismatches
+        NonMatchingMinor,
+        /// Decompiled and not matching due to major mismatches
+        NonMatchingMajor,
+        /// Unnamed or not decompiled
+        NotDecompiled,
+        /// Working in progress
+        Wip,
+        /// Library function - out of scope for decompilation
+        Library,
+    }
 }
+pub use status_imp::Status;
 impl Status {
     /// Parse status string into enum
     pub fn from_str(s: &str) -> cu::Result<Self> {

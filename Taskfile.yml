@@ -69,18 +69,15 @@ tasks:
       - src/**/*.rs
       - src/**/Cargo.toml
     cmds:
-      - uv run --no-sync maturin generate-stubs --out src --target-dir {{.MATURIN_DEV_TARGET}}
+      # build the extension module so we can extract the doc string out of it
+      - task: build-dev
+      - uv run --no-sync maturin generate-stubs --quiet --out src --target-dir {{.MATURIN_DEV_TARGET}}
+      - uv run --no-sync scripts/add-docs-to-stubs.py
 
   build-dev:
     # This builds the dev profile and installs it into the uv environment.
     # Then we can run it with 'uv run --no-sync viking'
     # Running 'uv run viking' directly requires buiding from scratch each time
-    sources:
-      - Taskfile.yml
-      - Cargo.toml
-      - Cargo.lock
-      - src/**/*.rs
-      - src/**/Cargo.toml
     cmds:
       - uv run --no-sync maturin develop --uv --target-dir {{.MATURIN_DEV_TARGET}}
 

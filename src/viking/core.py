@@ -5,7 +5,6 @@ into Rust with the global state
 """
 
 import atexit
-import traceback
 
 from . import _core
 
@@ -40,29 +39,3 @@ def get_config():
 def find_tool(tool: str):
     """Find a tool binary. Returns the absolute path"""
     return _core.find_tool(core_state, tool)
-
-
-def run_cmd_host_loop(cmd_host: _core.PyCmdHostHandle):
-    while cmd := cmd_host.recv():
-        match cmd:
-            case _core.PyCmd.AsmDiffer(args):
-                # need this here to avoid circular import
-                from .asm_differ import asm_differ
-
-                try:
-                    print("launching asm-differ...")
-                    asm_differ(args)
-                    cmd_host.send_result(None)
-                except SystemExit as e:
-                    if e.code == 0:
-                        cmd_host.send_result(None)
-                    else:
-                        cmd_host.send_result(f"asm-differ exited with code {e.code}")
-                except Exception:  # noqa: BLE001
-                    traceback.print_exc()
-                    cmd_host.send_result("an exception occured within asm-differ")
-            case _:
-                cmd_host.send_result(
-                    "unexpected: python cmd_host received unknown command"
-                )
-    cmd_host.join()

@@ -270,7 +270,6 @@ fn show_asm_differ(
 
     python.asm_differ(args)?;
 
-    ui::clear_terminal();
     Ok(())
 }
 

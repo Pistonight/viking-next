@@ -2,6 +2,7 @@ use cu::pre::*;
 
 /// Print symbols in the output ELF.
 #[derive(Debug, clap::Parser)]
+#[clap(bin_name = "listsym")]
 pub struct Args {
     /// Show symbols that are undefined (e.g. unimplemented functions)
     #[clap(short = 'u', long)]

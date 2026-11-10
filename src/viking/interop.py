@@ -1,7 +1,50 @@
-
+import traceback
 import types
 import typing
 import weakref
+
+from . import _core, ui
+
+
+def run_cmd_host_loop(cmd_host: _core.PyCmdHostHandle):
+    while (cmd := cmd_host.recv()) is not None:
+        match cmd:
+            case _core.PyCmd.AsmDiffer(args):
+                try:
+                    # need this here to avoid circular import
+                    from .asm_differ import asm_differ
+
+                    ui.step("launching asm-differ...")
+                    asm_differ(args)
+                    cmd_host.send_result(True, "")
+                except SystemExit as e:
+                    if e.code == 0:
+                        cmd_host.send_result(True, "")
+                    else:
+                        cmd_host.send_result(
+                            False, f"asm-differ exited with code {e.code}"
+                        )
+                except Exception:  # noqa: BLE001
+                    traceback.print_exc()
+                    cmd_host.send_result(
+                        False, "an exception occured within asm-differ"
+                    )
+            case _core.PyCmd.AsmDifferOptionalArgsHelp():
+                try:
+                    # need this here to avoid circular import
+                    from .asm_differ import asm_differ_optional_arguments_help
+
+                    cmd_host.send_result(True, asm_differ_optional_arguments_help())
+                except Exception:  # noqa: BLE001
+                    traceback.print_exc()
+                    cmd_host.send_result(
+                        False, "an exception occured within asm-differ"
+                    )
+            case _:
+                cmd_host.send_result(
+                    False, "unexpected: python cmd_host received unknown command"
+                )
+    cmd_host.join()
 
 
 class RustObj[T]:

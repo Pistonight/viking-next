@@ -2,6 +2,7 @@ use cu::pre::*;
 
 /// Upload a function to decomp.me.
 #[derive(Debug, clap::Parser)]
+#[clap(bin_name = "decompme")]
 pub struct Args {
     /// Specify the version to check
     #[clap(long)]
