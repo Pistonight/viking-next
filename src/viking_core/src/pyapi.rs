@@ -7,19 +7,37 @@ use crate::interop;
 ///
 /// Pyo3 does not yet support per-module state (for multi-interpreter),
 /// so we leak a pointer to let python hold it as a module scope variable.
-pub struct RustState {
+///
+/// We choose leaking the pointer to make it explicit that the Rust object
+/// has static lifetime (as long as the python object exists)
+struct RustState {
     /// Configuration file
     pub config: Config,
 }
-interop::make_handle_class!(RustState, State);
+
+interop::make_handle_class! {
+    /// Global (per-module) state of the Rust module
+    #[handle(RustState, module = "viking._core")]
+    struct State;
+}
+
 #[pymethods]
 impl State {
-    pub fn config(&self) -> Config {
+    /// Clone the config into the Python side
+    pub fn clone_config(&self) -> Config {
         self.config.clone()
     }
 }
 
-/// The pieces exposed to Python
+/// The low-level Python-rust bindings
+///
+/// ### Function bindings
+/// The function bindings are considered low-level and not part of the public API.
+/// There should be a similarly-named function in modules like `viking.core`, `viking.ui`
+/// that serves as the Python-friendly API.
+///
+/// ### Class bindings
+/// by
 ///
 /// In python, please use the `_core`-prefixed module to call and reference
 /// bindings, so it's obvious you are calling into Rust
@@ -58,14 +76,13 @@ mod _core {
 
     // ======= command =======
     #[pymodule_export]
-    use crate::interop::{PyCmd, PyCmdHostHandle as PyCmdHost};
+    use crate::interop::{PyCmd, PyCmdHost};
 
     // ======= cli =======
 
     #[pymodule]
     mod _core_cmd_check {
         use super::*;
-        /// Entry point for the `check` command
         #[pyfunction]
         fn run(state: State, args: Vec<String>) -> PyCmdHost {
             interop::execute_with_cmd_host(move |python| {
@@ -83,7 +100,6 @@ mod _core {
     #[pymodule]
     mod _core_cmd_decompme {
         use super::*;
-        /// Entry point for the `decompme` command
         #[pyfunction]
         fn run(state: State, args: Vec<String>) -> PyResult<u32> {
             match crate::cmd_decompme::parse_args(&args) {
@@ -99,7 +115,6 @@ mod _core {
     #[pymodule]
     mod _core_cmd_listsym {
         use super::*;
-        /// Entry point for the `listsym` command
         #[pyfunction]
         fn run(state: State, args: Vec<String>) -> PyResult<u32> {
             match crate::cmd_listsym::parse_args(&args) {
@@ -113,6 +128,7 @@ mod _core {
     }
 
     // ======= file list (fl) =======
+
     #[pymodule]
     mod _core_fl {
         use super::*;
@@ -152,6 +168,7 @@ mod _core {
 
     // ======= ui =======
 
+    /// Bindings for UI utils (`viking_core::ui`)
     #[pymodule]
     mod _core_ui {
         use super::*;
@@ -162,7 +179,6 @@ mod _core {
             print_warning_with_detail,
         };
 
-        /// Show a confirmation prompt. Raises exception on cancel
         #[pyfunction]
         fn confirm(prompt: &str, default_value: bool, help: Option<&str>) -> PyResult<()> {
             interop::into_pyresult(crate::ui::confirm(prompt, default_value, help))
@@ -177,7 +193,6 @@ mod _core {
         ConfigDecompMeTarget, ConfigRepo,
     };
 
-    /// Find a tool based on repo config
     #[pyfunction]
     pub fn find_tool(state: State, tool: &str) -> PyResult<PathBuf> {
         interop::into_pyresult(state.config.repo.find_tool(tool))

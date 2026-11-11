@@ -6,7 +6,7 @@ import weakref
 from . import _core, ui
 
 
-def run_cmd_host_loop(cmd_host: _core.PyCmdHostHandle):
+def run_cmd_host_loop(cmd_host: _core.PyCmdHost):
     while (cmd := cmd_host.recv()) is not None:
         try:
             match cmd:

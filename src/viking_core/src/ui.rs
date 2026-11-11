@@ -19,11 +19,6 @@ macro_rules! step {
 pub(crate) use step;
 
 /// Print a message using the step formatting
-///
-/// ## Format
-/// ```
-/// [bright green]>>> {msg}
-/// ```
 #[pyfunction]
 pub fn print_step(msg: &str) {
     println!("{} {}", ">>>".bright_green(), msg.bright_green())
@@ -36,18 +31,12 @@ macro_rules! note {
 pub(crate) use note;
 
 /// Print a message using the note formatting
-///
-/// ## Format
-/// ```
-/// [bold cyan]note: [bold]{msg}
-/// ```
 #[pyfunction]
 pub fn print_note(msg: &str) {
     eprintln!("{}{}{}", "note".bold().cyan(), ": ".bold(), msg.bold())
 }
 
-/// Print either a warning or an error
-#[pyfunction]
+/// Print either a warning or an error, controlled by `is_error`
 pub fn print_warn_or_error(msg: &str, is_error: bool) {
     if is_error {
         print_error(msg);
@@ -63,11 +52,6 @@ macro_rules! warn_ {
 pub(crate) use warn_ as warn;
 
 /// Print a message using warning formatting
-///
-/// ## Format
-/// ```
-/// [bold yellow]warning: [bold]{msg}
-/// ```
 #[pyfunction]
 pub fn print_warning(msg: &str) {
     let stderr = std::io::stderr();
@@ -75,11 +59,11 @@ pub fn print_warning(msg: &str) {
     print_warning_locked(&mut lock, msg);
 }
 
-/// Print a message using warning formatting plus details
+/// Print a message using warning formatting plus details. The details
+/// are automatically wrapped.
 ///
-/// ## Format
-/// ```
-/// [bold yellow]warning: [bold]{msg}
+/// ```text
+/// warning: {msg}
 ///   |  detail...
 ///   |  detail...
 ///   |  detail...
@@ -111,11 +95,6 @@ macro_rules! error {
 pub(crate) use error;
 
 /// Print a message using error formatting
-///
-/// ## Format
-/// ```
-/// [bold red]error: [bold]{msg}
-/// ```
 #[pyfunction]
 pub fn print_error(msg: &str) {
     let stderr = std::io::stderr();
@@ -123,11 +102,11 @@ pub fn print_error(msg: &str) {
     print_error_locked(&mut lock, msg);
 }
 
-/// Print a message using error formatting plus details
+/// Print a message using error formatting plus details. The details
+/// are automatically wrapped.
 ///
-/// ## Format
-/// ```
-/// [bold red]error: [bold]{msg}
+/// ```text
+/// error: {msg}
 ///   |  detail...
 ///   |  detail...
 ///   |  detail...
@@ -160,7 +139,7 @@ fn print_detail_locked(lock: &mut StderrLock, msg: &str) {
     .unwrap();
 }
 
-/// Format a mangled symbol name. Show as `<demangled> (<mangled>)
+/// Format a mangled symbol name for display. Show as `{demangled} ({mangled})`
 #[pyfunction]
 pub fn format_symbol_name(name: &str) -> String {
     match demangle::demangle_str(name) {
@@ -169,6 +148,7 @@ pub fn format_symbol_name(name: &str) -> String {
     }
 }
 
+/// Format an address for display
 #[pyfunction]
 pub fn format_address(addr: u64) -> String {
     format!("{addr:#x}").green().to_string()
@@ -215,6 +195,11 @@ pub fn interactive_select<'a, T, FnFormat: Fn(&T) -> String>(
 }
 
 /// Show a confirmation prompt. Ok(()) means user chooses to proceed
+///
+/// ```text
+/// {prompt} (Y/n)
+/// [{help}]
+/// ```
 pub fn confirm(prompt: &str, default_value: bool, help: Option<&str>) -> cu::Result<()> {
     let mut confirm = inquire::Confirm::new(prompt).with_default(default_value);
     if let Some(help) = help {

@@ -20,6 +20,12 @@ pub fn load_config() -> cu::Result<Config> {
     if let Ok(path_from_env) = cu::env_var("VIKING_CONFIG")
         && !path_from_env.is_empty()
     {
+        if path_from_env == "0" {
+            // special value to use "no config", when just need to
+            // import the python modules without actually calling
+            // anything
+            return Ok(Default::default());
+        }
         return load_config_at(&path_from_env);
     }
     let default_path = Path::new("tools/config.toml");
@@ -84,9 +90,9 @@ fn load_config_at_impl(path: &Path) -> cu::Result<Config> {
     Ok(config)
 }
 
-#[derive(Debug, Deserialize, Clone, Display)]
+#[derive(Debug, Default, Deserialize, Clone, Display)]
 #[display("{:#?}", self)]
-#[pyclass(from_py_object, str)]
+#[pyclass(from_py_object, str, module = "viking._core")]
 pub struct Config {
     /// The `[repo]` section
     #[pyo3(get)]
@@ -102,9 +108,9 @@ pub struct Config {
 }
 
 /// Configuration for general project information
-#[derive(Debug, Deserialize, Clone, Display)]
+#[derive(Debug, Default, Deserialize, Clone, Display)]
 #[display("{:#?}", self)]
-#[pyclass(from_py_object, str)]
+#[pyclass(from_py_object, str, module = "viking._core")]
 pub struct ConfigRepo {
     /// Root directory of the repo. Relative to the containing directory
     /// of the config file. All other paths in the config are relative to
@@ -314,9 +320,9 @@ impl ConfigRepo {
 }
 
 /// Configuration for checking mismatches
-#[derive(Debug, Deserialize, Clone, Display)]
+#[derive(Debug, Default, Deserialize, Clone, Display)]
 #[display("{:#?}", self)]
-#[pyclass(from_py_object, str)]
+#[pyclass(from_py_object, str, module = "viking._core")]
 pub struct ConfigCheckMismatch {
     /// asm_differ options
     #[pyo3(get)]
@@ -356,9 +362,9 @@ impl ConfigCheckMismatch {
 }
 
 /// asm_differ options
-#[derive(Debug, Deserialize, Clone, Display)]
+#[derive(Debug, Default, Deserialize, Clone, Display)]
 #[display("{:#?}", self)]
-#[pyclass(from_py_object, str)]
+#[pyclass(from_py_object, str, module = "viking._core")]
 pub struct ConfigCheckMismatchAsmDiffer {
     /// `source_directories` config option in asm_differ; will be appended to repo.root_path
     #[pyo3(get)]
@@ -368,7 +374,7 @@ pub struct ConfigCheckMismatchAsmDiffer {
 /// Configuration for creating decomp.me snippets
 #[derive(Debug, Deserialize, Clone, Display)]
 #[display("{:#?}", self)]
-#[pyclass(from_py_object, str)]
+#[pyclass(from_py_object, str, module = "viking._core")]
 pub struct ConfigDecompMe {
     #[pyo3(get)]
     /// Target configuration. Must specify either ( Compiler and Flags ) or ( Preset Id ).
@@ -388,7 +394,7 @@ impl ConfigDecompMe {
 
 #[derive(Debug, Deserialize, Clone, Display)]
 #[display("{:#?}", self)]
-#[pyclass(from_py_object, str)]
+#[pyclass(from_py_object, str, module = "viking._core")]
 #[serde(untagged, deny_unknown_fields)]
 pub enum ConfigDecompMeTarget {
     Preset {

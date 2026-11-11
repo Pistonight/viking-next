@@ -1,17 +1,23 @@
-"""nx-decomp-tools CLI
+"""
+CLI entry points
+
+## Examples
+```python
+import viking.cli
+
+viking.cli.main_argv(["check", "MyFunction"])
+
+# or use each tool directly
+viking.cli.check(["MyFunction"])
+```
 
 Usage: viking COMMAND [ARGS...]
 """
 
-# This is the CLI entry point
-#
-# To invoke programmatically from python:
-# ```
-# import viking.cli
-# viking.cli.main_argv(["check", "MyFunction"])
-# # or use each tool directly
-# viking.cli.check(["MyFunction"])
-# ```
+USAGE = """NX decomp tools CLI
+
+Usage: viking COMMAND [ARGS...]
+"""
 
 import sys
 import traceback
@@ -27,6 +33,7 @@ def _commands():
 
 
 def print_help():
+    """Print help text, which shows what commands are available"""
     print(__doc__)
     print("Commands:")
     for command in _commands():
@@ -36,7 +43,7 @@ def print_help():
 
 
 def main() -> typing.NoReturn:
-    """Main entrypoint parsing args from sys.argv"""
+    """Main entrypoint parsing args from `sys.argv`"""
     try:
         main_argv(sys.argv[1:])
     except SystemExit as e:

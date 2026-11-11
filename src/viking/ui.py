@@ -9,7 +9,13 @@ format_address = _core_ui.format_symbol_name
 
 
 def confirm(prompt: typing.Any, default_value: bool = True, help: str | None = None):  # pyright: ignore[reportAny]
-    """Show confirmation prompt"""
+    """Show confirmation prompt. Raise exception on cancel
+
+    ```text
+    {prompt} (Y/n)
+    [{help}]
+    ```
+    """
     _core_ui.confirm(str(prompt), default_value, help)  # pyright: ignore[reportAny]
 
 
@@ -29,7 +35,15 @@ def warn(msg: typing.Any):  # pyright: ignore[reportAny]
 
 
 def warn_detail(msg: typing.Any, detail: typing.Any):  # pyright: ignore[reportAny]
-    """Print a message using warning formatting plus details"""
+    """Print a message using warning formatting plus details. The details are automatically wrapped.
+
+    ```text
+    warning: {msg}
+      |  detail...
+      |  detail...
+      |  detail...
+    ```
+    """
     _core_ui.print_warning_with_detail(str(msg), str(detail))  # pyright: ignore[reportAny]
 
 
@@ -45,5 +59,13 @@ def error(msg: typing.Any):  # pyright: ignore[reportAny]
 
 
 def error_detail(msg: typing.Any, detail: typing.Any):  # pyright: ignore[reportAny]
-    """Print a message using error formatting plus details"""
+    """Print a message using error formatting plus details. The details are automatically wrapped.
+
+    ```text
+    error: {msg}
+    |  detail...
+    |  detail...
+    |  detail...
+    ```
+    """
     _core_ui.print_error_with_detail(str(msg), str(detail))  # pyright: ignore[reportAny]

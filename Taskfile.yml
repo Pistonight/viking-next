@@ -14,13 +14,13 @@ tasks:
   install:
     desc: Install dependencies
     cmds:
-      - task: install-uv
+      - task: install-deps
       - task: py-bindgen
 
   run:
     desc: Run the viking CLI (pass the args to viking after -- )
     cmds:
-      - task: build-dev
+      - task: install-dev
       - uv run --no-sync viking {{.CLI_ARGS}}
 
   check:
@@ -46,9 +46,20 @@ tasks:
     cmds:
       - uv build
 
+  doc:
+    desc: Generate API docs
+    env:
+      VIKING_CONFIG: '0' # use empty config
+    cmds:
+      # builds the extension and regenerates the stubs
+      - task: py-bindgen
+      - rm -rf dist/docs
+      # wraps pdoc with workarounds for the PyO3 extension module
+      - uv run --no-sync scripts/build-docs.py
+
   # --- helpers ---
 
-  install-uv:
+  install-deps:
     sources:
       - Taskfile.yml
       - pyproject.toml
@@ -70,14 +81,22 @@ tasks:
       - src/**/Cargo.toml
     cmds:
       # build the extension module so we can extract the doc string out of it
-      - task: build-dev
+      - task: install-dev
       - uv run --no-sync maturin generate-stubs --quiet --out src --target-dir {{.MATURIN_DEV_TARGET}}
       - uv run --no-sync scripts/add-docs-to-stubs.py
 
-  build-dev:
+  install-dev:
     # This builds the dev profile and installs it into the uv environment.
     # Then we can run it with 'uv run --no-sync viking'
     # Running 'uv run viking' directly requires buiding from scratch each time
+    sources:
+      - Taskfile.yml
+      - Cargo.toml
+      - Cargo.lock
+      - src/**/*.rs
+      - src/**/Cargo.toml
+    generates:
+      - .venv/bin/viking # this ensures we rebuild if install-deps removes the dependency
     cmds:
       - uv run --no-sync maturin develop --uv --target-dir {{.MATURIN_DEV_TARGET}}
 
@@ -102,6 +121,6 @@ tasks:
       - cargo clean
       - rm -rf .venv dist .ruff_cache
       - rm -rf src/**/__pycache__ src/**/*.so
-      - rm -f src/viking/_core.pyi
+      - rm -rf src/viking/_core
 
 

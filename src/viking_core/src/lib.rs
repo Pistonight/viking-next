@@ -14,10 +14,10 @@ mod cmd_decompme;
 mod cmd_listsym;
 
 /// ELF utils
-mod elf;
+pub mod elf;
 
 /// File List utils
-mod fl;
+pub mod fl;
 
 /// CPP demangle utils
 mod demangle;

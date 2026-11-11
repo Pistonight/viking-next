@@ -44,5 +44,6 @@ build-backend = "maturin"
 dev = [
     "basedpyright>=1.40.2",
     "maturin[patchelf]>=1.16.0",
+    "pdoc>=16.0.0,<17",  # build-docs.py patches a private API
     "ruff>=0.17.0",
 ]

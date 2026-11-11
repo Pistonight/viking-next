@@ -275,6 +275,7 @@ impl From<Vec<String>> for AddressLabel {
 #[pymethods]
 impl AddressLabel {
     /// Get the number of names
+    #[allow(clippy::len_without_is_empty)] // it's guaranteed to be not empty
     pub fn len(&self) -> usize {
         match self {
             Self::Single(_) => 1,
@@ -284,7 +285,7 @@ impl AddressLabel {
 
     /// Get the name (first if multiple)
     pub fn name(&self) -> &str {
-        match self{
+        match self {
             Self::Single(label) => label,
             // unwrap: when FileList is loaded, it is validated to be non-empty
             Self::Multi(labels) => labels.first().unwrap(),
@@ -293,9 +294,9 @@ impl AddressLabel {
 
     /// Get all names
     pub fn all(&self) -> Vec<String> {
-        match self{
+        match self {
             Self::Single(label) => vec![label.to_string()],
-            Self::Multi(labels) => labels.clone()
+            Self::Multi(labels) => labels.clone(),
         }
     }
 
@@ -333,7 +334,7 @@ mod status_imp {
 pub use status_imp::Status;
 impl Status {
     /// Parse status string into enum
-    pub fn from_str(s: &str) -> cu::Result<Self> {
+    pub fn from_name(s: &str) -> cu::Result<Self> {
         Ok(match s.trim() {
             "NonMatchingMinor" => Self::NonMatchingMinor,
             "NonMatchingMajor" => Self::NonMatchingMajor,
@@ -384,9 +385,9 @@ impl Status {
 #[pymethods]
 impl Status {
     /// Parse status string into enum
-    #[pyo3(name = "from_str")]
+    #[pyo3(name = "from_name")]
     #[staticmethod]
-    pub fn py_from_str(s: &str) -> PyResult<Self> { interop::into_pyresult(Self::from_str(s)) }
+    pub fn py_from_name(s: &str) -> PyResult<Self> { interop::into_pyresult(Self::from_name(s)) }
     /// Parse status code into enum
     #[pyo3(name = "from_code")]
     #[staticmethod]

@@ -8,6 +8,7 @@ from ..core import get_config
 
 
 def setup_compiler(version: str):
+    """Setup a specific version of clang in the toolchain install path (`repo.toolchain_install_path` in the config)"""
     config = get_config()
     compiler_dir = config.repo.toolchain_install_path / ("clang-" + version)
     if compiler_dir.is_dir():

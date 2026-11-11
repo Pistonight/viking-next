@@ -9,7 +9,7 @@ use crate::interop;
 /// Wrap an execution with a handle to send Python commands
 pub fn execute_with_cmd_host<F: FnOnce(PyCmdSender) -> cu::Result<u32> + Send + 'static>(
     f: F,
-) -> PyCmdHostHandle {
+) -> PyCmdHost {
     let (cmd_send, cmd_recv) = mpsc::channel();
     let (res_send, res_recv) = mpsc::channel();
     let task_thread = Some(thread::spawn(move || f(PyCmdSender { cmd_send, res_recv })));
@@ -18,7 +18,7 @@ pub fn execute_with_cmd_host<F: FnOnce(PyCmdSender) -> cu::Result<u32> + Send + 
         res_send,
         task_thread,
     };
-    PyCmdHostHandle::new(cmd_host)
+    PyCmdHost::new(cmd_host)
 }
 
 /// State for sending commands to Python to run.
@@ -28,6 +28,7 @@ pub fn execute_with_cmd_host<F: FnOnce(PyCmdSender) -> cu::Result<u32> + Send + 
 /// handling gets trickier too. Ideally we should never need to call
 /// Python from Rust other than interop with external python libraries
 /// like asm-differ
+#[derive(Debug)]
 pub struct RustPyCmdHost {
     /// Channel for python thread to receive commands
     cmd_recv: mpsc::Receiver<PyCmd>,
@@ -36,10 +37,14 @@ pub struct RustPyCmdHost {
     /// Thread running Rust that may send commands to python
     task_thread: Option<JoinHandle<cu::Result<u32>>>,
 }
-interop::make_handle_class!(RustPyCmdHost, PyCmdHostHandle mut);
+interop::make_handle_class! {
+    /// Host for receiving commands from Rust
+    #[handle(RustPyCmdHost, module = "viking._core")]
+    pub mut struct PyCmdHost;
+}
 
 #[pymethods]
-impl PyCmdHostHandle {
+impl PyCmdHost {
     /// Blocks Python code until a command is received, or None
     /// if sender is dropped
     pub fn recv(&self) -> Option<PyCmd> {
@@ -79,6 +84,7 @@ impl PyCmdHostHandle {
     }
 }
 
+/// Command send from Rust to Python to execute some Python in the middle of Rust
 #[derive(Debug, Clone, Display)]
 #[display("{self:?}")]
 #[pyclass(str, from_py_object)]
