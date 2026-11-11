@@ -15,6 +15,7 @@ The output is written to dist/docs
 # pyright: reportPrivateUsage=false
 
 import ast
+import base64
 import importlib.machinery
 import importlib.util
 import sys
@@ -26,9 +27,14 @@ from typing import cast, override
 import pdoc
 import pdoc.doc
 import pdoc.doc_pyi
+import pdoc.render
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = ROOT / "dist" / "docs"
+# Overrides for pdoc's templates (theme.css, syntax-highlighting.css, custom.css)
+THEME_DIR = ROOT / "scripts" / "docs-theme"
+# Tiled background of the main page, see custom.css
+BACKGROUND_IMAGE = THEME_DIR / "background.webp"
 
 # Submodules of viking left out of the docs
 # - asm_differ: has import side effects and is internal
@@ -327,8 +333,29 @@ def _safe_getdoc(obj: object) -> str:
 pdoc.doc._safe_getdoc = _safe_getdoc
 
 
+def image_data_uri(path: Path) -> str:
+    """Encode an image as a data URI, with the type detected from its content"""
+    data = path.read_bytes()
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        mime = "image/png"
+    elif data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        mime = "image/webp"
+    elif data.startswith(b"\xff\xd8\xff"):
+        mime = "image/jpeg"
+    else:
+        raise ValueError(f"unsupported image format: {path}")
+    return f"data:{mime};base64,{base64.b64encode(data).decode()}"
+
+
 def main() -> None:
     core_submodules = _register_core_submodules()
+    pdoc.render.configure(template_directory=THEME_DIR)
+    # pdoc inlines all CSS into each page, and pages are at different
+    # directory depths, so a relative URL to an image file would not work.
+    # Embed the image as a data URI, available to the templates as a global
+    # (cast: jinja2 types globals by its own default values)
+    template_globals = cast(dict[str, object], pdoc.render.env.globals)
+    template_globals["background_image_uri"] = image_data_uri(BACKGROUND_IMAGE)
     pdoc.pdoc(
         "viking",
         *core_submodules,

@@ -45,7 +45,7 @@ def decompress_nso(nso_path: Path, dest_path: Path):
 
 
 def apply_xdelta3_patch(input: Path, patch: Path, dest: Path):
-    """Apply `patch` to `input` and save the result to `dest"""
+    """Apply `patch` to `input` and save the result to `dest`"""
     ui.step("applying patch...")
     try:
         subprocess.check_call(

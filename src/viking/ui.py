@@ -1,3 +1,5 @@
+"""UI helper functions"""
+
 import sys
 import typing
 

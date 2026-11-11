@@ -133,20 +133,16 @@ mod _core {
     mod _core_fl {
         use super::*;
 
-        /// Check if the versioned/versionless file list file is CSV
+        #[pymodule_export]
+        use crate::fl::{AddressLabel, Status};
         #[pyfunction]
         fn is_csv(state: State, version: Option<&str>) -> bool {
             crate::fl::is_csv(&state.config, version)
         }
-
-        /// Parse a hex value as-is as a U32
         #[pyfunction]
         fn parse_offset(hex_value: &str) -> PyResult<u32> {
             interop::into_pyresult(crate::fl::parse_offset(hex_value))
         }
-
-        /// Parse an absolute address (offset + base address) to just the offset
-        /// according to the base address in the config
         #[pyfunction]
         fn parse_abs_address_as_offset(state: State, hex_value: &str) -> PyResult<u32> {
             interop::into_pyresult(crate::fl::parse_abs_address_as_offset(
@@ -154,21 +150,14 @@ mod _core {
                 hex_value,
             ))
         }
-
-        /// Parse an absolute address (offset + base address). The value is checked
-        /// to ensure the offset is a valid U32.
         #[pyfunction]
         fn parse_abs_address(state: State, hex_value: &str) -> PyResult<u64> {
             interop::into_pyresult(crate::fl::parse_abs_address(&state.config, hex_value))
         }
-
-        #[pymodule_export]
-        use crate::fl::{AddressLabel, Status};
     }
 
     // ======= ui =======
 
-    /// Bindings for UI utils (`viking_core::ui`)
     #[pymodule]
     mod _core_ui {
         use super::*;
@@ -197,4 +186,7 @@ mod _core {
     pub fn find_tool(state: State, tool: &str) -> PyResult<PathBuf> {
         interop::into_pyresult(state.config.repo.find_tool(tool))
     }
+
+    #[pymodule_export]
+    use crate::demangle::{demangle_or_as_is, raw_or_demangled_contains};
 }

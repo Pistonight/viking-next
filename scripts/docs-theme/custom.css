@@ -1,0 +1,114 @@
+/*
+ * Dark overrides for the parts of pdoc's content.css and layout.css that use
+ * hardcoded light colors instead of the theme variables.
+ */
+
+/* Main page background: tiled image, embedded by build-docs.py as a data URI.
+ * The sidebar has its own background, so this only shows behind the content */
+body {
+    background-image: url("{{ background_image_uri }}");
+    background-repeat: repeat;
+}
+
+/* Admonitions (e.g. "> [!NOTE]" in docstrings)
+ * pdoc's icons are SVGs with dark fills baked in, so re-include them with the
+ * fill swapped for a palette color (data URIs can't use CSS variables) */
+{% macro alert_icon(path, fill, color) -%}
+{%- set svg %}{% include path %}{% endset -%}
+url("data:image/svg+xml,{% filter urlencode %}{{ svg.replace(fill, color) }}{% endfilter %}")
+{%- endmacro %}
+.pdoc .alert {
+    color: var(--botw-parchment);
+    background-color: var(--botw-slate-900);
+    border-color: var(--botw-slate-700);
+    border-left-width: 4px;
+}
+.pdoc .alert.note {
+    border-left-color: var(--botw-sheikah);
+    background-image: {{ alert_icon("resources/info-circle-fill.svg", "#084298", "#5ad1e6") }};
+}
+.pdoc .alert.tip {
+    border-left-color: var(--botw-korok);
+    background-image: {{ alert_icon("resources/lightbulb.svg", "#0a3622", "#9cc55a") }};
+}
+.pdoc .alert.important {
+    border-left-color: var(--botw-rupee-purple);
+    background-image: {{ alert_icon("resources/exclamation-square-fill.svg", "#055160", "#c08ee0") }};
+}
+.pdoc .alert.warning {
+    border-left-color: var(--botw-ancient);
+    background-image: {{ alert_icon("resources/exclamation-triangle-fill.svg", "#664d03", "#f5a742") }};
+}
+.pdoc .alert.caution {
+    border-left-color: var(--botw-blood-moon);
+    background-image: {{ alert_icon("resources/exclamation-octagon-fill.svg", "#842029", "#e0574f") }};
+}
+.pdoc .alert.danger {
+    border-left-color: var(--botw-malice);
+    background-image: {{ alert_icon("resources/lightning-fill.svg", "#842029", "#c4415a") }};
+}
+
+.pdoc .decorator-deprecated {
+    color: var(--botw-blood-moon);
+}
+
+/* Sidebar */
+nav.pdoc {
+    background-color: var(--botw-slate-900);
+    border-right: 1px solid var(--botw-slate-800);
+}
+nav.pdoc input[type=search] {
+    color: var(--botw-parchment);
+    background-color: var(--botw-slate-850);
+    border: 1px solid var(--botw-slate-700);
+}
+nav.pdoc input[type=search]:focus {
+    outline: 1px solid var(--botw-sheikah);
+}
+
+/* Replaces the "API Documentation" heading on pages where it's hidden
+ * (see module.html.jinja2) */
+nav.pdoc .nav-members-spacer {
+    height: 1.5rem;
+}
+
+/* Keep the "built with pdoc" attribution at the bottom of the sidebar.
+ * Only on desktop, where the sidebar is a fixed full-height scrolling panel
+ * (on mobile it's a drop-down menu, where the default placement is fine).
+ * It's transparent, so it is not pinned while scrolling (it would overlap the
+ * list). When the list is longer than the sidebar, it comes after the list */
+@media (min-width: 770px) {
+    /* fill the sidebar height so the attribution can be pushed to the bottom
+     * when the content is short */
+    nav.pdoc > div {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+        box-sizing: border-box;
+        padding-bottom: 0;
+    }
+    /* flex items stretch to full width by default, keep the button compact */
+    nav.pdoc .module-list-button {
+        align-self: flex-start;
+    }
+    /* push to the bottom when the list is short */
+    nav.pdoc .attribution {
+        margin-top: auto;
+        padding: 2rem 0 1rem;
+    }
+}
+
+/* Inline code in docstrings */
+.pdoc code {
+    color: var(--botw-parchment);
+}
+
+/* Section headings in docstrings: Sheikah glow */
+.pdoc .docstring h1, .pdoc .docstring h2, .pdoc .docstring h3,
+.pdoc .docstring h4, .pdoc .docstring h5, .pdoc .docstring h6 {
+    color: var(--botw-sheikah);
+}
+
+::selection {
+    background-color: rgba(90, 209, 230, 0.3);
+}

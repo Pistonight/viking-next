@@ -1,0 +1,57 @@
+/*
+ * Dark-only theme with a BOTW-inspired palette.
+ * Overrides pdoc's templates/theme.css. Palette tokens are shared with
+ * syntax-highlighting.css and custom.css in this directory.
+ */
+:root {
+    color-scheme: dark;
+
+    /* Sheikah Slate */
+    --botw-slate-950: #0c1116;
+    --botw-slate-900: #111920;
+    --botw-slate-850: #16212a;
+    --botw-slate-800: #1c2a35;
+    --botw-slate-700: #2a3d4b;
+    --botw-stone: #8a9a9f;
+    --botw-stone-dim: #7a8e96;
+
+    /* Parchment / Hylian text */
+    --botw-parchment: #e6dcc3;
+    --botw-parchment-dim: #c9bfa6;
+
+    /* Sheikah glow */
+    --botw-sheikah: #5ad1e6;
+    --botw-sheikah-bright: #a2ecf8;
+    /* Ancient tech */
+    --botw-ancient: #f5a742;
+    /* Korok / Hyrule field */
+    --botw-korok: #9cc55a;
+    /* Champion tunic */
+    --botw-champion: #79a7d9;
+    /* Triforce */
+    --botw-triforce: #e8c66a;
+    /* Rupees */
+    --botw-rupee-purple: #c08ee0;
+    /* Blood Moon / Malice */
+    --botw-blood-moon: #e0574f;
+    --botw-malice: #c4415a;
+
+    --pdoc-background: var(--botw-slate-950);
+}
+
+.pdoc {
+    --text: var(--botw-parchment);
+    --muted: var(--botw-stone);
+    --link: var(--botw-sheikah);
+    --link-hover: var(--botw-sheikah-bright);
+    --code: var(--botw-slate-850);
+    --active: #4a3414; /* ancient orange, dimmed for highlighted rows */
+
+    --accent: var(--botw-slate-900);
+    --accent2: var(--botw-slate-700);
+
+    --nav-hover: rgba(90, 209, 230, 0.08);
+    --name: var(--botw-ancient);
+    --def: var(--botw-korok);
+    --annotation: var(--botw-champion);
+}

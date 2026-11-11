@@ -1,2 +1,5 @@
 python binding for FileList API
-progress.py CLI tool
+publish documentation (0.2.0)
+acceptance test: convert scripts in botw
+acceptance test: convert scripts in smo
+progress.py CLI tool (0.2.1)

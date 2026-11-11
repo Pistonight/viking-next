@@ -1,0 +1,58 @@
+/*
+ * Pygments token colors with a BOTW-inspired palette (see theme.css).
+ * Overrides pdoc's templates/syntax-highlighting.css, keeping its selectors.
+ */
+pre { line-height: 125%; }
+span.linenos { color: var(--botw-stone-dim); background-color: transparent; padding-left: 5px; padding-right: 20px; }
+.pdoc-code .hll { background-color: #2b2412 }
+.pdoc-code { background: var(--botw-slate-900); color: var(--botw-parchment); }
+
+/* Comments: weathered stone */
+.pdoc-code .c, .pdoc-code .ch, .pdoc-code .cm, .pdoc-code .cpf, .pdoc-code .c1, .pdoc-code .cs { color: var(--botw-stone-dim); font-style: italic }
+.pdoc-code .cp { color: var(--botw-rupee-purple) } /* Comment.Preproc */
+
+/* Keywords: Korok green */
+.pdoc-code .k, .pdoc-code .kc, .pdoc-code .kd, .pdoc-code .kn, .pdoc-code .kr { color: var(--botw-korok); font-weight: bold }
+.pdoc-code .kp { color: var(--botw-korok) }
+.pdoc-code .ow { color: var(--botw-korok); font-weight: bold } /* Operator.Word */
+/* Types: ancient tech orange */
+.pdoc-code .kt { color: var(--botw-ancient) }
+
+/* Operators and punctuation: parchment, dimmed */
+.pdoc-code .o, .pdoc-code .p { color: var(--botw-parchment-dim) }
+.pdoc-code .w { color: var(--botw-slate-700) }
+
+/* Numbers: purple rupee */
+.pdoc-code .m, .pdoc-code .mb, .pdoc-code .mf, .pdoc-code .mh, .pdoc-code .mi, .pdoc-code .mo, .pdoc-code .il { color: var(--botw-rupee-purple) }
+
+/* Strings: Triforce gold */
+.pdoc-code .s, .pdoc-code .sa, .pdoc-code .sb, .pdoc-code .sc, .pdoc-code .dl, .pdoc-code .s2, .pdoc-code .sh, .pdoc-code .s1 { color: var(--botw-triforce) }
+.pdoc-code .sd { color: var(--botw-stone); font-style: italic } /* Literal.String.Doc (incl. Rust /// comments) */
+.pdoc-code .se { color: var(--botw-ancient); font-weight: bold } /* Literal.String.Escape */
+.pdoc-code .si, .pdoc-code .sr { color: var(--botw-ancient) } /* Interpol, Regex */
+.pdoc-code .sx { color: var(--botw-korok) } /* Literal.String.Other */
+.pdoc-code .ss { color: var(--botw-champion) } /* Literal.String.Symbol */
+
+/* Names */
+.pdoc-code .nc, .pdoc-code .nn { color: var(--botw-ancient); font-weight: bold } /* Class, Namespace */
+.pdoc-code .nf, .pdoc-code .fm { color: var(--botw-sheikah) } /* Function */
+.pdoc-code .nb, .pdoc-code .bp { color: var(--botw-champion) } /* Builtin */
+.pdoc-code .no { color: var(--botw-blood-moon) } /* Constant */
+.pdoc-code .nd { color: var(--botw-rupee-purple) } /* Decorator */
+.pdoc-code .na { color: var(--botw-champion) } /* Attribute */
+.pdoc-code .ne { color: var(--botw-malice); font-weight: bold } /* Exception */
+.pdoc-code .ni { color: var(--botw-stone); font-weight: bold } /* Entity */
+.pdoc-code .nl { color: var(--botw-triforce) } /* Label (incl. Rust lifetimes) */
+.pdoc-code .nt { color: var(--botw-korok); font-weight: bold } /* Tag */
+.pdoc-code .nv, .pdoc-code .vc, .pdoc-code .vg, .pdoc-code .vi, .pdoc-code .vm { color: var(--botw-parchment) } /* Variable */
+
+/* Generic (diffs, console output) */
+.pdoc-code .gd { color: var(--botw-blood-moon) } /* Deleted */
+.pdoc-code .gi { color: var(--botw-korok) } /* Inserted */
+.pdoc-code .ge { font-style: italic }
+.pdoc-code .gs { font-weight: bold }
+.pdoc-code .gr, .pdoc-code .gt { color: var(--botw-malice) } /* Error, Traceback */
+.pdoc-code .gh, .pdoc-code .gp { color: var(--botw-sheikah); font-weight: bold } /* Heading, Prompt */
+.pdoc-code .gu { color: var(--botw-rupee-purple); font-weight: bold } /* Subheading */
+.pdoc-code .go { color: var(--botw-stone) } /* Output */
+.pdoc-code .err { border: 1px solid var(--botw-malice) }

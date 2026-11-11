@@ -60,6 +60,8 @@ impl PyCmdHost {
         let _ = self.res_send.send((success, result));
     }
 
+    /// Called after `recv()` returns `None` to wait for the Rust side
+    /// to finish running
     pub fn join(&mut self) -> PyResult<u32> {
         if self.0 == 0 {
             return Ok(0);

@@ -1,0 +1,23 @@
+{#
+  Overrides pdoc's default module template (templates/default/module.html.jinja2)
+#}
+{% extends "default/module.html.jinja2" %}
+
+{#
+  Only show the "API Documentation" heading above the member list when the
+  sidebar has other sections (Contents or Submodules) to separate it from.
+  Otherwise (e.g. leaf submodules) the member list is the only thing in the
+  sidebar and the heading is just noise.
+#}
+{% block nav_members %}
+    {% if module.members %}
+        {% set has_contents = module.docstring | to_markdown | to_html | attr("toc_html") %}
+        {% if has_contents or module.submodules %}
+            <h2>API Documentation</h2>
+        {% else %}
+            {# keep some space between the search box and the list, see custom.css #}
+            <div class="nav-members-spacer"></div>
+        {% endif %}
+        {{ nav_members(module.members.values()) }}
+    {% endif %}
+{% endblock %}

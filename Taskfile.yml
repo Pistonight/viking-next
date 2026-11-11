@@ -48,14 +48,14 @@ tasks:
 
   doc:
     desc: Generate API docs
-    env:
-      VIKING_CONFIG: '0' # use empty config
     cmds:
-      # builds the extension and regenerates the stubs
-      - task: py-bindgen
       - rm -rf dist/docs
-      # wraps pdoc with workarounds for the PyO3 extension module
-      - uv run --no-sync scripts/build-docs.py
+      - task: build-docs
+
+  dev-doc:
+    desc: Host doc in watch mode (please `cargo install shwoop`)
+    cmds:
+      - shwoop dist/docs --host -w src -- {{.TASK_EXE}} build-docs
 
   # --- helpers ---
 
@@ -100,6 +100,12 @@ tasks:
     cmds:
       - uv run --no-sync maturin develop --uv --target-dir {{.MATURIN_DEV_TARGET}}
 
+  build-docs:
+    env:
+      VIKING_CONFIG: '0' # use empty config
+    cmds:
+      - task: py-bindgen
+      - uv run --no-sync scripts/build-docs.py
 
   cargo-clippy:
     vars:
