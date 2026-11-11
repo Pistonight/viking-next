@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use colored::Colorize;
 use cu::pre::*;
 
@@ -269,6 +271,11 @@ fn show_asm_differ(
     }
 
     python.asm_differ(args)?;
+
+    // asm-differ prints status messages that shifts where
+    // the cursor is - restore the line position
+    print!("\r");
+    let _ = std::io::stdout().flush();
 
     Ok(())
 }

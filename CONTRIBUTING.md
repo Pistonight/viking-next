@@ -47,15 +47,15 @@ to simplify error handling, traceback reporting, and avoid the complexity with h
 interpreter and references in Rust.
 
 However, in some scenarios, it is not avoidable to require Rust code to call Python code, for example
-to invoke some library that's only in Python. We solve this with [`PyCmdHost`](src/viking_core/src/pyapi.rs).
+to invoke some library that's only in Python. We solve this with [the command pattern](src/viking_core/src/interop/py_cmd.rs).
 When Python calls a Rust function that requires calling back to Python at some point, the Rust function
 runs on a separate thread, and the Python calling thread blocks the interpreter to wait for commands from
-the Rust side. When the Rust side issues a command, the control switches to the threading running the Python
+the Rust side. When the Rust side issues a command, the control switches to the thread running the Python
 interpreter and the Rust thread blocks until the Python side finishes and returns a result or an exception.
 
 ### "Global" state
 
-The Rust side should be free of process-wide singleton to support upcoming Python multi-interpreter,
+The Rust side should be free of process-wide singleton to support the upcoming Python multi-interpreter feature,
 where a single process may host multiple Python interpreters. This means you need to avoid something
 like `static MY_STATE: LazyLock<...> = ...` in Rust.
 

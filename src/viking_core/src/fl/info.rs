@@ -131,7 +131,7 @@ impl Info {
 }
 
 /// Information about an address
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct InfoData {
     /// The address as offset from the base address defined in the config
     #[serde(serialize_with = "as_hex")]
@@ -206,8 +206,52 @@ impl InfoData {
     }
 }
 
+impl InfoData {
+    #[inline(always)]
+    pub fn is_decompiled(&self) -> bool {
+        !matches!(self.status, Status::NotDecompiled | Status::Library)
+    }
+    /// Get the number of names
+    #[inline(always)]
+    pub fn num_names(&self) -> usize {
+        self.label.len()
+    }
+
+    /// Get the name (first if multiple)
+    #[inline(always)]
+    pub fn name(&self) -> &str {
+        self.label.name()
+    }
+
+    /// Get all names
+    #[inline(always)]
+    pub fn all_names(&self) -> Vec<String> {
+        self.label.all()
+    }
+
+    /// Check if any name of the function entry matches the input name
+    #[inline(always)]
+    pub fn contains_name(&self, name: &str) -> bool {
+        self.label.contains_name(name)
+    }
+
+    /// Get the (absolute) start address in the original ELF
+    #[inline(always)]
+    pub fn get_start(&self) -> u64 {
+        self.absolute_address
+    }
+
+    /// Get the (absolute) end address in the original ELF
+    #[inline(always)]
+    pub fn get_end(&self) -> u64 {
+        self.get_start() + self.size as u64
+    }
+}
+
 /// Label for an address
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug, PartialEq, Eq, Display)]
+#[display("{self:#?}")]
+#[pyclass(from_py_object, str)]
 #[serde(untagged)]
 pub enum AddressLabel {
     /// Address has a single name
@@ -228,38 +272,39 @@ impl From<Vec<String>> for AddressLabel {
         Self::Multi(value)
     }
 }
-
-impl InfoData {
-    pub fn is_decompiled(&self) -> bool {
-        !matches!(self.status, Status::NotDecompiled | Status::Library)
-    }
-    pub fn num_names(&self) -> usize {
-        match &self.label {
-            AddressLabel::Single(_) => 1,
-            AddressLabel::Multi(labels) => labels.len(),
+#[pymethods]
+impl AddressLabel {
+    /// Get the number of names
+    pub fn len(&self) -> usize {
+        match self {
+            Self::Single(_) => 1,
+            Self::Multi(labels) => labels.len(),
         }
     }
+
+    /// Get the name (first if multiple)
     pub fn name(&self) -> &str {
-        match &self.label {
-            AddressLabel::Single(label) => label,
+        match self{
+            Self::Single(label) => label,
             // unwrap: when FileList is loaded, it is validated to be non-empty
-            AddressLabel::Multi(labels) => labels.first().unwrap(),
+            Self::Multi(labels) => labels.first().unwrap(),
         }
     }
-    /// Check if any name of the function entry matches the input name
+
+    /// Get all names
+    pub fn all(&self) -> Vec<String> {
+        match self{
+            Self::Single(label) => vec![label.to_string()],
+            Self::Multi(labels) => labels.clone()
+        }
+    }
+
+    /// Check if any name matches the input name
     pub fn contains_name(&self, name: &str) -> bool {
-        match &self.label {
-            AddressLabel::Single(label) => label == name,
-            AddressLabel::Multi(labels) => labels.iter().any(|x| x == name),
+        match &self {
+            Self::Single(label) => label == name,
+            Self::Multi(labels) => labels.iter().any(|x| x == name),
         }
-    }
-
-    pub fn get_start(&self) -> u64 {
-        self.absolute_address
-    }
-
-    pub fn get_end(&self) -> u64 {
-        self.get_start() + self.size as u64
     }
 }
 

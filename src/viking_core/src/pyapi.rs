@@ -147,7 +147,7 @@ mod _core {
         }
 
         #[pymodule_export]
-        use crate::fl::Status;
+        use crate::fl::{AddressLabel, Status};
     }
 
     // ======= ui =======

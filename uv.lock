@@ -5,7 +5,7 @@ requires-python = ">=3.14"
 [[package]]
 name = "asm-differ"
 version = "0.1.0"
-source = { git = "https://github.com/simonlindholm/asm-differ?rev=0dd09af8f8008f1f880327cf0aca3b26d2562ea2#0dd09af8f8008f1f880327cf0aca3b26d2562ea2" }
+source = { git = "https://github.com/Pistonight/asm-differ?rev=232bb1a76330511fe8ce2e77a895725076b17a5c#232bb1a76330511fe8ce2e77a895725076b17a5c" }
 dependencies = [
     { name = "colorama" },
     { name = "cxxfilt" },
@@ -257,7 +257,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "asm-differ", git = "https://github.com/simonlindholm/asm-differ?rev=0dd09af8f8008f1f880327cf0aca3b26d2562ea2" }]
+requires-dist = [{ name = "asm-differ", git = "https://github.com/Pistonight/asm-differ?rev=232bb1a76330511fe8ce2e77a895725076b17a5c" }]
 
 [package.metadata.requires-dev]
 dev = [
