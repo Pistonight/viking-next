@@ -30,7 +30,7 @@ jobs:
         with:
           arch: ${{ matrix.target }}
           binary: viking
-          build-args: --features global-allocator,cmd-all
+          build-args: "--features global-allocator,cmd-all"
 
   build-wheel:
     strategy:

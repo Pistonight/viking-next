@@ -1,0 +1,66 @@
+name: doc
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  rust-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Pistonight/mono-dev/actions/setup@main
+        with:
+          mono-dev: false
+          rust: nightly
+      - run: task build-rust-docs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: rust-docs
+          path: target/doc-nightly/doc
+
+  other-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Pistonight/mono-dev/actions/setup@main
+        with:
+          mono-dev: false
+          rust: stable
+          python: uv
+      - run: task install
+      - run: task build-python-docs
+      - run: task build-markdown-docs
+        # todo: wheels index
+      - uses: actions/upload-artifact@v7
+        with:
+          name: docs
+          path: dist/docs
+
+  upload:
+    needs:
+      - other-docs
+      - rust-docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Pistonight/mono-dev/actions/setup@main
+        with:
+          mono-dev: false
+      - uses: dawidd6/action-download-artifact@v28
+        with:
+          workflow: doc.yml
+          ref: ${{ github.ref }}
+          name: docs
+          path: dist/docs
+          workflow_conclusion: ""
+      - uses: dawidd6/action-download-artifact@v28
+        with:
+          workflow: doc.yml
+          ref: ${{ github.ref }}
+          name: rust-docs
+          path: dist/docs/rust
+          workflow_conclusion: ""
+      - name: debug dist/docs
+        run: ls -R dist/docs
+
