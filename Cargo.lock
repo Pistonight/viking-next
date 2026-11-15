@@ -2559,6 +2559,7 @@ dependencies = [
  "owning_ref",
  "pistonite-cu",
  "pyo3",
+ "pyo3-build-config",
  "rayon",
  "reqwest",
  "rustc-hash 2.1.3",

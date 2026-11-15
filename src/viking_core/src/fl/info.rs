@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use colored::Colorize;
 use cu::pre::*;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;

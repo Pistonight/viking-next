@@ -42,7 +42,7 @@ def apply(config: dict[str, typing.Any], args: typing.Any):  # pyright: ignore[r
         # Tell llvm-objdump to not contact debuginfod server
         # even if the llvm-objdump is built with curl enabled.
         # Note for GNU binutils, the flag is -WE
-        # 
+        #
         # Alternatively we could clear the DEBUGINFOD_URLS env var which would
         # work for both GNU and LLVM objdump.
         "--no-debuginfod"

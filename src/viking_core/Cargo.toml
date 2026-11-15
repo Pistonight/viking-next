@@ -54,11 +54,14 @@ lazy-init = { version = "0.5.0", optional = true }
 reqwest = { version = "0.12.3", default-features = false, features = ["http2", "blocking", "json", "rustls-tls"], optional = true }
 tempfile = { version = "3.20.0", optional = true }
 
+[build-dependencies]
+pyo3-build-config = "0.28.2"
+
 [features]
-# default = []
+default = []
 # uncomment below for development for rust-analyzer, or set in your local rust-analyzer
 # config the default feature set it should use
-default = [ "python" ]
+# default = [ "python" ]
 python = [ "global-allocator", "cmd-all" ]
 cmd-all = [
     "cmd-check",

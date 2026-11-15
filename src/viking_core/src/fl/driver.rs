@@ -47,7 +47,11 @@ fn load_at_impl(config: &Config, path: &Path) -> cu::Result<fl::FileList> {
 /// the config (assuming CSV format).
 ///
 /// See [`fl::write_file_list_yml_at`] for caveats.
-pub fn write_file_list_csv(config: &Config, info_list: &[fl::Info], version: Option<&str>) -> cu::Result<()> {
+pub fn write_file_list_csv(
+    config: &Config,
+    info_list: &[fl::Info],
+    version: Option<&str>,
+) -> cu::Result<()> {
     fl::write_file_list_csv_at(&config.repo.file_list_with_version(version), info_list)
 }
 

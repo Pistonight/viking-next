@@ -13,7 +13,6 @@ pub fn init_prompt_settings() {
     inquire::set_global_render_config(config);
 }
 
-
 /// Print a message using the step formatting
 #[pyfunction]
 pub fn print_step(msg: &str) {
@@ -36,7 +35,6 @@ pub fn print_warn_or_error(msg: &str, is_error: bool) {
         print_warning(msg);
     }
 }
-
 
 /// Print a message using warning formatting
 #[pyfunction]
