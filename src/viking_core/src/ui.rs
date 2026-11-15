@@ -212,15 +212,3 @@ pub fn confirm(prompt: &str, default_value: bool, help: Option<&str>) -> cu::Res
     }
     Ok(())
 }
-
-/// A helper for printing duration for a section of code to debug performance issues
-pub struct ProfileScope(String, std::time::Instant);
-/// A helper for printing duration for a section of code to debug performance issues
-pub fn profile_scope(x: &str) -> ProfileScope {
-    ProfileScope(x.to_string(), std::time::Instant::now())
-}
-impl Drop for ProfileScope {
-    fn drop(&mut self) {
-        println!("[perf] {}: {}ms", self.0, self.1.elapsed().as_millis());
-    }
-}

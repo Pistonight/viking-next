@@ -35,6 +35,9 @@ cache-keys = [
     { file = "Cargo.lock" },
 ]
 
+[tool.ruff]
+extend-exclude = ["src/viking/_core"]
+
 # [tool.uv.sources]
 # asm-differ = { git = "https://github.com/Pistonight/asm-differ", rev = "232bb1a76330511fe8ce2e77a895725076b17a5c" }
 # asm-differ = { path = "../asm-differ", editable = true }

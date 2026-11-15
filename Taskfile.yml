@@ -26,8 +26,8 @@ tasks:
   check:
     desc: Check code for issues
     cmds:
-      # - task: py-bindgen
-      # - uv run --no-sync basedpyright --warnings
+      - task: py-bindgen
+      - uv run --no-sync basedpyright --warnings
       - task: cargo-clippy
         vars:
           FLAGS: --no-default-features
@@ -49,6 +49,16 @@ tasks:
       - uv run --no-sync ruff format src --check
       - uv run --no-sync ruff check
       - cargo fmt --check
+      - silent: true
+        cmd: |
+          if ! grep -q '^default = \[\]$' src/viking_core/Cargo.toml; then
+            echo "error: default features must be empty in src/viking_core/Cargo.toml" >&2
+            echo "  expected the line: default = []" >&2
+            echo "  if you enabled features for local development (e.g. rust-analyzer)," >&2
+            echo "  revert it, or set the feature set in your local rust-analyzer config instead" >&2
+            exit 1
+          fi
+          echo "default feature check: ok"
 
   fix:
     desc: Fix code formatting
@@ -105,6 +115,21 @@ tasks:
       - task: install-dev
       - uv run --no-sync maturin generate-stubs --quiet --out src --target-dir {{.MATURIN_DEV_TARGET}}
       - uv run --no-sync scripts/add-docs-to-stubs.py
+      - silent: true
+        cmd: |
+          # if CI = <not empty>; ensure stubs are up-to-date
+          if [ -n "$CI" ]; then
+            STUBS_DIR=src/viking/_core
+            # --porcelain also lists untracked files, so new stub modules are caught too
+            CHANGES=$(git status --porcelain -- "$STUBS_DIR" '*.pyi')
+            if [ -n "$CHANGES" ]; then
+              echo "error: generated Python stubs are out of date:" >&2
+              echo "$CHANGES" >&2
+              git --no-pager diff --stat -- "$STUBS_DIR" '*.pyi' >&2
+              echo "  run 'task install' locally to regenerate the stubs, then commit the changes" >&2
+              exit 1
+            fi
+          fi
 
   install-dev:
     # This builds the dev profile and installs it into the uv environment.

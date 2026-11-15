@@ -163,9 +163,7 @@ fn fuzzy_resolve_function(
 
     // fuzzy search (expensive)
     // pass false for prefer_exact since we already know there is no exact match
-    let x = ui::profile_scope("decomp elf fuzzy search");
     let decomp_elf_candidates = decomp_symtab.fuzzy_search(query, false);
-    drop(x);
     match decomp_elf_candidates.len() {
         0 => {
             // error case - also search in the file list to try to produce
@@ -341,124 +339,6 @@ fn fuzzy_resolve_function(
             }
         }
     }
-
-    // let x = ui::profile_scope("resolve function");
-    // let file_list_candidates = file_list.info_list().fuzzy_search(query, true);
-    // let decomp_elf_candidates = decomp_symtab.fuzzy_search(query, true);
-    //
-    // // check no match cases and display useful error to the user
-    // let (function, name) = match (file_list_candidates.len(), decomp_elf_candidates.len()) {
-    //     (0, 0) => {
-    //         // inform user the dual no-match
-    //         ui::error!(
-    //             "no match for {} in either the {} or the {}!",
-    //             ui::format_symbol_name(query),
-    //             "file list".red(),
-    //             "decomp elf".red()
-    //         );
-    //         cu::bail!("failed to resolve {query} in the file list and the decomp elf");
-    //     }
-    //     (0, x) => {
-    //         ui::print_error_with_detail(
-    //             &format!(
-    //                 "no match for {} in {}!",
-    //                 ui::format_symbol_name(query),
-    //                 "file list".red()
-    //             ),
-    //             &format!(
-    //                 "but, found {} match for {} in {}",
-    //                 x,
-    //                 ui::format_symbol_name(query),
-    //                 "decomp elf".red()
-    //             ),
-    //         );
-    //         cu::bail!("failed to resolve {query} in the file list");
-    //     }
-    //     (x, 0) => {
-    //         ui::print_error_with_detail(
-    //             &format!(
-    //                 "no match for {} in {}!",
-    //                 ui::format_symbol_name(query),
-    //                 "decomp elf".red()
-    //             ),
-    //             &format!(
-    //                 "but, found {} match for {} in {}",
-    //                 x,
-    //                 ui::format_symbol_name(query),
-    //                 "file list".red()
-    //             ),
-    //         );
-    //         cu::bail!("failed to resolve {query} in the decomp elf");
-    //     }
-    //     (1, 1) => {
-    //         // exact match for both
-    //         let function = file_list_candidates[0].clone();
-    //         let (name, _) = decomp_elf_candidates[0];
-    //         (function, name)
-    //     }
-    //     (1, _) => {
-    //         let function = file_list_candidates[0].clone();
-    //         let (name, _) =
-    //             decomp_symtab.interactive_select(query, &decomp_elf_candidates, "decomp elf")?;
-    //         (function, name)
-    //     }
-    //     (_, 1) => {
-    //         let function = file_list.info_list().interactive_select(
-    //             query,
-    //             &file_list_candidates,
-    //             "file list",
-    //         )?;
-    //         let (name, _) = decomp_elf_candidates[0];
-    //         (function, name)
-    //     }
-    //     (_, _) => {
-    //         ui::clear_terminal();
-    //         let prompt = format!(
-    //             "{} is ambiguous in both the {} and the {}; select where to resolve:",
-    //             query.dimmed(),
-    //             "file list".red(),
-    //             "decomp elf".red(),
-    //         );
-    //         let i = inquire::Select::new(&prompt, vec!["file list".red(), "decomp elf".red()])
-    //             .with_starting_cursor(0)
-    //             .raw_prompt()?
-    //             .index;
-    //         if i == 0 {
-    //             let function = file_list.info_list().interactive_select(
-    //                 query,
-    //                 &file_list_candidates,
-    //                 "file list",
-    //             )?;
-    //             let query = function.name();
-    //             let decomp_elf_candidates = decomp_symtab.fuzzy_search(query, true);
-    //             let (name, _) = decomp_symtab.interactive_select(
-    //                 query,
-    //                 &decomp_elf_candidates,
-    //                 "decomp elf",
-    //             )?;
-    //             (function, name)
-    //         } else {
-    //             let (name, _) = decomp_symtab.interactive_select(
-    //                 query,
-    //                 &decomp_elf_candidates,
-    //                 "decomp elf",
-    //             )?;
-    //             let query = name;
-    //             let file_list_candidates = file_list.info_list().fuzzy_search(query, true);
-    //             let function = file_list.info_list().interactive_select(
-    //                 query,
-    //                 &file_list_candidates,
-    //                 "file list",
-    //             )?;
-    //             (function, name)
-    //         }
-    //     }
-    // };
-    //
-    // Ok(FunctionToCheck {
-    //     info: function,
-    //     name: name.to_string(),
-    // })
 }
 
 /// Resolved information of the function to check

@@ -3,14 +3,10 @@ use cu::pre::*;
 use crate::config::Config;
 use crate::elf;
 use crate::fl;
-use crate::ui;
 
 use crate::cmd_check::{Args, FunctionChecker, check_all, check_single};
 
-pub fn run(
-    config: &Config,
-    args: &Args, //, python: PyCmdSender
-) -> cu::Result<()> {
+pub fn run(config: &Config, args: &Args) -> cu::Result<()> {
     let version = args.version();
 
     let orig_elf = elf::load_original_elf(config, version)?;
@@ -63,17 +59,7 @@ pub fn run(
     )?;
 
     if let Some(func) = &args.function {
-        let x = ui::profile_scope("check_single total");
-        check_single::run_check_single(
-            config,
-            //&python,
-            &checker,
-            &all_functions,
-            file_list,
-            func,
-            args,
-        )?;
-        drop(x);
+        check_single::run_check_single(config, &checker, &all_functions, file_list, func, args)?;
     } else {
         check_all::run_check_all(config, version, &checker, file_list, args)?;
     }

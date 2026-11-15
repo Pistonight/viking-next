@@ -7,6 +7,5 @@ wheels/
 .venv
 target
 *.so
-*.pyi
 .ruff_cache
 .task
