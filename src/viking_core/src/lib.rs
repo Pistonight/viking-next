@@ -1,26 +1,35 @@
-use mimalloc::MiMalloc;
-
+#[cfg(feature = "global-allocator")]
 #[global_allocator]
-static GLOBAL: MiMalloc = MiMalloc;
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 /// Bindings exposed to Python
+#[cfg(feature = "python")]
 mod pyapi;
 
+/// CLI entry points in Rust
+pub mod cli;
+
 /// The `check` command
+#[cfg(feature = "cmd-check")]
 mod cmd_check;
+
 /// The `decompme` command
+#[cfg(feature = "cmd-decompme")]
 mod cmd_decompme;
+
 /// The `listsym` command
+#[cfg(feature = "cmd-listsym")]
 mod cmd_listsym;
 
 /// ELF utils
+#[cfg(feature = "elf")]
 pub mod elf;
 
 /// File List utils
 pub mod fl;
 
 /// CPP demangle utils
-mod demangle;
+pub mod demangle;
 
 /// Terminal UI utils
 pub mod ui;
@@ -29,4 +38,4 @@ pub mod ui;
 pub mod config;
 
 /// Python interop utils
-mod interop;
+pub mod interop;

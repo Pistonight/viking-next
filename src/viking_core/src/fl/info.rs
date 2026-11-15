@@ -4,12 +4,14 @@ use std::sync::Arc;
 
 use colored::Colorize;
 use cu::pre::*;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
 use crate::demangle;
 use crate::fl;
+#[cfg(feature = "python")]
 use crate::interop;
 use crate::ui;
 
@@ -48,7 +50,7 @@ impl InfoList {
         known_functions
     }
     pub fn interactive_fuzzy_select(&self, name: &str, description: &str) -> cu::Result<Info> {
-        let candidates = self.fuzzy_search(name);
+        let candidates = self.fuzzy_search(name, true);
         self.interactive_select(name, &candidates, description)
     }
     pub fn interactive_select(
@@ -57,7 +59,18 @@ impl InfoList {
         candidates: &[Info],
         description: &str,
     ) -> cu::Result<Info> {
-        let selected = ui::interactive_select(query, description, candidates, |info| {
+        let match_word = if candidates.len() == 1 {
+            "match"
+        } else {
+            "matches"
+        };
+        let prompt = format!(
+            "{} is ambiguous in {} (found {} {match_word}); did you mean:",
+            query.dimmed(),
+            description.red(),
+            candidates.len()
+        );
+        let selected = ui::interactive_select(&prompt, candidates, |info| {
             ui::format_symbol_name(info.name())
         })?;
         match selected {
@@ -69,15 +82,23 @@ impl InfoList {
             Some(info) => Ok(info.clone()),
         }
     }
-    /// Fuzzy search symbol info given the query string. Return matched symbol infos
-    pub fn fuzzy_search(&self, name: &str) -> Vec<Info> {
-        let exact_match = self
-            .0
-            .par_iter()
-            .find_first(|function| function.name() == name);
 
-        if let Some(exact_match) = exact_match {
-            return vec![exact_match.clone()];
+    /// Find a function by name
+    pub fn find_exact(&self, name: &str) -> Option<Info> {
+        self.0
+            .par_iter()
+            .find_first(|function| function.name() == name)
+            .cloned()
+    }
+
+    /// Fuzzy search symbol info given the query string. Return matched symbol infos.
+    ///
+    /// If `prefer_exact` is true, it will return just the exact match if there is one.
+    pub fn fuzzy_search(&self, name: &str, prefer_exact: bool) -> Vec<Info> {
+        if prefer_exact {
+            if let Some(exact_match) = self.find_exact(name) {
+                return vec![exact_match.clone()];
+            }
         }
 
         // Find all functions whose demangled name contains the specified string.
@@ -251,7 +272,7 @@ impl InfoData {
 /// Label for an address
 #[derive(Deserialize, Clone, Debug, PartialEq, Eq, Display)]
 #[display("{self:#?}")]
-#[pyclass(from_py_object, str)]
+#[cfg_attr(feature = "python", pyclass(from_py_object, str))]
 #[serde(untagged)]
 pub enum AddressLabel {
     /// Address has a single name
@@ -272,7 +293,7 @@ impl From<Vec<String>> for AddressLabel {
         Self::Multi(value)
     }
 }
-#[pymethods]
+#[cfg_attr(feature = "python", pymethods)]
 impl AddressLabel {
     /// Get the number of names
     #[allow(clippy::len_without_is_empty)] // it's guaranteed to be not empty
@@ -315,7 +336,7 @@ mod status_imp {
     /// Decompilation status of a function/symbol
     #[derive(Clone, Copy, Serialize, Deserialize, Debug, Display, PartialEq, Eq)]
     #[display("{}", self.description())]
-    #[pyclass(from_py_object, str)]
+    #[cfg_attr(feature = "python", pyclass(from_py_object, str))]
     pub enum Status {
         /// Decompiled and matching
         Matching,
@@ -382,6 +403,7 @@ impl Status {
 }
 
 #[rustfmt::skip]
+#[cfg(feature = "python")]
 #[pymethods]
 impl Status {
     /// Parse status string into enum

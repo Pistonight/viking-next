@@ -144,17 +144,17 @@ pub struct ConfigRepo {
     ///
     /// A project may have more than 1 data symbol file. Each data symbol file
     /// should be a CSV with 2 columns: Address and Name (in this order without a header)
-    pub data_symbols: Vec<PathBuf>,
+    data_symbols: Vec<PathBuf>,
 
     /// Name of the file or function listing inside the data or versioned data directory.
     ///
     /// If the name ends with `.csv`, it's assumed to use the old CSV listing format.
     /// Otherwise it's assumed to be the new YAML format.
-    pub file_list: PathBuf,
+    file_list: PathBuf,
 
     /// Name of the original game elf inside the data or versioned data directory.
     #[serde(default = "ConfigRepo::default_original_elf")]
-    pub original_elf: PathBuf,
+    original_elf: PathBuf,
 
     /// Path to the build directory, relative to `root_path`
     ///
@@ -170,19 +170,19 @@ pub struct ConfigRepo {
 
     /// Path to the `build.ninja` file, relative to the build or versioned build directory
     #[serde(default = "ConfigRepo::default_build_ninja")]
-    pub build_ninja: PathBuf,
+    build_ninja: PathBuf,
 
     /// Path to the compilation database file (`compile_commands.json`), relative to the build or versioned build directory
     #[serde(default = "ConfigRepo::default_compilation_database")]
-    pub compilation_database: PathBuf,
+    compilation_database: PathBuf,
 
     /// Paths to find tools, relative to `root_path`.
-    pub toolchain_bin_paths: Vec<PathBuf>,
+    toolchain_bin_paths: Vec<PathBuf>,
 
     /// If our binaries repo is used, the path to that in the project. Relative to `root_path`.
     ///
     /// Tools found in `toolchain_bin_paths` are preferred if found
-    pub nx_decomp_tools_binaries: Option<PathBuf>,
+    nx_decomp_tools_binaries: Option<PathBuf>,
 }
 
 impl ConfigRepo {
@@ -376,8 +376,8 @@ pub struct ConfigCheckMismatchAsmDiffer {
 #[display("{:#?}", self)]
 #[pyclass(from_py_object, str, module = "viking._core")]
 pub struct ConfigDecompMe {
-    #[pyo3(get)]
     /// Target configuration. Must specify either ( Compiler and Flags ) or ( Preset Id ).
+    #[pyo3(get)]
     #[serde(flatten)]
     pub target: ConfigDecompMeTarget,
 

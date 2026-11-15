@@ -12,28 +12,22 @@ viking.cli.check(["MyFunction"])
 ```
 """
 
-_USAGE = """NX decomp tools CLI
-
-Usage: viking COMMAND [ARGS...]
-"""
-
 import sys
-import traceback
 import typing
-
-from ._core import _core_cmd_check, _core_cmd_decompme, _core_cmd_listsym
-from .core import core_state, run_cmd_host_loop
 
 
 def _commands():
-    return [check, decompme, listsym]
+    return [check, decompme, listsym, py_json_call]
 
 
 def print_help():
     """Print help text, which shows what commands are available"""
-    print(_USAGE)
+
+    print("NX decomp tools CLI\n\nUsage: viking COMMAND [ARGS...]\n")
     print("Commands:")
     for command in _commands():
+        if not command.__doc__ or command.__doc__.startswith("@private"):
+            continue
         print(f"  {command.__name__:<12}{command.__doc__}")
     print()
     print("Run viking COMMAND --help to see help for each command")
@@ -46,6 +40,8 @@ def main() -> typing.NoReturn:
     except SystemExit as e:
         sys.exit(e.code)
     except Exception as e:  # noqa: BLE001
+        import traceback
+
         # hide this frame
         if e.__traceback__:
             e.__traceback__ = e.__traceback__.tb_next
@@ -59,7 +55,8 @@ def main_argv(args: list[str]) -> typing.NoReturn:
     if len(args) < 1:
         print_help()
         sys.exit(0)
-    command_name = args[0]
+    command_name_orig = args[0]
+    command_name = command_name_orig.replace("-", "_")
     for command in _commands():
         if command_name == command.__name__:
             try:
@@ -77,20 +74,43 @@ def main_argv(args: list[str]) -> typing.NoReturn:
     sys.exit(127)
 
 
+def py_json_call(args: list[str]) -> typing.NoReturn:
+    """@private Execute a json-serialized command"""
+    # In this path we don't import .core to skip config loading
+    # which saves point something ms
+    if len(args) == 0:
+        from . import ui
+
+        ui.error("expected serialized json command")
+        sys.exit(127)
+    from . import _core
+    from .core import run_json_command
+
+    run_json_command(_core.parse_json_command(args[0]))
+
+
 def check(args: list[str]) -> typing.NoReturn:
     """Check compiled bytecode of a function matches the assembly found within the game"""
-    check_cmd = _core_cmd_check.run(core_state, args)
-    exit_status = run_cmd_host_loop(check_cmd)
+    from ._core import _core_cmd_check
+    from .core import core_state
+
+    exit_status = _core_cmd_check.run(core_state, args)
     sys.exit(exit_status)
 
 
 def decompme(args: list[str]) -> typing.NoReturn:
     """Upload a function to decomp.me"""
+    from ._core import _core_cmd_decompme
+    from .core import core_state
+
     exit_status = _core_cmd_decompme.run(core_state, args)
     sys.exit(exit_status)
 
 
 def listsym(args: list[str]) -> typing.NoReturn:
     """Print symbols in the output ELF"""
+    from ._core import _core_cmd_listsym
+    from .core import core_state
+
     exit_status = _core_cmd_listsym.run(core_state, args)
     sys.exit(exit_status)

@@ -14,10 +14,12 @@ from diff import main_early, main_late  # pyright: ignore[reportMissingTypeStubs
 # this initializes the global args parser used by asm_differ
 main_early()
 
-# hijack the parser so we can inject args
+# hijack the parser so we can inject args, instead of parsing from the command line args
 from diff import parser as _asm_differ_cli_parser  # pyright: ignore[reportMissingTypeStubs]
 
 assert _asm_differ_cli_parser is not None, "set by main_early"
+# override it's program argument
+_asm_differ_cli_parser.prog = "asm-differ"
 
 
 def asm_differ(args: list[str]):
@@ -39,6 +41,10 @@ def asm_differ_optional_arguments_help() -> str:
     parts = help.split("optional arguments:")
     if len(parts) < 2:
         parts = help.split("options:")
+
+    def remove_help(s: str) -> str:
+        return "\n".join(x for x in s.splitlines() if "--help" not in x)
+
     if len(parts) < 2:
-        return help
-    return parts[1]
+        return remove_help(help)
+    return remove_help(parts[1])

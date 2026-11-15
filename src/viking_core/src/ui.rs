@@ -1,6 +1,7 @@
 use std::io::{StderrLock, Write};
 
 use colored::*;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 
 use crate::demangle;
@@ -13,25 +14,29 @@ pub fn init_prompt_settings() {
 }
 
 /// Macro for [`print_step`]
+#[allow(unused)]
 macro_rules! step {
     ($($arg:tt)*) => { $crate::ui::print_step(&format!($($arg)*)) };
 }
+#[allow(unused)]
 pub(crate) use step;
 
 /// Print a message using the step formatting
-#[pyfunction]
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn print_step(msg: &str) {
     println!("{} {}", ">>>".bright_green(), msg.bright_green())
 }
 
 /// Macro for [`print_note`]
+#[allow(unused)]
 macro_rules! note {
     ($($arg:tt)*) => { $crate::ui::print_note(&format!($($arg)*)) };
 }
+#[allow(unused)]
 pub(crate) use note;
 
 /// Print a message using the note formatting
-#[pyfunction]
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn print_note(msg: &str) {
     eprintln!("{}{}{}", "note".bold().cyan(), ": ".bold(), msg.bold())
 }
@@ -46,13 +51,15 @@ pub fn print_warn_or_error(msg: &str, is_error: bool) {
 }
 
 /// Macro for [`print_warning`]
+#[allow(unused)]
 macro_rules! warn_ {
     ($($arg:tt)*) => { $crate::ui::print_warning(&format!($($arg)*)) };
 }
+#[allow(unused)]
 pub(crate) use warn_ as warn;
 
 /// Print a message using warning formatting
-#[pyfunction]
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn print_warning(msg: &str) {
     let stderr = std::io::stderr();
     let mut lock = stderr.lock();
@@ -68,7 +75,7 @@ pub fn print_warning(msg: &str) {
 ///   |  detail...
 ///   |  detail...
 /// ```
-#[pyfunction]
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn print_warning_with_detail(msg: &str, detail: &str) {
     let stderr = std::io::stderr();
     let mut lock = stderr.lock();
@@ -89,13 +96,15 @@ fn print_warning_locked(lock: &mut StderrLock, msg: &str) {
 
 /// Macro for [`print_error`]
 #[macro_export]
+#[allow(unused)]
 macro_rules! error {
     ($($arg:tt)*) => { $crate::ui::print_error(&format!($($arg)*)) };
 }
+#[allow(unused)]
 pub(crate) use error;
 
 /// Print a message using error formatting
-#[pyfunction]
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn print_error(msg: &str) {
     let stderr = std::io::stderr();
     let mut lock = stderr.lock();
@@ -111,7 +120,7 @@ pub fn print_error(msg: &str) {
 ///   |  detail...
 ///   |  detail...
 /// ```
-#[pyfunction]
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn print_error_with_detail(msg: &str, detail: &str) {
     let stderr = std::io::stderr();
     let mut lock = stderr.lock();
@@ -140,7 +149,7 @@ fn print_detail_locked(lock: &mut StderrLock, msg: &str) {
 }
 
 /// Format a mangled symbol name for display. Show as `{demangled} ({mangled})`
-#[pyfunction]
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn format_symbol_name(name: &str) -> String {
     match demangle::demangle_str(name) {
         Ok(demangled) => format!("{} ({})", demangled.blue(), name.blue().dimmed()),
@@ -149,13 +158,13 @@ pub fn format_symbol_name(name: &str) -> String {
 }
 
 /// Format an address for display
-#[pyfunction]
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn format_address(addr: u64) -> String {
     format!("{addr:#x}").green().to_string()
 }
 
 /// Clear the terminal
-#[pyfunction]
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn clear_terminal() {
     crossterm::execute!(
         std::io::stdout(),
@@ -166,8 +175,7 @@ pub fn clear_terminal() {
 }
 
 pub fn interactive_select<'a, T, FnFormat: Fn(&T) -> String>(
-    query: &str,
-    description: &str,
+    prompt: &str,
     options: &'a [T],
     fn_format: FnFormat,
 ) -> cu::Result<Option<&'a T>> {
@@ -176,17 +184,11 @@ pub fn interactive_select<'a, T, FnFormat: Fn(&T) -> String>(
         [_only_match] => return Ok(Some(&options[0])),
         _ => {}
     }
-    let prompt = format!(
-        "{} is ambiguous in {} (found {} matches); did you mean:",
-        query.dimmed(),
-        description.red(),
-        options.len()
-    );
     clear_terminal();
 
     let formatted_options = options.iter().map(fn_format).collect();
 
-    let i = inquire::Select::new(&prompt, formatted_options)
+    let i = inquire::Select::new(prompt, formatted_options)
         .with_starting_cursor(0)
         .with_page_size(crossterm::terminal::size()?.1 as usize / 2)
         .raw_prompt()?
@@ -209,4 +211,16 @@ pub fn confirm(prompt: &str, default_value: bool, help: Option<&str>) -> cu::Res
         cu::bail!("Operation was cancelled by the user");
     }
     Ok(())
+}
+
+/// A helper for printing duration for a section of code to debug performance issues
+pub struct ProfileScope(String, std::time::Instant);
+/// A helper for printing duration for a section of code to debug performance issues
+pub fn profile_scope(x: &str) -> ProfileScope {
+    ProfileScope(x.to_string(), std::time::Instant::now())
+}
+impl Drop for ProfileScope {
+    fn drop(&mut self) {
+        println!("[perf] {}: {}ms", self.0, self.1.elapsed().as_millis());
+    }
 }

@@ -61,13 +61,18 @@ impl<'a> SymbolTableByName<'a> {
         )
     }
 
-    /// Search for an exact match for the query (as a mangled symbol),
-    /// or find all entries whose mangled or demangled name contains the query
-    /// as substring.
-    pub fn fuzzy_search<'s>(&'s self, query: &str) -> Vec<(&'a str, &'s Sym)> {
-        // exact match
-        if let Some((name, info)) = self.get_key_value(query) {
-            return vec![(name, info)];
+    /// Search for a symbol based on a query.
+    ///
+    /// If `prefer_exact` is `true` and `query` matches a symbol exactly,
+    /// that symbol will be the only value returned.
+    ///
+    /// Otherwise, find all entries whose mangled or demangled name contains the query
+    pub fn fuzzy_search<'s>(&'s self, query: &str, prefer_exact: bool) -> Vec<(&'a str, &'s Sym)> {
+        if prefer_exact {
+            // exact match
+            if let Some((name, info)) = self.get_key_value(query) {
+                return vec![(name, info)];
+            }
         }
 
         // all-substring/demangle search
@@ -90,7 +95,18 @@ impl<'a> SymbolTableByName<'a> {
         candidates: &[(&'a str, &'s Sym)],
         description: &str,
     ) -> cu::Result<(&'a str, &'s Sym)> {
-        let selected = ui::interactive_select(query, description, candidates, |(name, _)| {
+        let match_word = if candidates.len() == 1 {
+            "match"
+        } else {
+            "matches"
+        };
+        let prompt = format!(
+            "{} is ambiguous in {} (found {} {match_word}); did you mean:",
+            query.dimmed(),
+            description.red(),
+            candidates.len()
+        );
+        let selected = ui::interactive_select(&prompt, candidates, |(name, _)| {
             ui::format_symbol_name(name)
         })?;
         match selected {

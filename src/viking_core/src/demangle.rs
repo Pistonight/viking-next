@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use pyo3::prelude::*;
 
 /// Demangle a C++ symbol.
+#[inline(always)]
 pub fn demangle_str(name: &str) -> cu::Result<String> {
     if !name.starts_with("_Z") {
         cu::bail!("not an external mangled name");
@@ -15,6 +16,7 @@ pub fn demangle_str(name: &str) -> cu::Result<String> {
 
 /// Try demangle the name, or return the name unchanged if it cannot be demangled
 #[pyfunction]
+#[inline(always)]
 pub fn demangle_or_as_is(name: &str) -> Cow<'_, str> {
     match demangle_str(name) {
         Ok(x) => x.into(),

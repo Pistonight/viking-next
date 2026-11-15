@@ -26,10 +26,26 @@ tasks:
   check:
     desc: Check code for issues
     cmds:
-      - task: py-bindgen
-      - uv run --no-sync basedpyright --warnings
-      # TODO: implementation in progress so there are unused stuff
+      # - task: py-bindgen
+      # - uv run --no-sync basedpyright --warnings
       - task: cargo-clippy
+        vars:
+          FLAGS: --no-default-features
+      - task: cargo-clippy
+        vars:
+          FLAGS: --no-default-features --features elf
+      - task: cargo-clippy
+        vars:
+          FLAGS: --no-default-features --features cmd-check
+      - task: cargo-clippy
+        vars:
+          FLAGS: --no-default-features --features cmd-decompme
+      - task: cargo-clippy
+        vars:
+          FLAGS: --no-default-features --features cmd-listsym
+      - task: cargo-clippy
+        vars:
+          FLAGS: --no-default-features --features python
       - uv run --no-sync ruff format src --check
       - uv run --no-sync ruff check
       - cargo fmt --check
@@ -39,7 +55,12 @@ tasks:
     cmds:
       - uv run --no-sync ruff format src
       - uv run --no-sync ruff check --fix --fixable I001 # only format imports
-      - cargo fmt
+      - cargo fmt --all
+
+  test:
+    desc: Run unit tests
+    cmds:
+      - cargo test --all-targets --all-features
 
   build:
     desc: Build the wheel

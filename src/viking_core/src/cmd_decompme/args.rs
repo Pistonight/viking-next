@@ -34,5 +34,8 @@ pub struct Args {
 /// is already printed
 pub fn parse_args(cli_args: &[String]) -> Option<Args> {
     // need to put a arg[0] as the placeholder for the binary
-    cu::cli::try_parse(std::iter::once("decompme").chain(cli_args.iter().map(|x| x.as_str())))
+    cu::cli::try_parse(
+        std::iter::once("decompme").chain(cli_args.iter().map(|x| x.as_str())),
+        true,
+    )
 }

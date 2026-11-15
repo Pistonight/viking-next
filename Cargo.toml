@@ -1,3 +1,7 @@
 [workspace]
 resolver = "2"
 members = [ "src/viking_core" ]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

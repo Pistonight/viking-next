@@ -1,7 +1,8 @@
 """Core functionality such as loading the configuration file and Python-rust interop."""
 
 import atexit
-import traceback
+import sys
+import typing
 from pathlib import Path
 
 from . import _core, ui
@@ -15,7 +16,12 @@ from . import _core, ui
 # Any Rust code that needs this global state should
 # take core_state (State in Rust) as the first parameter
 
-core_state = _core.init_core_state()
+
+def _init_core_state():
+    return _core.init_core_state([sys.executable, sys.argv[0]])
+
+
+core_state = _init_core_state()
 """@private"""
 
 
@@ -39,45 +45,28 @@ def get_config() -> Config:
 # ======= command =======
 
 
-def run_cmd_host_loop(cmd_host: _core.PyCmdHost):
-    """@private Receive commands from Rust function running on a separate thread"""
-    while (cmd := cmd_host.recv()) is not None:
-        try:
-            match cmd:
-                case _core.PyCmd.AsmDiffer(args):
-                    try:
-                        # need this here to avoid circular import
-                        from .asm_differ import asm_differ
+def run_json_command(cmd: _core.PyCmd) -> typing.NoReturn:
+    """@private Execute command received from Rust"""
+    match cmd:
+        case _core.PyCmd.AsmDiffer(args):
+            try:
+                # need this here to avoid circular import
+                from .asm_differ import asm_differ
 
-                        ui.step("launching asm-differ...")
-                        asm_differ(args)
-                        cmd_host.send_result(True, "")
-                    except SystemExit as e:
-                        if e.code == 0:
-                            cmd_host.send_result(True, "")
-                        else:
-                            cmd_host.send_result(
-                                False, f"asm-differ exited with code {e.code}"
-                            )
-                    except KeyboardInterrupt:
-                        # treat the same as exiting normally
-                        cmd_host.send_result(True, "")
-                case _core.PyCmd.AsmDifferOptionalArgsHelp():
-                    # need this here to avoid circular import
-                    from .asm_differ import asm_differ_optional_arguments_help
+                ui.step("launching asm-differ...")
+                asm_differ(args)
+            except KeyboardInterrupt:
+                # treat the same as exiting normally
+                pass
+            sys.exit(0)
+        case _core.PyCmd.AsmDifferOptionalArgsHelp():
+            # need this here to avoid circular import
+            from .asm_differ import asm_differ_optional_arguments_help
 
-                    cmd_host.send_result(True, asm_differ_optional_arguments_help())
-                case _:
-                    cmd_host.send_result(
-                        False, f"unexpected: did not implement handler for {cmd}"
-                    )
-        except Exception:  # noqa: BLE001
-            traceback.print_exc()
-            cmd_host.send_result(
-                False, f"an exception occured while running the command: {cmd}"
-            )
-
-    cmd_host.join()
+            print(asm_differ_optional_arguments_help())
+            sys.exit(0)
+        case _:
+            raise Exception(f"unknown json command: {cmd}")  # noqa: TRY002
 
 
 # ======= config =======

@@ -1,3 +1,4 @@
+use cu::pre::*;
 use pyo3::prelude::*;
 
 use crate::config::Config;
@@ -59,7 +60,8 @@ mod _core {
 
     /// Initialize the rust extension module
     #[pyfunction]
-    pub fn init_core_state() -> PyResult<State> {
+    pub fn init_core_state(python_command: Vec<String>) -> PyResult<State> {
+        interop::set_python_command(python_command);
         // this isn't per-module state but not really anything we can do
         // since it's in 3rd party state, but shouldn't really matter
         crate::ui::init_prompt_settings();
@@ -76,54 +78,45 @@ mod _core {
 
     // ======= command =======
     #[pymodule_export]
-    use crate::interop::{PyCmd, PyCmdHost};
+    use crate::interop::PyCmd;
+
+    #[pyfunction]
+    pub fn parse_json_command(s: &str) -> PyResult<PyCmd> {
+        interop::into_pyresult(json::parse::<PyCmd>(s))
+    }
 
     // ======= cli =======
 
+    #[cfg(feature = "cmd-check")]
     #[pymodule]
     mod _core_cmd_check {
         use super::*;
         #[pyfunction]
-        fn run(state: State, args: Vec<String>) -> PyCmdHost {
-            interop::execute_with_cmd_host(move |python| {
-                match crate::cmd_check::parse_args(&state.config, &args, &python) {
-                    None => Ok(127),
-                    Some(args) => {
-                        crate::cmd_check::run(&state.config, &args, python)?;
-                        Ok(0)
-                    }
-                }
-            })
+        fn run(state: State, args: Vec<String>) -> PyResult<u32> {
+            let result = crate::cli::check_config_argv(&state.config, args);
+            interop::into_pyresult(result)
         }
     }
 
+    #[cfg(feature = "cmd-decompme")]
     #[pymodule]
     mod _core_cmd_decompme {
         use super::*;
         #[pyfunction]
         fn run(state: State, args: Vec<String>) -> PyResult<u32> {
-            match crate::cmd_decompme::parse_args(&args) {
-                None => Ok(127),
-                Some(args) => match crate::cmd_decompme::run(&state.config, args) {
-                    Err(e) => interop::into_pyresult(Err(e)),
-                    Ok(_) => Ok(0),
-                },
-            }
+            let result = crate::cli::decompme_config_argv(&state.config, args);
+            interop::into_pyresult(result)
         }
     }
 
+    #[cfg(feature = "cmd-listsym")]
     #[pymodule]
     mod _core_cmd_listsym {
         use super::*;
         #[pyfunction]
         fn run(state: State, args: Vec<String>) -> PyResult<u32> {
-            match crate::cmd_listsym::parse_args(&args) {
-                None => Ok(127),
-                Some(args) => match crate::cmd_listsym::run(&state.config, args) {
-                    Err(e) => interop::into_pyresult(Err(e)),
-                    Ok(_) => Ok(0),
-                },
-            }
+            let result = crate::cli::listsym_config_argv(&state.config, args);
+            interop::into_pyresult(result)
         }
     }
 

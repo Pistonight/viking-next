@@ -1,93 +1,101 @@
-use std::sync::mpsc;
-use std::thread::{self, JoinHandle};
+use std::ffi::{OsStr, OsString};
+use std::process::{Command, ExitStatus, Output};
+use std::sync::Mutex;
 
 use cu::pre::*;
 use pyo3::prelude::*;
 
-use crate::interop;
+/// The command to execute python intrepreter that has viking installed
+static VIKING_PYTHON_COMMAND: Mutex<Option<Vec<OsString>>> = Mutex::new(None);
 
-/// Wrap an execution with a handle to send Python commands
-pub fn execute_with_cmd_host<F: FnOnce(PyCmdSender) -> cu::Result<u32> + Send + 'static>(
-    f: F,
-) -> PyCmdHost {
-    let (cmd_send, cmd_recv) = mpsc::channel();
-    let (res_send, res_recv) = mpsc::channel();
-    let task_thread = Some(thread::spawn(move || f(PyCmdSender { cmd_send, res_recv })));
-    let cmd_host = RustPyCmdHost {
-        cmd_recv,
-        res_send,
-        task_thread,
-    };
-    PyCmdHost::new(cmd_host)
-}
-
-/// State for sending commands to Python to run.
+/// Set the Python command to execute viking.
 ///
-/// This is easier than implementing callback from Rust to python,
-/// because Python objects are tied to the interpreter, and error
-/// handling gets trickier too. Ideally we should never need to call
-/// Python from Rust other than interop with external python libraries
-/// like asm-differ
-#[derive(Debug)]
-pub struct RustPyCmdHost {
-    /// Channel for python thread to receive commands
-    cmd_recv: mpsc::Receiver<PyCmd>,
-    /// Channel for python to send result back
-    res_send: mpsc::Sender<(bool, String)>,
-    /// Thread running Rust that may send commands to python
-    task_thread: Option<JoinHandle<cu::Result<u32>>>,
+/// Usually if viking is invoked from it's Python CLI, this is automatically
+/// called as part of the initialization. However, for performance reason,
+/// viking also ships its CLI as native binaries, which is faster on paths
+/// when no Python code needs to be executed.
+///
+/// However, in case Python code does need to run, for example opening ASM
+/// diffing as part of the `check` tool, the native binary needs to know
+/// how to invoke the viking Python CLI.
+///
+/// For example, this should be something like `["uv", "run", "viking"]` for UV setup,
+/// or `["python3", "-m", "viking"]` for raw Python setup.
+pub fn set_python_command<I: IntoIterator<Item = impl AsRef<OsStr>>>(command: I) {
+    let mut s_command = VIKING_PYTHON_COMMAND
+        .lock()
+        .expect("failed to lock VIKING_PYTHON_COMMAND");
+    *s_command = Some(
+        command
+            .into_iter()
+            .map(|x| x.as_ref().to_os_string())
+            .collect(),
+    )
 }
-interop::make_handle_class! {
-    /// Host for receiving commands from Rust
-    #[handle(RustPyCmdHost, module = "viking._core")]
-    pub mut struct PyCmdHost;
+
+/// Set VIKING_PYTHON_COMMAND from VIKING_PYTHON_COMMAND environment variable
+#[cu::context(
+    "failed to set python command from VIKING_PYTHON_COMMAND environment variable; this environment variable is required when running viking native binaries"
+)]
+fn set_python_command_from_env() -> cu::Result<()> {
+    // for now we don't support quoting... for simplicity
+    let command = cu::env_var("VIKING_PYTHON_COMMAND")?;
+    if command.is_empty() {
+        cu::bail!("VIKING_PYTHON_COMMAND is empty");
+    }
+    set_python_command(command.split_whitespace());
+    Ok(())
 }
 
-#[pymethods]
-impl PyCmdHost {
-    /// Blocks Python code until a command is received, or None
-    /// if sender is dropped
-    pub fn recv(&self) -> Option<PyCmd> {
-        if self.0 == 0 {
-            return None;
-        }
-        self.cmd_recv.recv().ok()
-    }
-
-    /// Send a result back to Rust. None means success, otherwise
-    /// sends an error message string
-    pub fn send_result(&self, success: bool, result: String) {
-        let _ = self.res_send.send((success, result));
-    }
-
-    /// Called after `recv()` returns `None` to wait for the Rust side
-    /// to finish running
-    pub fn join(&mut self) -> PyResult<u32> {
-        if self.0 == 0 {
-            return Ok(0);
-        }
-        let Some(thread) = self.task_thread.take() else {
-            return Ok(0);
-        };
-        fn join_imp(thread: JoinHandle<cu::Result<u32>>) -> cu::Result<u32> {
-            match thread.join() {
-                Ok(x) => x,
-                Err(e) => {
-                    let info = cu::best_effort_panic_info(&e);
-                    cu::bail!("rust panicked: {info}");
-                }
+fn get_python_command(args: Vec<OsString>) -> cu::Result<(OsString, Vec<OsString>)> {
+    let (arg0, command) = loop {
+        let command = VIKING_PYTHON_COMMAND
+            .lock()
+            .expect("failed to lock VIKING_PYTHON_COMMAND");
+        match &*command {
+            None => {
+                drop(command);
+                set_python_command_from_env()?;
+                continue;
+            }
+            Some(x) => {
+                let mut command = Vec::with_capacity(x.len() + args.len());
+                let mut iter = x.iter();
+                let arg0 = cu::check!(
+                    iter.next(),
+                    "viking python command is missing executable (arg0)"
+                )?;
+                command.extend(iter.cloned());
+                command.extend(args);
+                break (arg0.clone(), command);
             }
         }
-        let result = join_imp(thread);
-        // drop the host
-        let _ = unsafe { self.claim_by_ref() };
-        self.0 = 0;
-        interop::into_pyresult(result)
+    };
+    Ok((arg0, command))
+}
+
+pub mod python {
+    use super::*;
+    /// Call asm-differ with the given args
+    #[cu::context("failed to run asm-differ")]
+    pub fn asm_differ(args: impl IntoIterator<Item = impl Into<String>>) -> cu::Result<()> {
+        let args = args.into_iter().map(Into::into).collect();
+        let cmd = PyCmd::AsmDiffer(args);
+        cmd.build()?.exec_inherit(true)?;
+        Ok(())
+    }
+    /// Print optional arguments of asm-differ
+    #[cu::context("failed to print asm-differ optional arguments")]
+    pub fn print_asm_differ_optional_arguments() -> cu::Result<()> {
+        PyCmd::AsmDifferOptionalArgsHelp()
+            .build()?
+            .exec_inherit(true)?;
+        Ok(())
     }
 }
 
 /// Command send from Rust to Python to execute some Python in the middle of Rust
-#[derive(Debug, Clone, Display)]
+#[derive(Debug, Clone, Display, Serialize, Deserialize)]
 #[display("{self:?}")]
 #[pyclass(str, from_py_object)]
 pub enum PyCmd {
@@ -96,48 +104,43 @@ pub enum PyCmd {
     /// Print optional arguments of asm-differ
     AsmDifferOptionalArgsHelp(),
 }
-
-/// Sender facade for Rust to dispatch PyCmd. Dropping
-/// the sender marks the end of the API lifetime
-pub struct PyCmdSender {
-    cmd_send: mpsc::Sender<PyCmd>,
-    res_recv: mpsc::Receiver<(bool, String)>,
+impl PyCmd {
+    #[cu::context("failed to build PyCmd")]
+    pub fn build(&self) -> cu::Result<PyCmdExecutor> {
+        let json = json::stringify(self)?;
+        let args = vec!["py-json-call".into(), json.into()];
+        Ok(PyCmdExecutor { args })
+    }
 }
-impl PyCmdSender {
-    /// Format help for optional arguments for asm-differ
-    pub fn asm_differ_optional_arguments_help(&self) -> cu::Result<String> {
-        cu::check!(
-            self.do_send(PyCmd::AsmDifferOptionalArgsHelp()),
-            "failed to format asm-differ optional arguments help"
-        )
-    }
-    /// Call asm-differ with the given args
-    pub fn asm_differ(&self, args: impl IntoIterator<Item = impl Into<String>>) -> cu::Result<()> {
-        let args = args.into_iter().map(Into::into).collect();
-        let args_debug = format!("{args:?}");
-        let cmd = PyCmd::AsmDiffer(args);
-        cu::check!(
-            self.do_send(cmd),
-            "asm-differ command failed, args: {args_debug}"
-        )?;
-        Ok(())
-    }
 
-    fn do_send(&self, cmd: PyCmd) -> cu::Result<String> {
-        if self.cmd_send.send(cmd).is_err() {
-            cu::bail!("unexpected: python cmd host's command channel is disconnected");
+pub struct PyCmdExecutor {
+    args: Vec<OsString>,
+}
+impl PyCmdExecutor {
+    pub fn exec_captured(self, check: bool) -> cu::Result<Output> {
+        let (arg0, command) = get_python_command(self.args)?;
+        let child = cu::check!(
+            Command::new(&arg0).args(&command).output(),
+            "failed to spawn '{}' with args '{:?}'",
+            arg0.display(),
+            command
+        )?;
+        if check && !child.status.success() {
+            cu::bail!("viking python process exited with {}", child.status);
         }
-        match self.res_recv.recv() {
-            Err(_) => {
-                cu::bail!("unexpected: python cmd host's result channel is disconnected");
-            }
-            Ok((ok, response)) => {
-                if !ok {
-                    cu::bail!("python cmd returned error: {response}")
-                } else {
-                    Ok(response)
-                }
-            }
+        Ok(child)
+    }
+    pub fn exec_inherit(self, check: bool) -> cu::Result<ExitStatus> {
+        let (arg0, command) = get_python_command(self.args)?;
+        let status = cu::check!(
+            Command::new(&arg0).args(&command).status(),
+            "failed to spawn '{}' with args '{:?}'",
+            arg0.display(),
+            command
+        )?;
+        if check && !status.success() {
+            cu::bail!("viking python process exited with {status}");
         }
+        Ok(status)
     }
 }
