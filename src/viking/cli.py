@@ -69,7 +69,8 @@ def main_argv(args: list[str]) -> typing.NoReturn:
             # in case command returns because of bad implementation
             sys.exit(126)  # pyright: ignore[reportUnreachable]
 
-    print(f"Unknown command: {command_name}")
+    if command_name_orig != "-h" and command_name_orig != "--help":
+        print(f"Unknown command: {command_name_orig}")
     print_help()
     sys.exit(127)
 

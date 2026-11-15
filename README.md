@@ -1,6 +1,7 @@
 # viking
 
-This is the rewrite and spiritual successor of [nx-decomp-tools](https://github.com/open-ead/nx-decomp-tools).
+This is the rewrite and spiritual successor of [nx-decomp-tools](https://github.com/open-ead/nx-decomp-tools) -
+tools for various NX decompilation (more precisely, matching reimplementation) projects.
 
 The goals of the rewrite are:
 - **Deduplication**: Combine the Python and Rust tools into a single Python package
@@ -15,21 +16,26 @@ The goals of the rewrite are:
   work with any project structure and has defaults that are reasonable and backward compatible.
 
 ## Installation
+See [SETUP.md](./SETUP.md)
+If you would like your project to use these tools, please
+
+### Python Package
+
+Installing the Python package is required for the `check` command, even if you
+are not using Viking's Python API!
 
 For decomp projects that use UV, uun the following command
 ```shell
-uv add git+https://github.com/Pistonight/viking
+uv add git+https://github.com/Pistonight/viking-next
 ```
 
-Or edit `pyproject.toml` directly and optionally pin the revision
+Or edit `pyproject.toml` directly and optionally pin the revision (replace `<commit hash>` below
+with the commit/tag you want)
 ```toml
 [project]
 dependencies = [
-    "viking",
+    "nx-decomp-tools-viking @ git+https://github.com/Pistonight/viking-next@<commit hash>",
 ]
-
-[tool.uv.sources]
-viking = { git = "https://github.com/Pistonight/viking-next", rev = "<commit hash>" }
 ```
 
 For other types of package managers, please refer to their documentations
@@ -93,3 +99,8 @@ See [the contributing guidelines](./CONTRIBUTING.md)
 ## Credits
 [leoetlino](https://github.com/leoetlino) and all contributors of
 [nx-decomp-tools](https://github.com/open-ead/nx-decomp-tools)
+
+Projects that use `nx-decomp-tools-viking`:
+- [*Breath of the Wild*](https://github.com/zeldaret/botw)
+- [*Super Mario Odyssey*](https://github.com/MonsterDruide1/OdysseyDecomp)
+  - (note: Odyssey uses a fork of the old one, before the rewrite)
