@@ -1,45 +1,32 @@
 use std::io::{StderrLock, Write};
 
 use colored::*;
-#[cfg(feature = "python")]
 use pyo3::prelude::*;
 
 use crate::demangle;
 
 /// Initialize inquire prompt settings
+#[doc(hidden)]
 pub fn init_prompt_settings() {
     let mut config = inquire::ui::RenderConfig::default();
     config.prompt.att |= inquire::ui::Attributes::BOLD;
     inquire::set_global_render_config(config);
 }
 
-/// Macro for [`print_step`]
-#[allow(unused)]
-macro_rules! step {
-    ($($arg:tt)*) => { $crate::ui::print_step(&format!($($arg)*)) };
-}
-#[allow(unused)]
-pub(crate) use step;
 
 /// Print a message using the step formatting
-#[cfg_attr(feature = "python", pyfunction)]
+#[pyfunction]
 pub fn print_step(msg: &str) {
     println!("{} {}", ">>>".bright_green(), msg.bright_green())
 }
-
-/// Macro for [`print_note`]
-#[allow(unused)]
-macro_rules! note {
-    ($($arg:tt)*) => { $crate::ui::print_note(&format!($($arg)*)) };
-}
-#[allow(unused)]
-pub(crate) use note;
+pub use viking_macro::step;
 
 /// Print a message using the note formatting
 #[cfg_attr(feature = "python", pyfunction)]
 pub fn print_note(msg: &str) {
     eprintln!("{}{}{}", "note".bold().cyan(), ": ".bold(), msg.bold())
 }
+pub use viking_macro::note;
 
 /// Print either a warning or an error, controlled by `is_error`
 pub fn print_warn_or_error(msg: &str, is_error: bool) {
@@ -50,21 +37,15 @@ pub fn print_warn_or_error(msg: &str, is_error: bool) {
     }
 }
 
-/// Macro for [`print_warning`]
-#[allow(unused)]
-macro_rules! warn_ {
-    ($($arg:tt)*) => { $crate::ui::print_warning(&format!($($arg)*)) };
-}
-#[allow(unused)]
-pub(crate) use warn_ as warn;
 
 /// Print a message using warning formatting
-#[cfg_attr(feature = "python", pyfunction)]
+#[pyfunction]
 pub fn print_warning(msg: &str) {
     let stderr = std::io::stderr();
     let mut lock = stderr.lock();
     print_warning_locked(&mut lock, msg);
 }
+pub use viking_macro::warn_ as warn;
 
 /// Print a message using warning formatting plus details. The details
 /// are automatically wrapped.
@@ -75,7 +56,7 @@ pub fn print_warning(msg: &str) {
 ///   |  detail...
 ///   |  detail...
 /// ```
-#[cfg_attr(feature = "python", pyfunction)]
+#[pyfunction]
 pub fn print_warning_with_detail(msg: &str, detail: &str) {
     let stderr = std::io::stderr();
     let mut lock = stderr.lock();
@@ -94,22 +75,14 @@ fn print_warning_locked(lock: &mut StderrLock, msg: &str) {
     .unwrap();
 }
 
-/// Macro for [`print_error`]
-#[macro_export]
-#[allow(unused)]
-macro_rules! error {
-    ($($arg:tt)*) => { $crate::ui::print_error(&format!($($arg)*)) };
-}
-#[allow(unused)]
-pub(crate) use error;
-
 /// Print a message using error formatting
-#[cfg_attr(feature = "python", pyfunction)]
+#[pyfunction]
 pub fn print_error(msg: &str) {
     let stderr = std::io::stderr();
     let mut lock = stderr.lock();
     print_error_locked(&mut lock, msg);
 }
+pub use viking_macro::error;
 
 /// Print a message using error formatting plus details. The details
 /// are automatically wrapped.
@@ -120,7 +93,7 @@ pub fn print_error(msg: &str) {
 ///   |  detail...
 ///   |  detail...
 /// ```
-#[cfg_attr(feature = "python", pyfunction)]
+#[pyfunction]
 pub fn print_error_with_detail(msg: &str, detail: &str) {
     let stderr = std::io::stderr();
     let mut lock = stderr.lock();
@@ -149,7 +122,7 @@ fn print_detail_locked(lock: &mut StderrLock, msg: &str) {
 }
 
 /// Format a mangled symbol name for display. Show as `{demangled} ({mangled})`
-#[cfg_attr(feature = "python", pyfunction)]
+#[pyfunction]
 pub fn format_symbol_name(name: &str) -> String {
     match demangle::demangle_str(name) {
         Ok(demangled) => format!("{} ({})", demangled.blue(), name.blue().dimmed()),
@@ -158,13 +131,13 @@ pub fn format_symbol_name(name: &str) -> String {
 }
 
 /// Format an address for display
-#[cfg_attr(feature = "python", pyfunction)]
+#[pyfunction]
 pub fn format_address(addr: u64) -> String {
     format!("{addr:#x}").green().to_string()
 }
 
 /// Clear the terminal
-#[cfg_attr(feature = "python", pyfunction)]
+#[pyfunction]
 pub fn clear_terminal() {
     crossterm::execute!(
         std::io::stdout(),
@@ -174,6 +147,7 @@ pub fn clear_terminal() {
     .unwrap_or(());
 }
 
+/// Show an interactive selection prompt if `options` contains more than 1 choice
 pub fn interactive_select<'a, T, FnFormat: Fn(&T) -> String>(
     prompt: &str,
     options: &'a [T],
@@ -196,7 +170,7 @@ pub fn interactive_select<'a, T, FnFormat: Fn(&T) -> String>(
     Ok(Some(&options[i]))
 }
 
-/// Show a confirmation prompt. Ok(()) means user chooses to proceed
+/// Show a confirmation prompt. `Ok(())` means user chooses to proceed
 ///
 /// ```text
 /// {prompt} (Y/n)

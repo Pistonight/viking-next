@@ -6,7 +6,7 @@ use cu::pre::*;
 use crate::config::Config;
 use crate::elf;
 use crate::fl;
-use crate::interop::python;
+use crate::python;
 use crate::ui;
 
 use crate::cmd_check::check_util;

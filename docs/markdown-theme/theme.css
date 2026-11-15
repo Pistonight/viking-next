@@ -233,7 +233,7 @@ main {
 .markdown-body code {
     padding: 0.2em 0.4em;
     font-size: 85%;
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-family: var(--botw-font-mono);
     color: var(--botw-parchment);
     background-color: var(--botw-slate-850);
     border-radius: 6px;

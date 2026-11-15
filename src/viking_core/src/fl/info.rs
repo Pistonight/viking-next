@@ -4,7 +4,6 @@ use std::sync::Arc;
 
 use colored::Colorize;
 use cu::pre::*;
-#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
@@ -12,13 +11,15 @@ use rustc_hash::FxHashMap;
 use crate::demangle;
 use crate::fl;
 #[cfg(feature = "python")]
-use crate::interop;
+use crate::python;
 use crate::ui;
 
+/// List of all [`Info`]s
 #[derive(Clone, Default, Constructor, Into, Debug, Deref, DerefMut)]
 #[repr(transparent)]
 pub struct InfoList(Vec<Info>);
 impl InfoList {
+    /// Create a map of offset to [`Info`]
     pub fn make_known_function_map(&self) -> FxHashMap<u32, fl::Info> {
         let mut known_functions =
             FxHashMap::with_capacity_and_hasher(self.len(), Default::default());
@@ -27,6 +28,7 @@ impl InfoList {
         }
         known_functions
     }
+    /// Create a map of name (label) to [`Info`]
     pub fn make_known_function_name_map(&self) -> FxHashMap<&str, fl::Info> {
         let mut known_functions =
             FxHashMap::with_capacity_and_hasher(self.len(), Default::default());
@@ -49,10 +51,15 @@ impl InfoList {
 
         known_functions
     }
+
+    /// Fuzzy search by `name`, then interactively select a result.
     pub fn interactive_fuzzy_select(&self, name: &str, description: &str) -> cu::Result<Info> {
         let candidates = self.fuzzy_search(name, true);
         self.interactive_select(name, &candidates, description)
     }
+
+    /// Interactively select an [`Info`] from a list of candidates filtered
+    /// from this list
     pub fn interactive_select(
         &self,
         query: &str,
@@ -116,6 +123,7 @@ impl InfoList {
     }
 
     /// Format into YAML file list writer
+    #[doc(hidden)]
     pub fn fmt_file_list_yml<W: Write>(&self, mut out: W) -> std::fmt::Result {
         for info in &self.0 {
             info.fmt_file_list_yml(&mut out)?;
@@ -124,7 +132,7 @@ impl InfoList {
     }
 }
 
-/// Clone-on-write Handle to an InfoData
+/// Clone-on-write Handle to an [`InfoData`]
 #[derive(Deserialize, Clone, Debug)]
 #[serde(transparent)]
 pub struct Info(Arc<InfoData>);
@@ -409,11 +417,11 @@ impl Status {
     /// Parse status string into enum
     #[pyo3(name = "from_name")]
     #[staticmethod]
-    pub fn py_from_name(s: &str) -> PyResult<Self> { interop::into_pyresult(Self::from_name(s)) }
+    pub fn py_from_name(s: &str) -> PyResult<Self> { python::into_pyresult(Self::from_name(s)) }
     /// Parse status code into enum
     #[pyo3(name = "from_code")]
     #[staticmethod]
-    pub fn py_from_code(s: &str) -> PyResult<Self> { interop::into_pyresult(Self::from_code(s)) }
+    pub fn py_from_code(s: &str) -> PyResult<Self> { python::into_pyresult(Self::from_code(s)) }
     /// Get the single-character code representation
     #[pyo3(name = "code")]
     pub fn py_code(&self) -> char { self.code() }

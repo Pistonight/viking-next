@@ -1,9 +1,10 @@
 [package]
 name = "viking"
 description = "Core implementation for viking"
-version = "0.0.0"
-edition = "2024"
-rust-version = "1.87"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -12,7 +13,7 @@ crate-type = ["cdylib", "rlib"]
 # global allocator
 mimalloc = { version = "0.1.52", optional = true }
 
-# core deps (required)
+# -- core deps (always pulled in) --
 colored = "2"
 cpp_demangle = "0.4.0"
 crossterm = "0.27.0"
@@ -24,38 +25,40 @@ rustc-hash = "2.1.3"
 serde = { version = "1", features = ["rc"] }
 serde-tuple-vec-map = "1.0.1"
 textwrap = "0.16.4"
+viking-macro.workspace = true
 
-# elf deps
-addr2line = { version = "0.22.0", optional = true }
-goblin = { version = "0.8.0", optional = true }
-memmap = { version = "0.7.0", optional = true }
-owning_ref = { version = "0.4.1", optional = true }
-
-# python deps
+# -- python deps --
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
-# "abi3-py39" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.9
+# "abi3-py3xx" specifies the stable ABI and minimum Python version support,
+# instead of require a different wheel per python version
 #
 # Even though pyo3 is not needed when building standalone binaries,
 # The macro API doesn't give us a clean way to conditionally add field attributes
 # without some hacks or writing our own proc-macros. On the other hand, compiling
 # a few extra dependencies isn't the end of the world
-pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py39", "experimental-inspect"] }
+pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py314", "experimental-inspect"] }
 
-# command deps
+# -- elf deps --
+addr2line = { version = "0.22.0", optional = true }
+goblin = { version = "0.8.0", optional = true }
+memmap = { version = "0.7.0", optional = true }
+owning_ref = { version = "0.4.1", optional = true }
+
+# -- command deps --
 bad64 = { version = "0.9.0", optional = true }
 capstone = { git = "https://github.com/leoetlino/capstone-rs", rev = "f5aa278e1982bca86a67ac8b8550ab1dd70f7d9d", optional = true }
 clang = { version = "2.0.0", features = ["runtime", "clang_10_0"], optional = true }
 itertools = { version = "0.15.0", optional = true }
 json_compilation_db = { version = "0.3.0", optional = true }
 lazy-init = { version = "0.5.0", optional = true }
-reqwest = { version = "0.12.3", features = ["blocking", "json"], optional = true }
+reqwest = { version = "0.12.3", default-features = false, features = ["http2", "blocking", "json", "rustls-tls"], optional = true }
 tempfile = { version = "3.20.0", optional = true }
 
 [features]
-default = []
+# default = []
 # uncomment below for development for rust-analyzer, or set in your local rust-analyzer
 # config the default feature set it should use
-# default = [ "python" ]
+default = [ "python" ]
 python = [ "global-allocator", "cmd-all" ]
 cmd-all = [
     "cmd-check",
@@ -90,6 +93,7 @@ elf = [
     "dep:owning_ref",
     "dep:memmap",
 ]
+nightly = [] # used for doc_cfg feature in doc generation
 
 # Multi-call binary
 [[bin]]

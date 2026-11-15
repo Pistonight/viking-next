@@ -1,3 +1,7 @@
+//! ELF utils
+//!
+//! TODO - could use some help to populate the documentation
+
 /// ELF loader/parser
 mod loader;
 pub use loader::*;

@@ -49,16 +49,7 @@ tasks:
       - uv run --no-sync ruff format src --check
       - uv run --no-sync ruff check
       - cargo fmt --check
-      - silent: true
-        cmd: |
-          if ! grep -q '^default = \[\]$' src/viking_core/Cargo.toml; then
-            echo "error: default features must be empty in src/viking_core/Cargo.toml" >&2
-            echo "  expected the line: default = []" >&2
-            echo "  if you enabled features for local development (e.g. rust-analyzer)," >&2
-            echo "  revert it, or set the feature set in your local rust-analyzer config instead" >&2
-            exit 1
-          fi
-          echo "default feature check: ok"
+      - uv run --no-sync scripts/check-manifest.py
 
   fix:
     desc: Fix code formatting
@@ -70,23 +61,54 @@ tasks:
   test:
     desc: Run unit tests
     cmds:
-      - cargo test --all-targets --all-features
+      - cargo test --all-targets --features python
 
-  build:
+  build-whl:
     desc: Build the wheel
     cmds:
-      - uv build
+      - uv build --wheel
+
+  build-cli:
+    desc: Build the rust CLI
+    cmds:
+      - cargo build --bin viking --release --features global-allocator,cmd-all
+      - rm -f target/release/viking-*
+      - ln target/release/viking target/release/viking-check
+      - ln target/release/viking target/release/viking-decompme
+      - ln target/release/viking target/release/viking-listsym
 
   doc:
     desc: Generate API docs
     cmds:
       - rm -rf dist/docs
-      - task: build-docs
+      - task: build-python-docs
+      - task: build-rust-docs
+      - task: build-markdown-docs
+      - cp -RL target/doc-nightly/doc dist/docs/rust
 
-  dev-doc:
-    desc: Host doc in watch mode (please `cargo install shwoop`)
+  host-doc:
+    desc: Build and host all documentation together
     cmds:
-      - shwoop dist/docs --host -w src -- {{.TASK_EXE}} build-docs
+      - task: doc
+      - shwoop dist/docs -p 8331 --host --raw
+
+  dev-pydoc:
+    desc: Host Python doc in watch mode (please `cargo install shwoop`)
+    cmds:
+      - task: build-python-docs
+      - shwoop dist/docs -p 8333 --host -w src -- {{.TASK_EXE}} build-python-docs
+
+  dev-rsdoc:
+    desc: Host Rust doc in watch mode [requires nightly toolchain] (please `cargo install shwoop`)
+    cmds:
+      - task: build-rust-docs
+      - shwoop target/doc-nightly/doc -p 8334 --host -w src -- {{.TASK_EXE}} build-rust-docs
+
+  dev-mddoc:
+    desc: Host Markdown doc in watch mode (please `cargo install shwoop`)
+    cmds:
+      - task: build-markdown-docs
+      - shwoop dist/docs -p 8335 --host -w README.md -w docs -- {{.TASK_EXE}} build-markdown-docs
 
   # --- helpers ---
 
@@ -146,12 +168,36 @@ tasks:
     cmds:
       - uv run --no-sync maturin develop --uv --target-dir {{.MATURIN_DEV_TARGET}}
 
-  build-docs:
+  build-python-docs:
     env:
       VIKING_CONFIG: '0' # use empty config
     cmds:
       - task: py-bindgen
-      - uv run --no-sync scripts/build-docs.py
+      - uv run --no-sync scripts/build-pdoc.py
+
+  build-rust-docs:
+    vars:
+      INDEX_HTML: target/doc-nightly/doc/index.html
+      COMMAND: doc --target-dir target/doc-nightly --no-deps --no-default-features --features cmd-all,nightly -p viking -p viking-macro
+    cmds:
+      - silent: true
+        cmd: |
+          if [ -n "$CI" ]; then
+            cargo {{.COMMAND}}
+          else
+            cargo +nightly {{.COMMAND}}
+          fi
+      - cmd: |
+          echo "Generating index redirect"
+          echo "<!DOCTYPE html>" > {{.INDEX_HTML}}
+          echo "<html><head>" >> {{.INDEX_HTML}}
+          echo '<meta http-equiv="refresh" content="0;url=viking/index.html">' >> {{.INDEX_HTML}}
+          echo "</head><body></body></html>" >> {{.INDEX_HTML}}
+        silent: true
+
+  build-markdown-docs:
+    cmds:
+      - uv run --no-sync scripts/build-markdown-doc.py
 
   cargo-clippy:
     vars:

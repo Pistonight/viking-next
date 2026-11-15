@@ -1,0 +1,57 @@
+name: build
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  build-rust:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: ubuntu-24.04
+            target: x64
+          - image: ubuntu-24.04-arm
+            target: arm64
+          - image: macos-latest
+            target: arm64
+    runs-on: ${{ matrix.image }}
+    steps:
+      - uses: Pistonight/mono-dev/actions/setup@main
+        with:
+          mono-dev: false
+          rust: stable
+          python: uv
+      - uses: Pistonight/mono-dev/actions/rust-xplat@main
+        with:
+          arch: ${{ matrix.target }}
+          binary: viking
+          build-args: --features global-allocator,cmd-all
+
+  build-wheel:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: ubuntu-24.04
+            target: x86_64
+          - image: ubuntu-24.04-arm
+            target: aarch64
+          - image: macos-latest
+            target: aarch64
+    runs-on: ${{ matrix.image }}
+    steps:
+      - uses: Pistonight/mono-dev/actions/setup@main
+        with:
+          mono-dev: false
+          rust: stable
+          python: uv
+      - run: uv build --wheel
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheel-${{ runner.os }}-${{ matrix.target }}
+          path: dist/*.whl

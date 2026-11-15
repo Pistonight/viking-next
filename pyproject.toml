@@ -3,7 +3,7 @@
 # (and supply-chain attack) because `pip install` always prioritize
 # package on PyPI
 name = "nx-decomp-tools-viking"
-version = "0.1.1"
+version = "0.1.2"
 description = "Rewrite of nx-decomp-tools and viking tools for NX matching reimplementation projects"
 readme = "README.md"
 authors = [
@@ -34,6 +34,7 @@ cache-keys = [
     { file = "src/viking_core/Cargo.toml" },
     { file = "Cargo.lock" },
 ]
+config-settings = { "maturin.build-args" = "--compatibility pypi" }
 
 [tool.ruff]
 extend-exclude = ["src/viking/_core"]
@@ -52,6 +53,7 @@ build-backend = "maturin"
 dev = [
     "basedpyright>=1.40.2",
     "maturin[patchelf]>=1.16.0",
-    "pdoc>=16.0.0,<17",  # build-docs.py patches a private API
+    "pdoc>=16.0.0,<17",  # our pdoc script patches private APIs, so require 16
     "ruff>=0.17.0",
+    "tomli>=2.5.0",
 ]

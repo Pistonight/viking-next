@@ -16,7 +16,7 @@ The goals of the rewrite are:
   work with any project structure and has defaults that are reasonable and backward compatible.
 
 ## Installation
-See [SETUP.md](./SETUP.md)
+See [SETUP.md](./docs/SETUP.md)
 If you would like your project to use these tools, please
 
 ### Python Package

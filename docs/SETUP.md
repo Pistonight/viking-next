@@ -96,7 +96,7 @@ toolchain_bin_paths = ["toolchain/bin"]
 source_directories = ["src", "lib"]
 ```
 
-See [config.rs](./src/viking_core/config.rs) for the full config schema.
+See [config.rs](../src/viking_core/src/config.rs) for the full config schema.
 
 ## Adding the Python package
 

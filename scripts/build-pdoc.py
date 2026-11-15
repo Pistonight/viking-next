@@ -1,12 +1,6 @@
 """
 Generate API docs with pdoc, working around a few incompatibilities
 between pdoc and the PyO3 extension module (viking._core).
-
-Usage: uv run --no-sync scripts/build-docs.py
-(run through `task doc`, which also regenerates the stubs and sets
-VIKING_CONFIG so that importing viking.core works without a project)
-
-The output is written to dist/docs
 """
 
 # LLM Generated
@@ -30,9 +24,9 @@ import pdoc.doc_pyi
 import pdoc.render
 
 ROOT = Path(__file__).resolve().parent.parent
-OUTPUT_DIR = ROOT / "dist" / "docs"
+OUTPUT_DIR = ROOT / "dist" / "docs" / "python"
 # Overrides for pdoc's templates (theme.css, syntax-highlighting.css, custom.css)
-THEME_DIR = ROOT / "scripts" / "docs-theme"
+THEME_DIR = ROOT / "scripts" / "pdoc-theme"
 # Tiled background of the main page, see custom.css
 BACKGROUND_IMAGE = THEME_DIR / "background.webp"
 
@@ -51,11 +45,11 @@ for _name in (
 ):
     if not hasattr(pdoc.doc_pyi, _name):
         raise RuntimeError(
-            f"pdoc.doc_pyi.{_name} no longer exists; scripts/build-docs.py needs to be updated for this version of pdoc"
+            f"pdoc.doc_pyi.{_name} no longer exists; scripts/build-pdoc.py needs to be updated for this version of pdoc"
         )
 if not hasattr(pdoc.doc, "_safe_getdoc"):
     raise RuntimeError(
-        "pdoc.doc._safe_getdoc no longer exists; scripts/build-docs.py needs to be updated for this version of pdoc"
+        "pdoc.doc._safe_getdoc no longer exists; scripts/build-pdoc.py needs to be updated for this version of pdoc"
     )
 
 

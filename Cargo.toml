@@ -1,6 +1,18 @@
 [workspace]
 resolver = "2"
-members = [ "src/viking_core" ]
+members = [
+    "src/viking_core",
+    "src/viking_macro",
+]
+
+[workspace.package]
+version = "0.1.2"
+edition = "2024"
+rust-version = "1.87"
+license = "MIT"
+
+[workspace.dependencies]
+viking-macro.path = "src/viking_macro"
 
 [profile.release]
 lto = "thin"

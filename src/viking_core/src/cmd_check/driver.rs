@@ -22,7 +22,7 @@ pub fn run(config: &Config, args: &Args) -> cu::Result<()> {
         s.spawn(|_| decomp_symtab = Some(decomp_elf.make_symbol_map_by_name()));
         s.spawn(|_| decomp_glob_data_table = Some(decomp_elf.build_glob_data_table()));
         s.spawn(|_| plt_functions = Some(orig_elf.get_plt_functions()));
-        s.spawn(|_| file_list = Some(fl::load(config, version)));
+        s.spawn(|_| file_list = Some(fl::load_file_list(config, version)));
     });
 
     let decomp_symtab = cu::check!(
