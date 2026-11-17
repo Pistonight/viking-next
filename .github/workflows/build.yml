@@ -57,36 +57,3 @@ jobs:
         with:
           name: wheel-${{ runner.os }}-${{ matrix.target }}
           path: dist/*.whl
-
-  # Builds the Rust API Docs
-  rust-docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: Pistonight/mono-dev/actions/setup@main
-        with:
-          mono-dev: false
-          rust: nightly
-      - run: task build-rust-docs
-      - uses: actions/upload-artifact@v7
-        with:
-          name: rust-docs
-          path: target/doc-nightly/doc
-          retention-days: 3
-
-  # Builds the Python API Docs and other markdown pages
-  website:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: Pistonight/mono-dev/actions/setup@main
-        with:
-          mono-dev: false
-          rust: stable
-          python: uv
-      - run: task install
-      - run: task build-python-docs
-      - run: task build-markdown-docs
-      - uses: actions/upload-artifact@v7
-        with:
-          name: website
-          path: dist/docs
-          retention-days: 3
