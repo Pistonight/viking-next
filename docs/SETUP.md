@@ -1,7 +1,7 @@
 # Setup nx-decomp-tools-viking
 
-*Note: the tools support Linux-x64 with incomplete support for Linux-arm64 and Macos-arm64.
-The ARM platforms should technically work but they aren't tested as much.*
+> Note: the tools support Linux-x64 with incomplete support for Linux-arm64 and Macos-arm64.
+> The ARM platforms should technically work but they aren't tested as much.
 
 Before getting started, you need to decide on 2 things about how your project
 would depend on this tool:
@@ -38,7 +38,8 @@ would depend on this tool:
          like checking match for a single function, the difference will be
          noticable if you are a performance-sensitive person.
      - Calling *Rust CLI*:
-       - Pros: Blazing fast native CLI, yay! (For workflows that don't need Python)
+       - Pros: The native CLI only spawns a Python process if and when needed,
+         which means it's a bit faster.
        - Cons: You will need a lot of additional setup, including
          installing the native binaries besides the Python package.
          The Python package is still required for tools that are implemented
@@ -47,7 +48,6 @@ would depend on this tool:
 
 ## Dependencies
 
-nx-decomp-tools-viking depends on:
 - Git: We have a few dependencies that are resolved from GitHub. You will
   need Git even if you are installing pre-built binaries.
 - Python: It's recommended to use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) as the project manager for Python,
@@ -100,12 +100,12 @@ See [config.rs](../src/viking_core/src/config.rs) for the full config schema.
 
 ## Adding the Python package
 
-*Note: the Python package is required even if you are using Rust CLI, unless
-you are only using the Rust tools that will never call Python.*
+> Note: the Python package is required even if you are using Rust CLI, unless
+> you are only using the Rust tools that will never call Python.
 
 ### From source with `uv`
 
-*Note: installing the Python package from source will require a Rust toolchain.*
+> Note: installing the Python package from source will require a Rust toolchain.
 
 Run `uv add` with the `git+https` GitHub URL:
 ```shell
@@ -122,9 +122,9 @@ dependencies = [
 
 ### From source with `pip`
 
-*Note: installing the Python package from source will require a Rust toolchain.*
+> Note: installing the Python package from source will require a Rust toolchain.
 
-*Note: we are not showing the virtual environment setup. If using pip directly, we assume you know what you are doing.*
+> Note: we are not showing the virtual environment setup. If using pip directly, we assume you know what you are doing.
 
 If your project uses `pyproject.toml`, add the same line to `dependencies`
 as shown in the `uv` section above, and run `pip install -e .`.
@@ -167,9 +167,9 @@ uv add "nx-decomp-tools-viking==<version>"
 
 ### From pre-built wheels with `pip`
 
-*Note: `pip` does not support pinning a package to an index. It looks up
-packages from all configured indexes, and picks the best match regardless of
-where it comes from. Always pin an exact version to reduce the risk.*
+> Note: `pip` does not support pinning a package to an index. It looks up
+> packages from all configured indexes, and picks the best match regardless of
+> where it comes from. Always pin an exact version to reduce the risk.
 
 If your project uses `pyproject.toml`, add the package to `dependencies`:
 ```toml
@@ -228,6 +228,30 @@ viking COMMAND ARGS...
 
 For calling the CLI programmatically, running project setup, accessing the file list
 using Python, etc, please refer to the [API Documentation for Python](https://pistonight.github.io/viking-next/python)
+
+Example:
+
+```python
+from viking import core, ui, setup
+
+# ui module: printing and formatting
+ui.step("getting config")
+# Get the config object (read from tools/config.toml)
+config = core.get_config()
+# get path to the original ELF using note formatting
+original_elf = config.repo.original_elf()
+# run some setup
+setup.convert_nso_to_elf("my_main.nso", original_elf)
+# discover a tool and print its path
+ui.note(core.find_tool("llvm-objdump"))
+```
+
+The `cli` module contains CLI entry points for calling CLI tools programmatically 
+```python
+import viking.cli
+viking.cli.main_argv(["check"])
+# or: viking.cli.check([])
+```
 
 ## Installing the Rust CLI
 
@@ -314,4 +338,10 @@ Otherwise, you need to call the Rust CLI with additional environment variables:
 ## Using the Rust API
 
 If you are write other tools in Rust that want to reuse viking's functionality,
-you can use its Rust API. See [API Documentation for Rust](https://pistonight.github.io/viking-next/crates/viking)
+you can use its Rust API. See [API Documentation for Rust](https://pistonight.github.io/viking-next/rust)
+
+To add `viking` as a dependency, add the following to your `Cargo.toml`, replacing `<version>` with a commit or version tag:
+```toml
+[dependencies]
+viking = { git = "https://github.com/Pistonight/viking-next", rev = "<version>" }
+```

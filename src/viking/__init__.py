@@ -1,5 +1,5 @@
 """
-This is the Python API Documentation. See the [project home page](../../index.html)
+This is the Python API Documentation. See the [project home page](../index.html)
 for more information.
 
 ## Submodules

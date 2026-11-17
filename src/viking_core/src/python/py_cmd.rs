@@ -6,6 +6,10 @@ use cu::pre::*;
 use pyo3::prelude::*;
 
 /// The command to execute python intrepreter that has viking installed
+///
+/// This is a process-wide state because it shouldn't matter if multiple
+/// interpreter sets it differently - since we are spawning a new interpreter
+/// each time to call Python from Rust
 static VIKING_PYTHON_COMMAND: Mutex<Option<Vec<OsString>>> = Mutex::new(None);
 
 /// Set the Python command to execute viking.

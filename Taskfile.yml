@@ -86,8 +86,8 @@ tasks:
       - task: build-markdown-docs
       - cp -RL target/doc-nightly/doc dist/docs/rust
 
-  host-doc:
-    desc: Build and host all documentation together
+  doc-preview:
+    desc: Build and host all documentation together (without watch mode)
     cmds:
       - task: doc
       - shwoop dist/docs -p 8331 --host --raw
@@ -176,24 +176,9 @@ tasks:
       - uv run --no-sync scripts/build-pdoc.py
 
   build-rust-docs:
-    vars:
-      INDEX_HTML: target/doc-nightly/doc/index.html
-      COMMAND: doc --target-dir target/doc-nightly --no-deps --no-default-features --features cmd-all,nightly -p viking -p viking-macro
     cmds:
-      - silent: true
-        cmd: |
-          if [ -n "$CI" ]; then
-            cargo {{.COMMAND}}
-          else
-            cargo +nightly {{.COMMAND}}
-          fi
-      - cmd: |
-          echo "Generating index redirect"
-          echo "<!DOCTYPE html>" > {{.INDEX_HTML}}
-          echo "<html><head>" >> {{.INDEX_HTML}}
-          echo '<meta http-equiv="refresh" content="0;url=viking/index.html">' >> {{.INDEX_HTML}}
-          echo "</head><body></body></html>" >> {{.INDEX_HTML}}
-        silent: true
+      # stdlib only, so CI can run it without installing the project environment
+      - python3 scripts/build-rust-doc.py
 
   build-markdown-docs:
     cmds:
@@ -225,5 +210,10 @@ tasks:
       - rm -rf .venv dist .ruff_cache
       - rm -rf src/**/__pycache__ src/**/*.so
       - rm -rf src/viking/_core
+
+  publish:
+    desc: Tag the current commit and push it to trigger a new release
+    cmds:
+      - uv run --no-sync scripts/publish.py
 
 

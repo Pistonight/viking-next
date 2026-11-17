@@ -14,13 +14,19 @@ Please always use the `task` commands instead of running
 `uv` or `cargo` directly for the optimal performance. You can
 read `Taskfile.yml` for more information on how these commands work.
 
+Run `task --list` to list all available commands.
+
+Common workflows:
 - `task install`: Syncs dependencies and re-generate the Python bindings from Rust.
   Rerun whenever the repo is updated or need to re-generate the Python bindings from Rust.
-- `task run [ARGS]..`: Run the viking CLI. The Rust code is automatically rebuilt.
+- `task run -- [ARGS]..`: Run the viking CLI. The Rust code is automatically rebuilt.
   You may need to specify the `VIKING_CONFIG` environment variable to point to the
   project you are testing with. (e.g. `VIKING_CONFIG=path/to/botw/tools/config.toml task run -- check`)
 - `task check`: Checks for formatting and linting issues
 - `task fix`: Fix formatting issues
+
+Please run `task check` and `task fix` to fix trivial issues before publishing/updating
+your PR, so the review process can be more streamlined.
 
 ## Architecture
 
@@ -42,21 +48,22 @@ The rule of thumb when choosing if something should be in Rust or Python is:
 
 ### Python-Rust call direction
 
-<!--
-The last point is important: Currently, the Rust side does not callback to the Python side.
-Once Python calls a Rust function, the control should stay inside Rust. This is a design decision
-to simplify error handling, traceback reporting, and avoid the complexity with handing the Python
-interpreter and references in Rust.
+Only Python code can call Rust. Rust cannot call Python directly. This design
+decision is made so that Python doesn't bring overhead to paths that don't
+need Python (even if other paths in the same entry point needs Python, like `check`).
 
-However, in some scenarios, it is not avoidable to require Rust code to call Python code, for example
-to invoke some library that's only in Python. We solve this with [the command pattern](src/viking_core/src/interop/py_cmd.rs).
-When Python calls a Rust function that requires calling back to Python at some point, the Rust function
-runs on a separate thread, and the Python calling thread blocks the interpreter to wait for commands from
-the Rust side. When the Rust side issues a command, the control switches to the thread running the Python
-interpreter and the Rust thread blocks until the Python side finishes and returns a result or an exception.
--->
+When Rust needs to call Python, it must do so through `PyCmd`, which serializes
+a JSON Payload and invokes the `py_json_cmd` command in the Python CLI.
 
-### "Global" state
+To add a new Python call:
+- Add the command to [`PyCmd`](../src/viking_core/src/python/py_cmd.rs).
+- Add the Rust API to call the command in the [`python`](../src/viking_core/src/python/driver.rs) in Rust.
+  This is what the Rust code calls.
+- Run `task install` to regenerate the Python bindings (this is only needed
+  so your editor picks up the new command you added).
+- Add the Python code that will handle the command to [`run_json_command`](../src/viking/core.py).
+
+### "Global" state in Rust
 
 The Rust side should be free of process-wide singleton to support the upcoming Python multi-interpreter feature,
 where a single process may host multiple Python interpreters. This means you need to avoid something
@@ -67,9 +74,5 @@ by allocating the global state in Rust once during module init, and pass (leak) 
 and store it as a module scope variable. The Rust functions that depend on this global state must
 take it as an argument from the Python side. See [`core.py`](../src/viking/core.py).
 
-### Python API structure
-
-The Rust bindings are generated at the `viking._core` module. This module is meant to be low-level
-FFI bindings and is not meant to be called directly by downstream projects. Instead, `viking.core`,
-`viking.ui` and `viking.fl` expose higher-level, Python-friendly facades that calls into `_core`
-under the hood.
+This global state should not be exposed in the Python public API. There should be a wrapper
+that calls the `_core` API internally and passing in `core_state`.

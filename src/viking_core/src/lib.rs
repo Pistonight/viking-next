@@ -1,4 +1,4 @@
-//! This is the Rust API Documentation. See the [project home page](../index.html)
+//! This is the Rust API Documentation. See the [project home page](../../index.html)
 //! for more information.
 //!
 //! ## Feature flags
