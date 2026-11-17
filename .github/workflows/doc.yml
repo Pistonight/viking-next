@@ -63,12 +63,14 @@ jobs:
           ref: ${{ github.ref }}
           name: website
           path: dist/docs
+          workflow_conclusion: ""
       - uses: dawidd6/action-download-artifact@v28
         with:
           workflow: doc.yml
           ref: ${{ github.ref }}
           name: rust-docs
           path: dist/docs/rust
+          workflow_conclusion: ""
       - run: task build-wheels-index
         env:
           GITHUB_TOKEN: ${{ github.token }}
