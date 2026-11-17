@@ -1,5 +1,8 @@
 name: doc
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -11,21 +14,58 @@ on:
       - deleted
 
 jobs:
-  bundle:
+  # Builds the Rust API Docs
+  rust-docs:
     runs-on: ubuntu-latest
+    steps:
+      - uses: Pistonight/mono-dev/actions/setup@main
+        with:
+          mono-dev: false
+          rust: nightly
+      - run: task build-rust-docs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: rust-docs
+          path: target/doc-nightly/doc
+          retention-days: 3
+
+  # Builds the Python API Docs and other markdown pages
+  website:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Pistonight/mono-dev/actions/setup@main
+        with:
+          mono-dev: false
+          rust: stable
+          python: uv
+      - run: task install
+      - run: task build-python-docs
+      - run: task build-markdown-docs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: website
+          path: dist/docs
+          retention-days: 3
+
+  bundle:
+    needs:
+      - rust-docs
+      - website
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
     steps:
       - uses: Pistonight/mono-dev/actions/setup@main
         with:
           mono-dev: false
       - uses: dawidd6/action-download-artifact@v28
         with:
-          workflow: build.yml
+          workflow: doc.yml
           ref: ${{ github.ref }}
           name: website
           path: dist/docs
       - uses: dawidd6/action-download-artifact@v28
         with:
-          workflow: build.yml
+          workflow: doc.yml
           ref: ${{ github.ref }}
           name: rust-docs
           path: dist/docs/rust
@@ -47,6 +87,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
