@@ -1,47 +1,17 @@
 name: doc
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
       - main
+  release:
+    types:
+      - published
+      - released
+      - unpublished
+      - deleted
 
 jobs:
-  rust-docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: Pistonight/mono-dev/actions/setup@main
-        with:
-          mono-dev: false
-          rust: nightly
-      - run: task build-rust-docs
-      - uses: actions/upload-artifact@v7
-        with:
-          name: rust-docs
-          path: target/doc-nightly/doc
-
-  other-docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: Pistonight/mono-dev/actions/setup@main
-        with:
-          mono-dev: false
-          rust: stable
-          python: uv
-      - run: task install
-      - run: task build-python-docs
-      - run: task build-markdown-docs
-        # todo: wheels index
-      - uses: actions/upload-artifact@v7
-        with:
-          name: docs
-          path: dist/docs
-
-  upload:
-    needs:
-      - other-docs
-      - rust-docs
+  bundle:
     runs-on: ubuntu-latest
     steps:
       - uses: Pistonight/mono-dev/actions/setup@main
@@ -49,18 +19,35 @@ jobs:
           mono-dev: false
       - uses: dawidd6/action-download-artifact@v28
         with:
-          workflow: doc.yml
+          workflow: build.yml
           ref: ${{ github.ref }}
-          name: docs
+          name: website
           path: dist/docs
-          workflow_conclusion: ""
       - uses: dawidd6/action-download-artifact@v28
         with:
-          workflow: doc.yml
+          workflow: build.yml
           ref: ${{ github.ref }}
           name: rust-docs
           path: dist/docs/rust
-          workflow_conclusion: ""
-      - name: debug dist/docs
-        run: ls -R dist/docs
+      - run: task build-wheels-index
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist/docs
+          retention-days: 3
+
+  deploy:
+    needs:
+      - bundle
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
 

@@ -14,5 +14,5 @@ jobs:
           rust: stable
           python: uv
       - run: task install
-      - run: task py-bindgen
+      - run: task check
       - run: task test

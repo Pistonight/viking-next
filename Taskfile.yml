@@ -199,6 +199,11 @@ tasks:
     cmds:
       - uv run --no-sync scripts/build-markdown-doc.py
 
+  build-wheels-index:
+    cmds:
+      # stdlib only, so CI can run it without installing the project environment
+      - python3 scripts/build-wheels-index.py
+
   cargo-clippy:
     vars:
       CLIPPY_FLAGS: >
