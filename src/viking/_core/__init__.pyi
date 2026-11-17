@@ -7,6 +7,7 @@ __all__ = ["Config", "ConfigCheckMismatch", "ConfigCheckMismatchAsmDiffer", "Con
 
 @final
 class Config:
+    """Structure of the TOML config file"""
     def __str__(self, /) -> str: ...
     @property
     def check_mismatch(self, /) -> ConfigCheckMismatch:
@@ -58,7 +59,7 @@ class ConfigCheckMismatch:
 
 @final
 class ConfigCheckMismatchAsmDiffer:
-    """asm_differ options"""
+    """Options for calling `asm-differ`"""
     def __str__(self, /) -> str: ...
     @property
     def source_directories(self, /) -> list[str]:
@@ -217,7 +218,9 @@ def init_core_state(python_command: Sequence[str]) -> State:
     """Initialize the rust extension module"""
 def parse_json_command(s: str) -> PyCmd: ...
 def raw_or_demangled_contains(function_name: str, query: str) -> bool:
-    """Return `true` if:
+    """Check if the function name contains `query` either as-is or when demangled.
+
+    Returns `true` if:
 
     - `function_name` contains `query`, or
     - `demangle(function_name)` contains `query`

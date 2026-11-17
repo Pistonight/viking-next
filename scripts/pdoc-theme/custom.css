@@ -3,8 +3,7 @@
  * hardcoded light colors instead of the theme variables.
  */
 
-/* Main page background: tiled image, embedded by build-docs.py as a data URI.
- * The sidebar has its own background, so this only shows behind the content */
+/* Main page background */
 body {
     background-image: url("{{ background_image_uri }}");
     background-repeat: repeat;
@@ -96,6 +95,26 @@ nav.pdoc .nav-members-spacer {
         margin-top: auto;
         padding: 2rem 0 1rem;
     }
+}
+
+/* Signatures (function/class/variable headers, also in search results)
+ * and the submodule/member lists in the sidebar use the code font
+ * (.submodules is added in module.html.jinja2) */
+.pdoc .attr,
+nav.pdoc .submodules a,
+nav.pdoc .memberlist a {
+    font-family: var(--botw-font-mono);
+}
+.pdoc .attr {
+    font-size: 0.875rem;
+}
+nav.pdoc .submodules a,
+nav.pdoc .memberlist a {
+    font-size: 0.8125rem;
+}
+/* "View Source" is a button, not code */
+.pdoc .attr .view-source-button {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 /* Inline code in docstrings */

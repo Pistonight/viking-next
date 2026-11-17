@@ -9,6 +9,18 @@
   Otherwise (e.g. leaf submodules) the member list is the only thing in the
   sidebar and the heading is just noise.
 #}
+{# Same as the default, with a class on the list to style it (see custom.css) #}
+{% block nav_submodules %}
+    {% if module.submodules %}
+        <h2>Submodules</h2>
+        <ul class="submodules">
+            {% for submodule in module.submodules if is_public(submodule) | trim %}
+                <li>{{ submodule.taken_from | link(text=submodule.name) }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}
+
 {% block nav_members %}
     {% if module.members %}
         {% set has_contents = module.docstring | to_markdown | to_html | attr("toc_html") %}

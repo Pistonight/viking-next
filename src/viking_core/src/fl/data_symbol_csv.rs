@@ -5,8 +5,9 @@ use csv::ReaderBuilder as CsvReaderBuilder;
 use crate::config::Config;
 use crate::fl;
 
+/// Load the data symbols CSVs from the specified paths
 #[cu::context("failed to load data symbols")]
-pub fn load_data_symbols_csv(
+pub fn load_data_symbols_at(
     config: &Config,
     paths: &[impl AsRef<Path>],
 ) -> cu::Result<DataSymbolMap> {
@@ -50,6 +51,7 @@ pub struct DataSymbolMap {
     symbols: Vec<DataSymbol>,
 }
 
+/// A data symbol entry in [`DataSymbolMap`]
 pub struct DataSymbol {
     /// Address of the symbol in the original executable.
     pub addr: u64,
@@ -60,10 +62,12 @@ pub struct DataSymbol {
 }
 
 impl DataSymbolMap {
+    /// Create a data symbol map. The input `symbols` must be sorted by address.
     pub fn new_unchecked(symbols: Vec<DataSymbol>) -> Self {
         Self { symbols }
     }
 
+    /// Borrow the underlying slice
     pub fn as_slice(&self) -> &[DataSymbol] {
         &self.symbols
     }

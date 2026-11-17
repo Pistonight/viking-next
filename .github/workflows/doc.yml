@@ -1,0 +1,53 @@
+name: doc
+on:
+  push:
+    branches:
+      - main
+  release:
+    types:
+      - published
+      - released
+      - unpublished
+      - deleted
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Pistonight/mono-dev/actions/setup@main
+        with:
+          mono-dev: false
+      - uses: dawidd6/action-download-artifact@v28
+        with:
+          workflow: build.yml
+          ref: ${{ github.ref }}
+          name: website
+          path: dist/docs
+      - uses: dawidd6/action-download-artifact@v28
+        with:
+          workflow: build.yml
+          ref: ${{ github.ref }}
+          name: rust-docs
+          path: dist/docs/rust
+      - run: task build-wheels-index
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist/docs
+          retention-days: 3
+
+  deploy:
+    needs:
+      - bundle
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
+

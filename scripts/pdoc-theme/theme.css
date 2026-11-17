@@ -36,6 +36,9 @@
     --botw-blood-moon: #e0574f;
     --botw-malice: #c4415a;
 
+    /* Code font, for signatures and member names (shared with the markdown theme) */
+    --botw-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
     --pdoc-background: var(--botw-slate-950);
 }
 

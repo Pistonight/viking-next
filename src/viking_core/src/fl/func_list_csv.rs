@@ -10,9 +10,10 @@ use crate::fl;
 
 const CSV_HEADER: &[&str] = &["Address", "Quality", "Size", "Name"];
 
-/// Load a legacy CSV format file into the new FileList format.
+/// Load the file list from a path, assuming legacy CSV format.
+///
 /// All symbols are put into an "UNKNOWN" object.
-pub fn load_csv_file_list(config: &Config, path: &Path) -> cu::Result<fl::FileList> {
+pub fn load_file_list_csv_at(config: &Config, path: &Path) -> cu::Result<fl::FileList> {
     let (info_list, num_names) = cu::check!(
         load_csv_flat(config, path),
         "failed to load csv function list"
@@ -22,7 +23,30 @@ pub fn load_csv_file_list(config: &Config, path: &Path) -> cu::Result<fl::FileLi
     Ok(file_list)
 }
 
-pub fn write_csv_file_list(path: &Path, info_list: &[fl::Info]) -> cu::Result<()> {
+/// Write the file list data to `path`, assuming CSV format.
+///
+/// The CSV does not store object information. To get `info_list` from [`fl::FileList`],
+/// make sure it's reloaded (if changed) and then pass in `info_list()`:
+///
+/// ```rust,no_run
+/// use viking::config;
+/// use viking::fl;
+/// # use cu::pre::*;
+///
+/// fn modify_file_list(file_litt: &mut fl::FileList) {
+///     /* ... */
+/// # todo!()
+/// }
+///
+/// # fn main() -> cu::Result<()> {
+/// let config = config::load_config()?;
+/// let mut file_list = fl::load_file_list(&config, None)?;
+/// modify_file_list(&mut file_list);
+/// file_list.reload_info_list();
+/// fl::write_file_list_csv_at("some.csv", file_list.info_list())?;
+/// # Ok(()) }
+/// ```
+pub fn write_file_list_csv_at(path: &Path, info_list: &[fl::Info]) -> cu::Result<()> {
     let mut writer = CsvWriter::from_path(path)?;
     writer.write_record(CSV_HEADER)?;
     for function in info_list {

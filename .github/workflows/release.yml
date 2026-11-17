@@ -1,0 +1,26 @@
+name: release
+on:
+  push:
+    tags:
+      - v*.*.*
+
+jobs:
+  draft-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dawidd6/action-download-artifact@v28
+        with:
+          workflow: build.yml
+          ref: ${{ github.ref }}
+          name_is_regexp: true
+          name: ^(viking|wheel)
+          path: dist
+      - uses: Pistonight/mono-dev/actions/release@main
+        with:
+          pack: viking-*
+          files: dist/*.whl
+
+

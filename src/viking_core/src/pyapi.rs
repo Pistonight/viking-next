@@ -2,7 +2,7 @@ use cu::pre::*;
 use pyo3::prelude::*;
 
 use crate::config::Config;
-use crate::interop;
+use crate::python;
 
 /// Global (per-module) state of the module
 ///
@@ -16,7 +16,7 @@ struct RustState {
     pub config: Config,
 }
 
-interop::make_handle_class! {
+python::make_handle_class! {
     /// Global (per-module) state of the Rust module
     #[handle(RustState, module = "viking._core")]
     struct State;
@@ -31,14 +31,6 @@ impl State {
 }
 
 /// The low-level Python-rust bindings
-///
-/// ### Function bindings
-/// The function bindings are considered low-level and not part of the public API.
-/// There should be a similarly-named function in modules like `viking.core`, `viking.ui`
-/// that serves as the Python-friendly API.
-///
-/// ### Class bindings
-/// by
 ///
 /// In python, please use the `_core`-prefixed module to call and reference
 /// bindings, so it's obvious you are calling into Rust
@@ -61,12 +53,12 @@ mod _core {
     /// Initialize the rust extension module
     #[pyfunction]
     pub fn init_core_state(python_command: Vec<String>) -> PyResult<State> {
-        interop::set_python_command(python_command);
+        python::set_python_command(python_command);
         // this isn't per-module state but not really anything we can do
         // since it's in 3rd party state, but shouldn't really matter
         crate::ui::init_prompt_settings();
 
-        let config = interop::into_pyresult(crate::config::load_config())?;
+        let config = python::into_pyresult(crate::config::load_config())?;
         Ok(State::new(RustState { config }))
     }
 
@@ -78,11 +70,11 @@ mod _core {
 
     // ======= command =======
     #[pymodule_export]
-    use crate::interop::PyCmd;
+    use crate::python::PyCmd;
 
     #[pyfunction]
     pub fn parse_json_command(s: &str) -> PyResult<PyCmd> {
-        interop::into_pyresult(json::parse::<PyCmd>(s))
+        python::into_pyresult(json::parse::<PyCmd>(s))
     }
 
     // ======= cli =======
@@ -94,7 +86,7 @@ mod _core {
         #[pyfunction]
         fn run(state: State, args: Vec<String>) -> PyResult<u32> {
             let result = crate::cli::check_config_argv(&state.config, args);
-            interop::into_pyresult(result)
+            python::into_pyresult(result)
         }
     }
 
@@ -105,7 +97,7 @@ mod _core {
         #[pyfunction]
         fn run(state: State, args: Vec<String>) -> PyResult<u32> {
             let result = crate::cli::decompme_config_argv(&state.config, args);
-            interop::into_pyresult(result)
+            python::into_pyresult(result)
         }
     }
 
@@ -116,7 +108,7 @@ mod _core {
         #[pyfunction]
         fn run(state: State, args: Vec<String>) -> PyResult<u32> {
             let result = crate::cli::listsym_config_argv(&state.config, args);
-            interop::into_pyresult(result)
+            python::into_pyresult(result)
         }
     }
 
@@ -134,18 +126,18 @@ mod _core {
         }
         #[pyfunction]
         fn parse_offset(hex_value: &str) -> PyResult<u32> {
-            interop::into_pyresult(crate::fl::parse_offset(hex_value))
+            python::into_pyresult(crate::fl::parse_offset(hex_value))
         }
         #[pyfunction]
         fn parse_abs_address_as_offset(state: State, hex_value: &str) -> PyResult<u32> {
-            interop::into_pyresult(crate::fl::parse_abs_address_as_offset(
+            python::into_pyresult(crate::fl::parse_abs_address_as_offset(
                 &state.config,
                 hex_value,
             ))
         }
         #[pyfunction]
         fn parse_abs_address(state: State, hex_value: &str) -> PyResult<u64> {
-            interop::into_pyresult(crate::fl::parse_abs_address(&state.config, hex_value))
+            python::into_pyresult(crate::fl::parse_abs_address(&state.config, hex_value))
         }
     }
 
@@ -163,7 +155,7 @@ mod _core {
 
         #[pyfunction]
         fn confirm(prompt: &str, default_value: bool, help: Option<&str>) -> PyResult<()> {
-            interop::into_pyresult(crate::ui::confirm(prompt, default_value, help))
+            python::into_pyresult(crate::ui::confirm(prompt, default_value, help))
         }
     }
 
@@ -177,7 +169,7 @@ mod _core {
 
     #[pyfunction]
     pub fn find_tool(state: State, tool: &str) -> PyResult<PathBuf> {
-        interop::into_pyresult(state.config.repo.find_tool(tool))
+        python::into_pyresult(state.config.repo.find_tool(tool))
     }
 
     #[pymodule_export]

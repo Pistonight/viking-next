@@ -39,10 +39,12 @@ def apply(config: dict[str, typing.Any], args: typing.Any):  # pyright: ignore[r
     config["source_directories"] = [str(root / x) for x in source_directories]
     config["objdump_executable"] = str(find_tool("llvm-objdump"))
     config["objdump_flags"] = [
-        # hidden flag in llvm-objdump to not contact debuginfod server
-        # even if the llvm-objdump is built with debuginfod enabled
-        # note for GNU binutils, the flag is -WE
-        # alternatively we could clear the DEBUGINFOD_URLS env var
+        # Tell llvm-objdump to not contact debuginfod server
+        # even if the llvm-objdump is built with curl enabled.
+        # Note for GNU binutils, the flag is -WE
+        #
+        # Alternatively we could clear the DEBUGINFOD_URLS env var which would
+        # work for both GNU and LLVM objdump.
         "--no-debuginfod"
     ]
     # ill-suited to C++ projects (and too slow for large executables)

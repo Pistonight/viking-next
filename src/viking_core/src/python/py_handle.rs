@@ -13,7 +13,7 @@ macro_rules! make_handle_class {
         #[handle($inner_type:ident, module = $module:literal)]
         $($rest:tt)*
 ) => {
-        $crate::interop::make_handle_class!(__struct (
+        $crate::python::make_handle_class!(__struct (
             $(#[doc = $doc])*
             #[pyclass(from_py_object, module = $module)]
             #[derive(Clone)]
@@ -22,24 +22,24 @@ macro_rules! make_handle_class {
     (__struct ($($attr:tt)*) [$inner_type:ident] struct $handle_type:ident ; ) => {
         $($attr)*
         struct $handle_type(usize);
-        $crate::interop::make_handle_class!(__impl [$inner_type, $handle_type]);
+        $crate::python::make_handle_class!(__impl [$inner_type, $handle_type]);
     };
     (__struct ($($attr:tt)*) [$inner_type:ident] pub struct $handle_type:ident ; ) => {
         $($attr)*
         pub struct $handle_type(usize);
-        $crate::interop::make_handle_class!(__impl [$inner_type, $handle_type]);
+        $crate::python::make_handle_class!(__impl [$inner_type, $handle_type]);
     };
     (__struct ($($attr:tt)*) [$inner_type:ident] pub mut struct $handle_type:ident ; ) => {
         $($attr)*
         pub struct $handle_type(usize);
-        $crate::interop::make_handle_class!(__impl [$inner_type, $handle_type]);
-        $crate::interop::make_handle_class!(__impl_mut [$inner_type, $handle_type]);
+        $crate::python::make_handle_class!(__impl [$inner_type, $handle_type]);
+        $crate::python::make_handle_class!(__impl_mut [$inner_type, $handle_type]);
     };
     (__struct ($($attr:tt)*) [$inner_type:ident] mut struct $handle_type:ident ; ) => {
         $($attr)*
         struct $handle_type(usize);
-        $crate::interop::make_handle_class!(__impl [$inner_type, $handle_type]);
-        $crate::interop::make_handle_class!(__impl_mut [$inner_type, $handle_type]);
+        $crate::python::make_handle_class!(__impl [$inner_type, $handle_type]);
+        $crate::python::make_handle_class!(__impl_mut [$inner_type, $handle_type]);
     };
     (__impl [$inner_type:ident, $handle_type:ident]) => {
         impl ::std::ops::Deref for $handle_type {

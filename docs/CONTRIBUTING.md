@@ -42,6 +42,7 @@ The rule of thumb when choosing if something should be in Rust or Python is:
 
 ### Python-Rust call direction
 
+<!--
 The last point is important: Currently, the Rust side does not callback to the Python side.
 Once Python calls a Rust function, the control should stay inside Rust. This is a design decision
 to simplify error handling, traceback reporting, and avoid the complexity with handing the Python
@@ -53,6 +54,7 @@ When Python calls a Rust function that requires calling back to Python at some p
 runs on a separate thread, and the Python calling thread blocks the interpreter to wait for commands from
 the Rust side. When the Rust side issues a command, the control switches to the thread running the Python
 interpreter and the Rust thread blocks until the Python side finishes and returns a result or an exception.
+-->
 
 ### "Global" state
 
@@ -63,7 +65,7 @@ like `static MY_STATE: LazyLock<...> = ...` in Rust.
 The bad news is that `pyo3` does not current support declaring per-module state. We work around this
 by allocating the global state in Rust once during module init, and pass (leak) the handle to Python
 and store it as a module scope variable. The Rust functions that depend on this global state must
-take it as an argument from the Python side. See [`core.py`](src/viking/src/core.py).
+take it as an argument from the Python side. See [`core.py`](../src/viking/core.py).
 
 ### Python API structure
 

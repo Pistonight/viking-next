@@ -7,7 +7,8 @@ use rustc_hash::FxHashSet;
 use crate::config::{self, Config};
 use crate::fl;
 
-pub fn load_yml_file_list(config: &Config, path: &Path) -> cu::Result<FileList> {
+/// Load the file list from a path, assuming YAML format
+pub fn load_file_list_yml_at(config: &Config, path: &Path) -> cu::Result<FileList> {
     #[derive(Deserialize)]
     #[serde(transparent)]
     struct FileListWrapper(#[serde(with = "tuple_vec_map")] Vec<(String, Object)>);
@@ -36,7 +37,10 @@ pub fn load_yml_file_list(config: &Config, path: &Path) -> cu::Result<FileList> 
     Ok(file_list)
 }
 
-pub fn write_yml_file_list(path: &Path, file_list_data: &[(String, Object)]) -> cu::Result<()> {
+/// Write the file list data to `path`, assuming YAML format.
+///
+/// Note you can pass in a reference of [`fl::FileList`] directly because it implements `Deref`.
+pub fn write_file_list_yml_at(path: &Path, file_list_data: &[(String, Object)]) -> cu::Result<()> {
     let mut buf = String::new();
     for (name, obj) in file_list_data {
         writeln!(&mut buf, "{}:", fl::quote_yaml_string_if_needed(name))?;
@@ -46,6 +50,7 @@ pub fn write_yml_file_list(path: &Path, file_list_data: &[(String, Object)]) -> 
     Ok(())
 }
 
+/// The YAML File List structure
 #[derive(Debug, Deref)]
 pub struct FileList {
     #[deref]
@@ -161,6 +166,7 @@ impl FileList {
         }
     }
 
+    /// Borrow the flat list of [`fl::Info`]
     pub fn info_list(&self) -> &fl::InfoList {
         &self.info_list
     }
@@ -183,7 +189,8 @@ impl FileList {
 
     /// Update a single symbol at offset
     ///
-    /// The update will NOT be reflected in the in-memory flatten function list (info_list)
+    /// The update will NOT be reflected in the in-memory flatten function list (info_list).
+    /// You must call [`reload_info_list`](`Self::reload_info_list`) to update it.
     pub fn update<F: FnOnce(&mut fl::InfoData)>(
         &mut self,
         offset: u32,
@@ -201,6 +208,7 @@ impl FileList {
     }
 }
 
+/// One object entry in a YAML file list
 #[derive(Deserialize, Clone, Debug)]
 pub struct Object {
     #[serde(rename(serialize = ".text", deserialize = ".text"))]
@@ -212,6 +220,7 @@ impl Object {
         self.text_section.first().unwrap().offset
     }
     /// Format into YAML file list writer
+    #[doc(hidden)]
     pub fn fmt_file_list_yml<W: Write>(&self, mut out: W) -> std::fmt::Result {
         let prefix = "  ";
         writeln!(out, "{prefix}'.text':")?;

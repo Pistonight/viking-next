@@ -6,5 +6,6 @@
         "src/viking/_core/**/*.pyi",
         "donor"
     ],
-    "reportUnusedCallResult": "none"
+    "reportUnusedCallResult": "none",
+    "reportExplicitAny": "none"
 }

@@ -24,7 +24,9 @@ pub fn demangle_or_as_is(name: &str) -> Cow<'_, str> {
     }
 }
 
-/// Return `true` if:
+/// Check if the function name contains `query` either as-is or when demangled.
+///
+/// Returns `true` if:
 ///
 /// - `function_name` contains `query`, or
 /// - `demangle(function_name)` contains `query`

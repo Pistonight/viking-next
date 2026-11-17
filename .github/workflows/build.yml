@@ -1,0 +1,92 @@
+name: build
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  # Builds the Rust CLI
+  rust:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: ubuntu-24.04
+            target: x64
+          - image: ubuntu-24.04-arm
+            target: arm64
+          - image: macos-latest
+            target: arm64
+    runs-on: ${{ matrix.image }}
+    steps:
+      - uses: Pistonight/mono-dev/actions/setup@main
+        with:
+          mono-dev: false
+          rust: stable
+          python: uv
+      - uses: Pistonight/mono-dev/actions/rust-xplat@main
+        with:
+          arch: ${{ matrix.target }}
+          binary: viking
+          build-args: "--features global-allocator,cmd-all"
+
+  # Builds the Python wheel
+  wheel:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: ubuntu-24.04
+            target: x86_64
+          - image: ubuntu-24.04-arm
+            target: aarch64
+          - image: macos-latest
+            target: aarch64
+    runs-on: ${{ matrix.image }}
+    steps:
+      - uses: Pistonight/mono-dev/actions/setup@main
+        with:
+          mono-dev: false
+          rust: stable
+          python: uv
+      - run: uv build --wheel
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheel-${{ runner.os }}-${{ matrix.target }}
+          path: dist/*.whl
+
+  # Builds the Rust API Docs
+  rust-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Pistonight/mono-dev/actions/setup@main
+        with:
+          mono-dev: false
+          rust: nightly
+      - run: task build-rust-docs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: rust-docs
+          path: target/doc-nightly/doc
+          retention-days: 3
+
+  # Builds the Python API Docs and other markdown pages
+  website:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Pistonight/mono-dev/actions/setup@main
+        with:
+          mono-dev: false
+          rust: stable
+          python: uv
+      - run: task install
+      - run: task build-python-docs
+      - run: task build-markdown-docs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: website
+          path: dist/docs
+          retention-days: 3

@@ -3,7 +3,7 @@ use colored::Colorize;
 use cu::pre::*;
 
 use crate::config::Config;
-use crate::interop::python;
+use crate::python;
 use crate::ui;
 
 /// Checks if the compiled bytecode of a function matches the assembly found within the game elf. If not, show the differences between them.

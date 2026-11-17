@@ -1,3 +1,13 @@
+//! File List utils
+//!
+//! [Specification](https://github.com/MonsterDruide1/OdysseyDecomp/blob/master/Contributing.md#the-file-list-format)
+//!
+//! Note the CSV format for function listing is deprecated and will be removed in the future. Do not use!
+//! This is also why there is no `write_file_list` wrapper that detects the format (unlike load).
+//!
+//! Note that when converting CSV to YAML, it does not fill D1/D2/C1/C2 labels for the same function
+//! that acts like both C1/C2 or D1/D2.
+
 /// Exported APIs
 mod driver;
 pub use driver::*;
@@ -18,7 +28,7 @@ pub use data_symbol_csv::*;
 mod info;
 pub use info::*;
 
-/// Shared utils
+/// Misc utils
 mod util;
 use util::*;
 pub use util::{parse_abs_address, parse_abs_address_as_offset, parse_offset};

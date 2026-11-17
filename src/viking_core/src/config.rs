@@ -7,7 +7,7 @@ use pyo3::prelude::*;
 pub const FUNCTION_LEN_UPPER_BOUND: usize = 110_000;
 pub const FILE_LIST_UNKNOWN_FILE: &str = "UNKNOWN";
 
-/// Load the configuration TOML file.
+/// Load the configuration TOML file at the default location.
 ///
 /// If `VIKING_CONFIG` environment variable is specified, it is used
 /// as the path to the config file. Otherwise, the config file is discovered
@@ -42,6 +42,7 @@ pub fn load_config() -> cu::Result<Config> {
     );
 }
 
+/// Load the configuration TOML file from a path (without built-in look up)
 #[inline(always)]
 pub fn load_config_at(path: impl AsRef<Path>) -> cu::Result<Config> {
     load_config_at_impl(path.as_ref())
@@ -90,6 +91,7 @@ fn load_config_at_impl(path: &Path) -> cu::Result<Config> {
     Ok(config)
 }
 
+/// Structure of the TOML config file
 #[derive(Debug, Default, Deserialize, Clone, Display)]
 #[display("{:#?}", self)]
 #[pyclass(from_py_object, str, module = "viking._core")]
@@ -361,7 +363,7 @@ impl ConfigCheckMismatch {
     }
 }
 
-/// asm_differ options
+/// Options for calling `asm-differ`
 #[derive(Debug, Default, Deserialize, Clone, Display)]
 #[display("{:#?}", self)]
 #[pyclass(from_py_object, str, module = "viking._core")]

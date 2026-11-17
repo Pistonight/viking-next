@@ -74,30 +74,11 @@ fn get_python_command(args: Vec<OsString>) -> cu::Result<(OsString, Vec<OsString
     Ok((arg0, command))
 }
 
-pub mod python {
-    use super::*;
-    /// Call asm-differ with the given args
-    #[cu::context("failed to run asm-differ")]
-    pub fn asm_differ(args: impl IntoIterator<Item = impl Into<String>>) -> cu::Result<()> {
-        let args = args.into_iter().map(Into::into).collect();
-        let cmd = PyCmd::AsmDiffer(args);
-        cmd.build()?.exec_inherit(true)?;
-        Ok(())
-    }
-    /// Print optional arguments of asm-differ
-    #[cu::context("failed to print asm-differ optional arguments")]
-    pub fn print_asm_differ_optional_arguments() -> cu::Result<()> {
-        PyCmd::AsmDifferOptionalArgsHelp()
-            .build()?
-            .exec_inherit(true)?;
-        Ok(())
-    }
-}
-
 /// Command send from Rust to Python to execute some Python in the middle of Rust
 #[derive(Debug, Clone, Display, Serialize, Deserialize)]
 #[display("{self:?}")]
 #[pyclass(str, from_py_object)]
+#[doc(hidden)]
 pub enum PyCmd {
     /// Run asm-differ with the given arguments
     AsmDiffer(Vec<String>),
@@ -113,6 +94,7 @@ impl PyCmd {
     }
 }
 
+#[doc(hidden)]
 pub struct PyCmdExecutor {
     args: Vec<OsString>,
 }
