@@ -3,8 +3,8 @@
 //!
 //! ## Feature flags
 //!
-//! The Rust crate hosts all utils and command line tools, so the dependency list
-//! is a bit chunky. The feature flags exist so you don't need to pull in all the
+//! The Rust crate hosts all utils and command line tools, so it has a lot of
+//! dependencies. The feature flags exist so you don't need to pull in all the
 //! dependencies if you only depend on a subset of utils. By default, no feature
 //! flags are enabled.
 //!

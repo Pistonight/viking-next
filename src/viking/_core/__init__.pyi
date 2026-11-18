@@ -41,11 +41,11 @@ class ConfigCheckMismatch:
         the object paths should be treated as relative to the project root
         itself.
 
-        This is useful to have to avoid changing the file list when refactoring the project
+        This avoids having to change the file list when the project is refactored
         in the future.
 
         For example, suppose a source file is `<root>/src/Foo/fooBar.cpp`,
-        usually this would require the object path be `src/Foo/fooBar.o`.
+        usually this would require the object path to be `src/Foo/fooBar.o`.
         You can set this config to `["src/"]`, and the object path can be
         listed as `Foo/fooBar.o` in the file list.
         """
@@ -74,13 +74,16 @@ class ConfigDecompMe:
         """Toggle overriding of default flags with flags discovered in compilation database. (True by default)"""
     @property
     def target(self, /) -> ConfigDecompMeTarget:
-        """Target configuration. Must specify either ( Compiler and Flags ) or ( Preset Id )."""
+        """Target configuration. Must specify either `compiler_name` and `default_compile_flags`,
+        or `preset_id`.
+        """
 
 class ConfigDecompMeTarget:
     """```rust
     pub enum ConfigDecompMeTarget {
         Preset {
-            /// Preset ID used for categorizing. Requires registering preset with compiler and flags.
+            /// ID of the decomp.me preset to use, which groups scratches by project.
+            /// The preset (with its compiler and flags) must already be registered on decomp.me.
             preset_id: String,
         },
         CompilerAndFlags {
@@ -174,7 +177,7 @@ class ConfigRepo:
         """Path relative to root for setup to install toolchains"""
 
 class PyCmd:
-    """Command send from Rust to Python to execute some Python in the middle of Rust
+    """Command sent from Rust to Python to execute some Python in the middle of Rust
 
     ```rust
     pub enum PyCmd {
@@ -210,12 +213,12 @@ class State:
         """Clone the config into the Python side"""
 
 def demangle_or_as_is(name: str) -> str:
-    """Try demangle the name, or return the name unchanged if it cannot be demangled"""
+    """Try to demangle the name, or return the name unchanged if it cannot be demangled"""
 def find_tool(state: State, tool: str) -> Path: ...
 def fini_core_state(state: State) -> None:
-    """Finalize the rust extension module"""
+    """Finalize the Rust extension module"""
 def init_core_state(sys_executable: str, sys_argv0: str) -> State:
-    """Initialize the rust extension module"""
+    """Initialize the Rust extension module"""
 def parse_json_command(s: str) -> PyCmd: ...
 def raw_or_demangled_contains(function_name: str, query: str) -> bool:
     """Check if the function name contains `query` either as-is or when demangled.

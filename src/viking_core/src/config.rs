@@ -214,7 +214,8 @@ pub struct ConfigRepo {
     /// Paths to find tools, relative to `root_path`.
     toolchain_bin_paths: Vec<PathBuf>,
 
-    /// If our binaries repo is used, the path to that in the project. Relative to `root_path`.
+    /// Path to the [nx-decomp-tools-binaries](https://github.com/open-ead/nx-decomp-tools-binaries)
+    /// repo in the project, if it's used. Relative to `root_path`.
     ///
     /// Tools found in `toolchain_bin_paths` are preferred if found
     nx_decomp_tools_binaries: Option<PathBuf>,
@@ -367,7 +368,7 @@ pub struct ConfigCheckMismatch {
     /// the object paths should be treated as relative to the project root
     /// itself.
     ///
-    /// This is useful to have to avoid changing the file list when refactoring the project
+    /// This avoids having to change the file list when the project is refactored
     /// in the future.
     ///
     /// For example, suppose a source file is `<root>/src/Foo/fooBar.cpp`,
@@ -411,7 +412,8 @@ pub struct ConfigCheckMismatchAsmDiffer {
 #[display("{:#?}", self)]
 #[pyclass(from_py_object, str, module = "viking._core")]
 pub struct ConfigDecompMe {
-    /// Target configuration. Must specify either ( Compiler and Flags ) or ( Preset Id ).
+    /// Target configuration. Must specify either `compiler_name` and `default_compile_flags`,
+    /// or `preset_id`.
     #[pyo3(get)]
     #[serde(flatten)]
     pub target: ConfigDecompMeTarget,
@@ -433,7 +435,8 @@ impl ConfigDecompMe {
 #[serde(untagged, deny_unknown_fields)]
 pub enum ConfigDecompMeTarget {
     Preset {
-        /// Preset ID used for categorizing. Requires registering preset with compiler and flags.
+        /// ID of the decomp.me preset to use, which groups scratches by project.
+        /// The preset (with its compiler and flags) must already be registered on decomp.me.
         preset_id: String,
     },
     CompilerAndFlags {

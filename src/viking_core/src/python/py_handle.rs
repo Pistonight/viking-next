@@ -1,12 +1,12 @@
 /// Create a handle class that stores a raw pointer leaked from Rust.
 ///
 /// The benefits over generating a #[pyclass] binding:
-/// - Force internal state to be not clonable to Python
-/// - No restriction on the type to be Sync
-/// - No lifetime restriction
+/// - The internal state cannot be cloned into Python
+/// - The type does not need to be `Sync`
+/// - There are no lifetime restrictions
 ///
-/// The only downside is we are not checking borrowing rules
-/// if mut references
+/// The downside is that borrowing rules are not checked when
+/// mutable references are taken
 macro_rules! make_handle_class {
     (
         $(#[doc = $doc:literal])*

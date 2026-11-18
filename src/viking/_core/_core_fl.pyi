@@ -11,7 +11,7 @@ class AddressLabel:
     pub enum AddressLabel {
         /// Address has a single name
         Single(String),
-        /// Adderss has multiple names.
+        /// Address has multiple names.
         ///
         /// For example, constructor C1/C2 or destructor D1/D2
         /// are usually the same function.
@@ -61,7 +61,7 @@ class Status:
         NonMatchingMajor,
         /// Unnamed or not decompiled
         NotDecompiled,
-        /// Working in progress
+        /// Work in progress
         Wip,
         /// Library function - out of scope for decompilation
         Library,

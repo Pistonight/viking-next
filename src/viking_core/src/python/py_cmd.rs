@@ -9,9 +9,9 @@ use crate::config;
 
 /// The command to execute the Python interpreter that has viking installed
 ///
-/// This is a process-wide state because it shouldn't matter if multiple
-/// interpreters set it differently - since we are spawning a new interpreter
-/// each time to call Python from Rust
+/// This is process-wide state. It does not need to be per-interpreter,
+/// since a new Python process is spawned every time Rust calls Python,
+/// so it doesn't matter if multiple interpreters set it differently
 static VIKING_PYTHON_COMMAND_PARAMS: Mutex<Option<PythonCommandParams>> = Mutex::new(None);
 
 /// Convenience wrapper to call [`set_python_command`]
@@ -35,12 +35,12 @@ pub fn set_python_program_args(
 
 /// Set the Python command to execute viking Python CLI.
 ///
-/// Usually if viking is invoked from its Python CLI, this is automatically
-/// called as part of the initialization. However, for performance reasons,
+/// If viking is invoked from its Python CLI, this is called automatically
+/// as part of the initialization. However, for performance reasons,
 /// viking also ships a Rust CLI, which is faster on paths where no Python
 /// code needs to be executed.
 ///
-/// However, in case Python code does need to run, for example opening ASM
+/// When Python code does need to run, for example opening ASM
 /// diffing as part of the `check` tool, the native binary needs to know
 /// how to invoke the viking Python CLI.
 ///
@@ -75,8 +75,8 @@ pub fn set_python_program_args(
 /// - `VIKING_PYTHON_COMMAND_PROGRAM`: The `program` field
 /// - `VIKING_PYTHON_COMMAND_ARGS`: The `args` field (split using shell quoting)
 /// - `VIKING_PYTHON_COMMAND_CWD`: The `cwd` field
-/// - Environments: please set it for the viking Rust process and it will be forwarded
-///   by child processes.
+/// - Other environment variables: set them for the viking Rust process,
+///   and they will be inherited by the child process.
 ///
 /// ## Automatic configuration
 ///

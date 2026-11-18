@@ -5,8 +5,8 @@
 //! Note the CSV format for function listing is deprecated and will be removed in the future. Do not use!
 //! This is also why there is no `write_file_list` wrapper that detects the format (unlike load).
 //!
-//! Note that when converting CSV to YAML, it does not fill D1/D2/C1/C2 labels for the same function
-//! that acts like both C1/C2 or D1/D2.
+//! Note that when converting CSV to YAML, a function that is both C1 and C2 (or both D1 and D2)
+//! only gets the one name from the CSV. The other label is not filled in.
 
 /// Exported APIs
 mod driver;
