@@ -1,5 +1,5 @@
 /// Run the `check` command, loading config from default locations
-/// and parse args from the command line
+/// and parsing args from the command line
 #[cfg(feature = "cmd-check")]
 pub fn check() -> cu::Result<u32> {
     check_argv(std::env::args().skip(1).collect())
@@ -26,7 +26,7 @@ pub fn check_config_argv(config: &crate::config::Config, args: Vec<String>) -> c
 }
 
 /// Run the `decompme` command, loading config from default locations
-/// and parse args from the command line
+/// and parsing args from the command line
 #[cfg(feature = "cmd-decompme")]
 pub fn decompme() -> cu::Result<u32> {
     decompme_argv(std::env::args().skip(1).collect())
@@ -51,7 +51,7 @@ pub fn decompme_config_argv(config: &crate::config::Config, args: Vec<String>) -
 }
 
 /// Run the `listsym` command, loading config from default locations
-/// and parse args from the command line
+/// and parsing args from the command line
 #[cfg(feature = "cmd-listsym")]
 pub fn listsym() -> cu::Result<u32> {
     listsym_argv(std::env::args().skip(1).collect())

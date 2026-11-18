@@ -8,7 +8,7 @@
 //! dependencies if you only depend on a subset of utils. By default, no feature
 //! flags are enabled.
 //!
-//! - If you only work core utilities like the config file and the file list, no feature flag is needed
+//! - If you only work with core utilities like the config file and the file list, no feature flag is needed
 //! - The `elf` feature enables utils parsing ELF files
 //! - Each CLI command has a `cmd-*` feature to enable it, or use `cmd-all` feature to enable
 //!   all of them.
@@ -25,7 +25,7 @@
 //! ## Error handling
 //!
 //! The Rust APIs use the [`anyhow`](https://docs.rs/anyhow) crate
-//! for error handling. All falliable APIs return `anyhow::Result<T>`.
+//! for error handling. All fallible APIs return `anyhow::Result<T>`.
 #![cfg_attr(feature = "nightly", feature(doc_cfg))]
 
 extern crate self as viking; // for macros to reference ourself
@@ -58,7 +58,7 @@ pub mod elf;
 
 pub mod fl;
 
-/// CPP symbol demangle utils
+/// C++ symbol demangle utils
 pub mod demangle;
 
 /// Terminal UI utils

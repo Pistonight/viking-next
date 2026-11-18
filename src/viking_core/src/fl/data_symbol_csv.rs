@@ -6,17 +6,19 @@ use crate::config::Config;
 use crate::fl;
 
 /// Load the data symbols CSVs from the specified paths
+///
+/// The data symbols CSVs should not have a header
 #[cu::context("failed to load data symbols")]
 pub fn load_data_symbols_at(
     config: &Config,
-    paths: &[impl AsRef<Path>],
+    paths: impl IntoIterator<Item=impl AsRef<Path>>,
 ) -> cu::Result<DataSymbolMap> {
     let mut symbols = vec![];
     for path in paths {
         let path = path.as_ref();
         let mut reader = cu::check!(
             CsvReaderBuilder::new()
-                .has_headers(true)
+                .has_headers(false)
                 .quoting(false)
                 .from_path(path),
             "fail to load data symbol csv file: '{}'",

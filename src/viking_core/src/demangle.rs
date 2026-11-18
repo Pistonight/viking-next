@@ -14,7 +14,7 @@ pub fn demangle_str(name: &str) -> cu::Result<String> {
     Ok(symbol.demangle(&options)?)
 }
 
-/// Try demangle the name, or return the name unchanged if it cannot be demangled
+/// Try to demangle the name, or return the name unchanged if it cannot be demangled
 #[pyfunction]
 #[inline(always)]
 pub fn demangle_or_as_is(name: &str) -> Cow<'_, str> {

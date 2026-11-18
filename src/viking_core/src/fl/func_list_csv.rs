@@ -13,7 +13,10 @@ const CSV_HEADER: &[&str] = &["Address", "Quality", "Size", "Name"];
 /// Load the file list from a path, assuming legacy CSV format.
 ///
 /// All symbols are put into an "UNKNOWN" object.
-pub fn load_file_list_csv_at(config: &Config, path: &Path) -> cu::Result<fl::FileList> {
+pub fn load_file_list_csv_at(config: &Config, path: impl AsRef<Path>) -> cu::Result<fl::FileList> {
+    load_file_list_csv_at_imp(config, path.as_ref())
+}
+fn load_file_list_csv_at_imp(config: &Config, path: &Path) -> cu::Result<fl::FileList> {
     let (info_list, num_names) = cu::check!(
         load_csv_flat(config, path),
         "failed to load csv function list"
@@ -33,7 +36,7 @@ pub fn load_file_list_csv_at(config: &Config, path: &Path) -> cu::Result<fl::Fil
 /// use viking::fl;
 /// # use cu::pre::*;
 ///
-/// fn modify_file_list(file_litt: &mut fl::FileList) {
+/// fn modify_file_list(file_list: &mut fl::FileList) {
 ///     /* ... */
 /// # todo!()
 /// }
@@ -46,7 +49,10 @@ pub fn load_file_list_csv_at(config: &Config, path: &Path) -> cu::Result<fl::Fil
 /// fl::write_file_list_csv_at("some.csv", file_list.info_list())?;
 /// # Ok(()) }
 /// ```
-pub fn write_file_list_csv_at(path: &Path, info_list: &[fl::Info]) -> cu::Result<()> {
+pub fn write_file_list_csv_at(path: impl AsRef<Path>, info_list: &[fl::Info]) -> cu::Result<()> {
+    write_file_list_csv_at_imp(path.as_ref(), info_list)
+}
+fn write_file_list_csv_at_imp(path: &Path, info_list: &[fl::Info]) -> cu::Result<()> {
     let mut writer = CsvWriter::from_path(path)?;
     writer.write_record(CSV_HEADER)?;
     for function in info_list {

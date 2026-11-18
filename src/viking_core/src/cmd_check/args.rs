@@ -49,7 +49,7 @@ pub struct OwnArgs {
     #[clap(short = 'p', long, conflicts_with = "function")]
     pub check_placement: bool,
 
-    /// Check that the file list is offset- and alphabetically- sorted
+    /// Check that the file list is offset- and alphabetically-sorted
     #[clap(long, conflicts_with = "function")]
     pub check_object_ordering: bool,
 
@@ -66,7 +66,7 @@ impl Args {
 }
 
 /// Parse the arguments for the `check` command. The input args should not include the binary name.
-/// If None is returned, a help or error message is already printed
+/// If None is returned, a help or error message has already been printed
 pub fn parse_args(config: &Config, cli_args: &[String]) -> Option<Args> {
     // clap doesn't have a way to collect unknown args
     // so we use trailing_var_arg and collect one unknown arg at a time

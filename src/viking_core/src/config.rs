@@ -32,7 +32,7 @@ pub fn discover_config() -> cu::Result<PathBuf> {
 /// will be returned.
 ///
 /// Otherwise, the config file is discovered by:
-/// - Use `tools/config.toml` from the current process working directory if exists;
+/// - Use `tools/config.toml` from the current process working directory if it exists;
 /// - Otherwise, check the same path from the parent directory;
 /// - Repeat until the config file is found.
 pub fn discover_config_optional() -> Option<cu::Result<PathBuf>> {
@@ -75,7 +75,7 @@ pub fn discover_config_optional() -> Option<cu::Result<PathBuf>> {
     Some(discover_from_current_dir_imp())
 }
 
-/// Load the configuration TOML file from a path (without built-in look up)
+/// Load the configuration TOML file from a path (without built-in lookup)
 #[inline(always)]
 pub fn load_config_at(path: impl AsRef<Path>) -> cu::Result<Config> {
     load_config_at_impl(path.as_ref())
@@ -371,7 +371,7 @@ pub struct ConfigCheckMismatch {
     /// in the future.
     ///
     /// For example, suppose a source file is `<root>/src/Foo/fooBar.cpp`,
-    /// usually this would require the object path be `src/Foo/fooBar.o`.
+    /// usually this would require the object path to be `src/Foo/fooBar.o`.
     /// You can set this config to `["src/"]`, and the object path can be
     /// listed as `Foo/fooBar.o` in the file list.
     #[pyo3(get)]

@@ -162,7 +162,7 @@ pub fn interactive_select<'a, T, FnFormat: Fn(&T) -> String>(
     Ok(Some(&options[i]))
 }
 
-/// Show a confirmation prompt. `Ok(())` means user chooses to proceed
+/// Show a confirmation prompt. `Ok(())` means the user chose to proceed
 ///
 /// ```text
 /// {prompt} (Y/n)

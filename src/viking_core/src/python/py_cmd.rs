@@ -7,10 +7,10 @@ use pyo3::prelude::*;
 
 use crate::config;
 
-/// The command to execute python intrepreter that has viking installed
+/// The command to execute the Python interpreter that has viking installed
 ///
 /// This is a process-wide state because it shouldn't matter if multiple
-/// interpreter sets it differently - since we are spawning a new interpreter
+/// interpreters set it differently - since we are spawning a new interpreter
 /// each time to call Python from Rust
 static VIKING_PYTHON_COMMAND_PARAMS: Mutex<Option<PythonCommandParams>> = Mutex::new(None);
 
@@ -36,7 +36,7 @@ pub fn set_python_program_args(
 /// Set the Python command to execute viking Python CLI.
 ///
 /// Usually if viking is invoked from its Python CLI, this is automatically
-/// called as part of the initialization. However, for performance reason,
+/// called as part of the initialization. However, for performance reasons,
 /// viking also ships a Rust CLI, which is faster on paths where no Python
 /// code needs to be executed.
 ///
@@ -54,7 +54,7 @@ pub fn set_python_program_args(
 ///     args: vec!["run".to_string(), "viking".to_string()],
 ///     cwd: None,
 ///     envs: vec![
-///         ("UV_PROJECT", "path/to/tools")
+///         ("UV_PROJECT".to_string(), "path/to/tools".to_string())
 ///     ]
 /// })?;
 /// # Ok(()) }
@@ -73,14 +73,14 @@ pub fn set_python_program_args(
 /// no manual `set_python_command` is needed:
 ///
 /// - `VIKING_PYTHON_COMMAND_PROGRAM`: The `program` field
-/// - `VIKING_PYTHON_COMMAND_ARGS`: The `args` field (splitted using shell-quoting)
+/// - `VIKING_PYTHON_COMMAND_ARGS`: The `args` field (split using shell quoting)
 /// - `VIKING_PYTHON_COMMAND_CWD`: The `cwd` field
 /// - Environments: please set it for the viking Rust process and it will be forwarded
 ///   by child processes.
 ///
 /// ## Automatic configuration
 ///
-/// For projects using UV, the params is set automatically if:
+/// For projects using UV, the params are set automatically if:
 /// - `uv` is found in `PATH`
 /// - There is no `VIKING_PYTHON_COMMAND_PROGRAM` environment variable set.
 /// - There is a `uv.lock` file next to either the config file, or the
@@ -93,9 +93,6 @@ pub fn set_python_program_args(
 /// - `envs`:
 ///   - `UV_PROJECT`: Directory containing `uv.lock`
 ///
-///
-/// For example, this should be something like `("uv", ["run", "viking"]` for UV setup,
-/// or `["python3", "-m", "viking"]` for raw Python setup.
 #[cu::context("failed to set viking python command")]
 pub fn set_python_command(mut params: PythonCommandParams) -> cu::Result<()> {
     params.envs.retain(|(k, _)| {
@@ -190,7 +187,7 @@ fn set_python_command_automatic_for_uv(uv: String, project_dir: &Path) -> cu::Re
     set_python_command(PythonCommandParams {
         program: uv,
         args: vec!["run".to_string(), "viking".to_string()],
-        cwd: Some(project.clone()),
+        cwd: None,
         envs: vec![("UV_PROJECT".to_string(), project)],
     })
 }
@@ -236,7 +233,7 @@ fn make_python_command(args: &[String]) -> cu::Result<Command> {
     }
 }
 
-/// Command send from Rust to Python to execute some Python in the middle of Rust
+/// Command sent from Rust to Python to execute some Python in the middle of Rust
 #[derive(Debug, Clone, Display, Serialize, Deserialize)]
 #[display("{self:?}")]
 #[pyclass(str, from_py_object)]
@@ -251,7 +248,7 @@ impl PyCmd {
     #[cu::context("failed to build PyCmd")]
     pub fn build(&self) -> cu::Result<PyCmdExecutor> {
         let json = json::stringify(self)?;
-        let args = vec!["py-json-call".into(), json.into()];
+        let args = vec!["py-json-call".into(), json];
         Ok(PyCmdExecutor { args })
     }
 }

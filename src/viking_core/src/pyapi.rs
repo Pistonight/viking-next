@@ -6,11 +6,11 @@ use crate::python;
 
 /// Global (per-module) state of the module
 ///
-/// Pyo3 does not yet support per-module state (for multi-interpreter),
-/// so we leak a pointer to let python hold it as a module scope variable.
+/// PyO3 does not yet support per-module state (for multi-interpreter),
+/// so we leak a pointer to let Python hold it as a module scope variable.
 ///
-/// We choose leaking the pointer to make it explicit that the Rust object
-/// has static lifetime (as long as the python object exists)
+/// We chose to leak the pointer to make it explicit that the Rust object
+/// has static lifetime (as long as the Python object exists)
 struct RustState {
     /// Configuration file
     pub config: Config,
@@ -30,9 +30,9 @@ impl State {
     }
 }
 
-/// The low-level Python-rust bindings
+/// The low-level Python-Rust bindings
 ///
-/// In python, please use the `_core`-prefixed module to call and reference
+/// In Python, please use the `_core`-prefixed module to call and reference
 /// bindings, so it's obvious you are calling into Rust
 ///
 /// ## Example
@@ -50,7 +50,7 @@ mod _core {
     #[pymodule_export]
     use State;
 
-    /// Initialize the rust extension module
+    /// Initialize the Rust extension module
     #[pyfunction]
     pub fn init_core_state(sys_executable: &str, sys_argv0: &str) -> PyResult<State> {
         ui::init_logger();
@@ -60,7 +60,7 @@ mod _core {
         Ok(State::new(RustState { config }))
     }
 
-    /// Finalize the rust extension module
+    /// Finalize the Rust extension module
     #[pyfunction]
     pub fn fini_core_state(state: State) {
         let _ = unsafe { state.claim() };

@@ -1,9 +1,9 @@
-import sys
 import json
 import os
 import platform
 import stat
 import subprocess
+import sys
 import tarfile
 import tempfile
 import urllib.parse
@@ -22,9 +22,10 @@ _CARGO_FEATURES = "global-allocator,cmd-all"
 
 
 def rust_cli_install_source(
-    cargo_root: str | Path, cargo_flags: list[str] | None = None,
+    cargo_root: str | Path,
+    cargo_flags: list[str] | None = None,
     repo: str | None = None,
-    commit: str | None = None
+    commit: str | None = None,
 ) -> Path:
     """Build and install the Rust CLI from source with `cargo install`
 
@@ -60,10 +61,7 @@ def rust_cli_install_source(
     return cargo_root / "bin" / _BIN_NAME
 
 
-def _cargo_source_args(
-    repo: str | None,
-    commit: str | None
-) -> list[str]:
+def _cargo_source_args(repo: str | None, commit: str | None) -> list[str]:
     """`cargo install` arguments to build the same version as the Python package,
     or the passed-in override repo/commit
 
@@ -82,14 +80,11 @@ def _cargo_source_args(
     if direct_url_json:
         direct_url: dict[str, Any] = json.loads(direct_url_json)  # pyright: ignore[reportAny]
         vcs_info: dict[str, Any] | None = direct_url.get("vcs_info")
-        if (
-            vcs_info
-            and vcs_info.get("vcs") == "git"
-        ):
+        if vcs_info and vcs_info.get("vcs") == "git":
             vcs_commit = vcs_info.get("commit_id")
             if vcs_commit is not None:
                 vcs_commit: str | None = str(vcs_commit)
-            vcs_url = direct_url.get("url", "") # pyright: ignore[reportAny]
+            vcs_url = direct_url.get("url", "")  # pyright: ignore[reportAny]
             if vcs_url:
                 vcs_url: str | None = str(vcs_url)
             the_url = repo or vcs_url
@@ -98,11 +93,13 @@ def _cargo_source_args(
                 # url is the repo it was installed from, without the "git+" prefix
                 return ["--git", the_url, "--rev", the_commit]
         if "dir_info" in direct_url:
-            url = direct_url.get("url", "") # pyright: ignore[reportAny]
+            url = direct_url.get("url", "")  # pyright: ignore[reportAny]
             if url:
                 url: str = str(url)
             if url.startswith("file://"):
-                path = Path(urllib.request.url2pathname(urllib.parse.urlparse(url).path))
+                path = Path(
+                    urllib.request.url2pathname(urllib.parse.urlparse(url).path)
+                )
                 return ["--path", str(path / "src" / "viking_core")]
     return ["--git", repo if repo else _REPO_URL, "--tag", _version_tag()]
 
@@ -120,7 +117,7 @@ def rust_cli_install_pre_built(path: str | Path) -> Path:
         arch = "x86_64"
 
     system = platform.system()
-    TARGET_TRIPLES =  {
+    TARGET_TRIPLES = {
         ("Linux", "x86_64"): "x86_64-unknown-linux-gnu",
         ("Linux", "aarch64"): "aarch64-unknown-linux-gnu",
         ("Darwin", "aarch64"): "aarch64-apple-darwin",
@@ -143,7 +140,7 @@ def rust_cli_install_pre_built(path: str | Path) -> Path:
         except OSError as e:  # includes urllib.error.URLError/HTTPError
             ui.bail(f"failed to download Rust CLI: {e}")
         with tarfile.open(archive) as f:
-            bin_name = _BIN_NAME if sys.platform != "win32"  else (_BIN_NAME + ".exe")
+            bin_name = _BIN_NAME if sys.platform != "win32" else (_BIN_NAME + ".exe")
             member = f.extractfile(bin_name)
             if member is None:
                 ui.bail(f"{bin_name} not found in the downloaded archive")
@@ -181,6 +178,7 @@ def rust_cli_create_hardlinks(viking_bin: str | Path, links: list[str | Path]) -
         link.unlink(missing_ok=True)
         os.link(viking_bin, link)
     ui.step(f"linked Rust CLI to {len(links)} path(s)")
+
 
 def _version_tag() -> str:
     """Release tag of the installed Python package"""

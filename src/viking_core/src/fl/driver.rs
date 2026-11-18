@@ -46,13 +46,13 @@ fn load_at_impl(config: &Config, path: &Path) -> cu::Result<fl::FileList> {
 /// Write the optionally-versioned file list according to the paths in
 /// the config (assuming CSV format).
 ///
-/// See [`fl::write_file_list_yml_at`] for caveats.
+/// See [`fl::write_file_list_csv_at`] for caveats.
 pub fn write_file_list_csv(
     config: &Config,
     info_list: &[fl::Info],
     version: Option<&str>,
 ) -> cu::Result<()> {
-    fl::write_file_list_csv_at(&config.repo.file_list_with_version(version), info_list)
+    fl::write_file_list_csv_at(config.repo.file_list_with_version(version), info_list)
 }
 
 /// Write the optionally-versioned file list according to the paths in
@@ -62,10 +62,10 @@ pub fn write_file_list_yml(
     data: &[(String, fl::Object)],
     version: Option<&str>,
 ) -> cu::Result<()> {
-    fl::write_file_list_yml_at(&config.repo.file_list_with_version(version), data)
+    fl::write_file_list_yml_at(config.repo.file_list_with_version(version), data)
 }
 
 /// Load the optionally-versioned data symbol CSVs according to the paths in the config.
 pub fn load_data_symbols(config: &Config, version: Option<&str>) -> cu::Result<fl::DataSymbolMap> {
-    fl::load_data_symbols_at(config, &config.repo.data_symbols_with_version(version))
+    fl::load_data_symbols_at(config, config.repo.data_symbols_with_version(version))
 }

@@ -42,7 +42,7 @@ pub fn load_elf(path: &Path, address_base: u64) -> cu::Result<elf::OwnedElf> {
     })
 }
 
-/// A stripped down version of `goblin::elf::Elf::parse`, parsing only the sections that we need.
+/// A stripped-down version of `goblin::elf::Elf::parse`, parsing only the sections that we need.
 /// https://github.com/m4b/goblin/blob/86de3b4b04c49e2f80ec9ebd8f60c059b7213fb7/src/elf/mod.rs#L268
 ///
 /// *Warning*: In particular, `strtab`, `soname` and `libraries` are **not** parsed.

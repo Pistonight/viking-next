@@ -133,7 +133,7 @@ impl InfoList {
     }
 }
 
-/// Clone-on-write Handle to an [`InfoData`]
+/// Clone-on-write handle to an [`InfoData`]
 #[derive(Deserialize, Clone, Debug)]
 #[serde(transparent)]
 pub struct Info(Arc<InfoData>);
@@ -286,7 +286,7 @@ impl InfoData {
 pub enum AddressLabel {
     /// Address has a single name
     Single(String),
-    /// Adderss has multiple names.
+    /// Address has multiple names.
     ///
     /// For example, constructor C1/C2 or destructor D1/D2
     /// are usually the same function.
@@ -355,7 +355,7 @@ mod status_imp {
         NonMatchingMajor,
         /// Unnamed or not decompiled
         NotDecompiled,
-        /// Working in progress
+        /// Work in progress
         Wip,
         /// Library function - out of scope for decompilation
         Library,

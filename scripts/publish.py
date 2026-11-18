@@ -1,6 +1,7 @@
-from typing import Any
-import tomli
 import subprocess
+from typing import Any
+
+import tomli
 
 # pyright: reportAny=false
 

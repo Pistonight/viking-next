@@ -12,20 +12,20 @@ pub struct Args {
     #[clap(short = 'd', long)]
     pub show_data: bool,
 
-    /// Show symbols that are listed as decompiled in the function CSV
+    /// Show symbols that are listed as decompiled in the file list
     #[clap(short = 'l', long)]
     pub show_decompiled: bool,
 
     /// Show only symbols containing the specified substring
     pub filter: Option<String>,
 
-    /// Specify the version to check
+    /// Specify the version to use
     #[clap(long)]
     pub version: Option<String>,
 }
 
-/// Parse the arg. If None is returned, the help or error message
-/// is already printed
+/// Parse the args. If None is returned, the help or error message
+/// has already been printed
 pub fn parse_args(cli_args: &[String]) -> Option<Args> {
     // need to put a arg[0] as the placeholder for the binary
     cu::cli::try_parse(

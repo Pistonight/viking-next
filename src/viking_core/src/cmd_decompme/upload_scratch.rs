@@ -43,7 +43,7 @@ pub fn run_upload(
                 }
                 (false, Some(_)) => {
                     ui::print_warning(
-                        "decompe_me.override_compile_flags is false - not using the discovered compile flags; using the configured preset_id instead",
+                        "decomp_me.override_compile_flags is false - not using the discovered compile flags; using the configured preset_id instead",
                     );
                     source.compiler_flags = None;
                 }
@@ -70,7 +70,7 @@ pub fn run_upload(
                 (false, Some(discovered_flags)) => {
                     if discovered_flags.trim() != default_compile_flags.trim() {
                         ui::print_warning(
-                            "decompe_me.override_compile_flags is false - not using the discovered compile flags; using the configured default_compile_flags instead",
+                            "decomp_me.override_compile_flags is false - not using the discovered compile flags; using the configured default_compile_flags instead",
                         );
                         source.compiler_flags = Some(default_compile_flags.to_string());
                     }
