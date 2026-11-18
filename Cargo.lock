@@ -2596,7 +2596,7 @@ checksum = "3a3b425286980a367278453f3b6d28cdcb134b574e5a35824a6ff5eebad50bb6"
 
 [[package]]
 name = "viking"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "addr2line",
  "bad64",
@@ -2631,7 +2631,7 @@ dependencies = [
 
 [[package]]
 name = "viking-macro"
-version = "0.1.3"
+version = "0.1.4"
 
 [[package]]
 name = "walkdir"

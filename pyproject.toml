@@ -3,7 +3,7 @@
 # (and supply-chain attack) because `pip install` always prioritize
 # package on PyPI
 name = "nx-decomp-tools-viking"
-version = "0.1.3"
+version = "0.1.4"
 description = "Rewrite of nx-decomp-tools and viking tools for NX matching reimplementation projects"
 readme = "README.md"
 requires-python = ">=3.14"

@@ -126,26 +126,30 @@ class ConfigRepo:
         """Get the path to the optionally-versioned build.ninja build file"""
     @property
     def build_path(self, /) -> Path:
-        """Path to the build directory, relative to `root_path`
+        """Path to the build directory
+        Relative in the config file to `root_path` and absolute at runtime.
 
         The build directory can be versioned:
-        - `build/*` - build files for the blank version
-        - `build/<version>/*` - build files for `<version>`
+        - `<root>/build/*` - build files for the blank version
+        - `<root>/build/<version>/*` - build files for `<version>`
         """
     @property
     def build_target(self, /) -> str:
-        """Name of the decomp elf inside the build or versioned build directory"""
+        """Name of the decomp elf inside the build or versioned build directory.
+        Use [`decomp_elf`](Self::decomp_elf) to get the full path.
+        """
     def compilation_database(self, /) -> Path:
         """Get the path to the versionless compilation database JSON file"""
     def compilation_database_with_version(self, /, version: str | None) -> Path:
         """Get the path to the optionally-versioned compilation database JSON file"""
     @property
     def data_path(self, /) -> Path:
-        """Path to the data directory, relative to `root_path`
+        """Path to the data directory.
+        Relative in the config file to `root_path` and absolute at runtime.
 
         The data directory can be versioned:
-        - `data/*` - data files for the blank version
-        - `data/<version>/*` - data files for `<version>`
+        - `<root>/data/*` - data files for the blank version
+        - `<root>/data/<version>/*` - data files for `<version>`
         """
     def data_symbols(self, /) -> list[Path]:
         """Get the paths to the versionless data symbol list files."""
@@ -166,6 +170,14 @@ class ConfigRepo:
         """Get the path to the versionless original game elf"""
     def original_elf_with_version(self, /, version: str | None) -> Path:
         """Get the path to the optionally-versioned original game elf"""
+    def original_nso(self, /) -> Path:
+        """Get the path to the versionless original game nso, which is the original
+        elf path with extension changed to `.nso`.
+        """
+    def original_nso_with_version(self, /, version: str | None) -> Path:
+        """Get the path to the optionally-versioned original game nso, which is the
+        original elf path with extension changed to `.nso`.
+        """
     @property
     def root_path(self, /) -> Path:
         """Root directory of the repo. Relative to the containing directory
@@ -174,7 +186,9 @@ class ConfigRepo:
         """
     @property
     def toolchain_install_path(self, /) -> Path:
-        """Path relative to root for setup to install toolchains"""
+        """Path for setup to install toolchains.
+        Relative in the config file to `root_path` and absolute at runtime.
+        """
 
 class PyCmd:
     """Command sent from Rust to Python to execute some Python in the middle of Rust

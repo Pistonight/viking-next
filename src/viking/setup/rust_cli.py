@@ -51,13 +51,13 @@ def rust_cli_install_source(
         _CARGO_FEATURES,
         *(cargo_flags or []),
     ]
-    ui.step("installing Rust CLI from source...")
+    ui.step("installing native tools binary from source...")
     try:
         subprocess.check_call(command)
     except FileNotFoundError:
         ui.bail("cargo not found, install the Rust toolchain and try again")
     except subprocess.CalledProcessError:
-        ui.bail("failed to install Rust CLI from source")
+        ui.bail("failed to install native tools binary from source")
     return cargo_root / "bin" / _BIN_NAME
 
 
@@ -126,20 +126,20 @@ def rust_cli_install_pre_built(path: str | Path) -> Path:
     target = TARGET_TRIPLES.get((system, arch))
     if target is None:
         ui.bail(
-            f"no pre-built Rust CLI for {system}-{arch}, please install from source"
+            f"no pre-built native binary for {system}-{arch}, please install from source"
         )
 
     path = Path(path)
     tag = _version_tag()
     url = f"{_REPO_URL}/releases/download/{tag}/{_BIN_NAME}-{target}-{tag}.tar.gz"
 
-    ui.step(f"downloading Rust CLI from {url}...")
+    ui.step(f"downloading viking from {url}...")
     with tempfile.TemporaryDirectory() as tmpdir:
         archive = Path(tmpdir) / "viking.tar.gz"
         try:
             _ = urllib.request.urlretrieve(url, archive)
         except OSError as e:  # includes urllib.error.URLError/HTTPError
-            ui.bail(f"failed to download Rust CLI: {e}")
+            ui.bail(f"failed to download tools: {e}")
         with tarfile.open(archive) as f:
             bin_name = _BIN_NAME if sys.platform != "win32" else (_BIN_NAME + ".exe")
             member = f.extractfile(bin_name)
@@ -153,7 +153,7 @@ def rust_cli_install_pre_built(path: str | Path) -> Path:
     path.unlink(missing_ok=True)
     _ = path.write_bytes(data)
     path.chmod(path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-    ui.step(f"installed Rust CLI to {path}")
+    ui.step(f"installed {path}")
     return path
 
 
@@ -170,7 +170,7 @@ def rust_cli_create_hardlinks(viking_bin: str | Path, links: list[str | Path]) -
     """
     viking_bin = Path(viking_bin)
     if not viking_bin.is_file():
-        ui.bail(f"Rust CLI binary not found: {viking_bin}")
+        ui.bail(f"viking binary not found: {viking_bin}")
     for link in links:
         link = Path(link)
         if link.exists() and os.path.samefile(link, viking_bin):
@@ -178,7 +178,7 @@ def rust_cli_create_hardlinks(viking_bin: str | Path, links: list[str | Path]) -
         link.parent.mkdir(parents=True, exist_ok=True)
         link.unlink(missing_ok=True)
         os.link(viking_bin, link)
-    ui.step(f"linked Rust CLI to {len(links)} path(s)")
+    ui.step(f"linked viking to {len(links)} path(s)")
 
 
 def _version_tag() -> str:

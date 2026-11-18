@@ -156,7 +156,8 @@ pub struct ConfigRepo {
     #[pyo3(get)]
     pub root_path: PathBuf,
 
-    /// Path relative to root for setup to install toolchains
+    /// Path for setup to install toolchains.
+    /// Relative in the config file to `root_path` and absolute at runtime.
     #[pyo3(get)]
     #[serde(default = "ConfigRepo::default_toolchain_install_path")]
     pub toolchain_install_path: PathBuf,
@@ -170,11 +171,12 @@ pub struct ConfigRepo {
     #[serde(default = "ConfigRepo::default_address_base")]
     pub address_base: u64,
 
-    /// Path to the data directory, relative to `root_path`
+    /// Path to the data directory.
+    /// Relative in the config file to `root_path` and absolute at runtime.
     ///
     /// The data directory can be versioned:
-    /// - `data/*` - data files for the blank version
-    /// - `data/<version>/*` - data files for `<version>`
+    /// - `<root>/data/*` - data files for the blank version
+    /// - `<root>/data/<version>/*` - data files for `<version>`
     #[pyo3(get)]
     pub data_path: PathBuf,
 
@@ -194,15 +196,17 @@ pub struct ConfigRepo {
     #[serde(default = "ConfigRepo::default_original_elf")]
     original_elf: PathBuf,
 
-    /// Path to the build directory, relative to `root_path`
+    /// Path to the build directory
+    /// Relative in the config file to `root_path` and absolute at runtime.
     ///
     /// The build directory can be versioned:
-    /// - `build/*` - build files for the blank version
-    /// - `build/<version>/*` - build files for `<version>`
+    /// - `<root>/build/*` - build files for the blank version
+    /// - `<root>/build/<version>/*` - build files for `<version>`
     #[pyo3(get)]
     pub build_path: PathBuf,
 
-    /// Name of the decomp elf inside the build or versioned build directory
+    /// Name of the decomp elf inside the build or versioned build directory.
+    /// Use [`decomp_elf`](Self::decomp_elf) to get the full path.
     #[pyo3(get)]
     pub build_target: String,
 
@@ -214,7 +218,8 @@ pub struct ConfigRepo {
     #[serde(default = "ConfigRepo::default_compilation_database")]
     compilation_database: PathBuf,
 
-    /// Paths to find tools, relative to `root_path`.
+    /// Paths to find tools.
+    /// Relative in the config file to `root_path` and absolute at runtime.
     toolchain_bin_paths: Vec<PathBuf>,
 
     /// Path to the [nx-decomp-tools-binaries](https://github.com/open-ead/nx-decomp-tools-binaries)
@@ -321,6 +326,17 @@ impl ConfigRepo {
             Some(v) => cu::path!(&(&self.data_path) / v / self.original_elf),
             None => self.original_elf(),
         }
+    }
+    /// Get the path to the versionless original game nso, which is the original
+    /// elf path with extension changed to `.nso`.
+    pub fn original_nso(&self) -> PathBuf {
+        self.original_elf().with_extension("nso")
+    }
+    /// Get the path to the optionally-versioned original game nso, which is the
+    /// original elf path with extension changed to `.nso`.
+    pub fn original_nso_with_version(&self, version: Option<&str>) -> PathBuf {
+        self.original_elf_with_version(version)
+            .with_extension("nso")
     }
     /// Get the path to the versionless decomp elf
     pub fn decomp_elf(&self) -> PathBuf {
