@@ -15,5 +15,6 @@ license = "MIT"
 viking-macro.path = "src/viking_macro"
 
 [profile.release]
+debug = true
 lto = "thin"
 codegen-units = 1

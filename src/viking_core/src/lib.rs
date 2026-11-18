@@ -21,9 +21,14 @@
 //!
 //! Unlike the Python API, the config file is not loaded automatically.
 //! Call [`config::load_config`] directly in Rust.
+//!
+//! ## Error handling
+//!
+//! The Rust APIs use the [`anyhow`](https://docs.rs/anyhow) crate
+//! for error handling. All falliable APIs return `anyhow::Result<T>`.
 #![cfg_attr(feature = "nightly", feature(doc_cfg))]
 
-extern crate self as viking;
+extern crate self as viking; // for macros to reference ourself
 
 #[cfg(feature = "global-allocator")]
 #[global_allocator]

@@ -52,11 +52,9 @@ mod _core {
 
     /// Initialize the rust extension module
     #[pyfunction]
-    pub fn init_core_state(python_command: Vec<String>) -> PyResult<State> {
-        python::set_python_command(python_command);
-        // this isn't per-module state but not really anything we can do
-        // since it's in 3rd party state, but shouldn't really matter
-        crate::ui::init_prompt_settings();
+    pub fn init_core_state(sys_executable: &str, sys_argv0: &str) -> PyResult<State> {
+        ui::init_logger();
+        python::into_pyresult(python::set_python_program_args(sys_executable, [sys_argv0]))?;
 
         let config = python::into_pyresult(crate::config::load_config())?;
         Ok(State::new(RustState { config }))
@@ -174,4 +172,5 @@ mod _core {
 
     #[pymodule_export]
     use crate::demangle::{demangle_or_as_is, raw_or_demangled_contains};
+use crate::ui;
 }

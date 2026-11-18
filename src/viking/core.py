@@ -18,7 +18,7 @@ from . import _core, ui
 
 
 def _init_core_state():
-    return _core.init_core_state([sys.executable, sys.argv[0]])
+    return _core.init_core_state(sys.executable, sys.argv[0])
 
 
 core_state = _init_core_state()

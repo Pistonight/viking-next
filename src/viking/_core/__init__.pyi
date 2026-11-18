@@ -214,7 +214,7 @@ def demangle_or_as_is(name: str) -> str:
 def find_tool(state: State, tool: str) -> Path: ...
 def fini_core_state(state: State) -> None:
     """Finalize the rust extension module"""
-def init_core_state(python_command: Sequence[str]) -> State:
+def init_core_state(sys_executable: str, sys_argv0: str) -> State:
     """Initialize the rust extension module"""
 def parse_json_command(s: str) -> PyCmd: ...
 def raw_or_demangled_contains(function_name: str, query: str) -> bool:

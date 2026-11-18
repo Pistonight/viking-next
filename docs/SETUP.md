@@ -255,8 +255,6 @@ viking.cli.main_argv(["check"])
 
 ## Installing the Rust CLI
 
-**NOTE: This is not implemented yet!!**
-
 The Rust CLI is a single multi-call binary `viking`. You can pass the command and
 args, such as `viking COMMAND ARGS...`, or rename the binary to the name of the command
 (such as `check`), and call it like `COMMAND ARGS...`.
@@ -278,12 +276,15 @@ viking_bin = viking.setup.rust_cli_install_source(
     cargo_root = "tools",
     # (optional) additional cargo flags
     cargo_flags = [],
+    # (optional) override the repo and/or commit to install from
+    repo = "...",
+    commit = "...",
 )
 
-# Install pre-built binary. This just downloads the binary from GitHub release
-# to whatever path you pass in.
+# Install pre-built binary. This just downloads and extracts the binary from GitHub
+# release to whatever path you pass in.
 viking_bin = "tools/bin/viking"
-viking.setup.rust_cli_install_prebuilt(viking_bin)
+viking.setup.rust_cli_install_pre_built(viking_bin)
 
 # If you want to hardlink the tools, you can do that as well,
 # so you can for example call `tools/check` instead of `tools/viking check`
@@ -324,15 +325,11 @@ cargo binstall viking@<version> \
 ### Point the Rust CLI to Python
 
 The Rust CLI will find the Python environment automatically
-if you use UV and the binary is in the same directory as `uv.lock`,
+if you use UV and either the config file or the binary is in the same directory as `uv.lock`,
 no additional setup will be required in this case!
 
-Otherwise, you need to call the Rust CLI with additional environment variables:
-- `VIKING_PYTHON_COMMAND`: The command to call the Python CLI. For example
-  `python3 -m viking` or `uv run viking`. Shell quoting is currently NOT supported (please
-  open a PR if you require it).
-- Other environment variables that are needed to call the Python project,
-  for example `UV_PROJECT` if you use UV.
+Otherwise, you need to call the Rust CLI with additional environment variables.
+See [`python::set_python_command`](https://pistonight.github.io/viking-next/rust/viking/python/fn.set_python_command.html).
 
 
 ## Using the Rust API

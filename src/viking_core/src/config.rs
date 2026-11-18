@@ -7,16 +7,35 @@ use pyo3::prelude::*;
 pub const FUNCTION_LEN_UPPER_BOUND: usize = 110_000;
 pub const FILE_LIST_UNKNOWN_FILE: &str = "UNKNOWN";
 
-/// Load the configuration TOML file at the default location.
+/// Discover and load the configuration TOML file.
+///
+/// See [`discover_config_optional`] for rules to resolve the config file location.
+/// Also see [`discover_config`].
+pub fn load_config() -> cu::Result<Config> {
+    match discover_config_optional() {
+        None => Ok(Default::default()),
+        Some(path) => load_config_at(path?)
+    }
+}
+
+/// Discover the path of the config file. An absolute path is always returned.
+///
+/// Like [`discover_config_optional`], but it will error if `VIKING_CONFIG` is set to `0`
+pub fn discover_config() -> cu::Result<PathBuf> {
+    cu::check!(discover_config_optional(), "a config file is required")?
+}
+
+/// Discover the path of the config file. An absolute path is always returned.
 ///
 /// If `VIKING_CONFIG` environment variable is specified, it is used
-/// as the path to the config file. Otherwise, the config file is discovered
-/// automatically by:
+/// as the path to the config file, except when it is set to `0`, `None`
+/// will be returned.
 ///
-/// - Use `tools/config.toml` from the current process working directory if exists,
-/// - Otherwise, check the same path from the parent directory,
+/// Otherwise, the config file is discovered by:
+/// - Use `tools/config.toml` from the current process working directory if exists;
+/// - Otherwise, check the same path from the parent directory;
 /// - Repeat until the config file is found.
-pub fn load_config() -> cu::Result<Config> {
+pub fn discover_config_optional() -> Option<cu::Result<PathBuf>> {
     if let Ok(path_from_env) = cu::env_var("VIKING_CONFIG")
         && !path_from_env.is_empty()
     {
@@ -24,22 +43,36 @@ pub fn load_config() -> cu::Result<Config> {
             // special value to use "no config", when just need to
             // import the python modules without actually calling
             // anything
-            return Ok(Default::default());
+            cu::debug!("VIKING_CONFIG=0, skip loading config");
+            return None;
         }
-        return load_config_at(&path_from_env);
-    }
-    let default_path = Path::new("tools/config.toml");
-    if let Ok(config) = load_config_at(default_path) {
-        return Ok(config);
-    }
-    for d in Path::new(".").normalize()?.ancestors() {
-        if let Ok(config) = load_config_at(d.join("tools/config.toml")) {
-            return Ok(config);
+
+        #[inline(always)]
+        fn discover_from_env_imp(p: &Path) -> cu::Result<PathBuf> {
+            let p = p.normalize()?;
+            if !p.is_file() {
+                cu::bail!("config file does not exist (set by VIKING_CONFIG): {}", p.display());
+            }
+            Ok(p)
         }
+        return Some(discover_from_env_imp(Path::new(&path_from_env)));
     }
-    cu::bail!(
-        "cannot find viking config; please ensure tools/config.toml exists, or set the VIKING_CONFIG environment variable"
-    );
+
+    #[inline(always)]
+    fn discover_from_current_dir_imp() -> cu::Result<PathBuf> {
+        for d in Path::new(".").normalize()?.ancestors() {
+            let p = cu::path!(&d / "tools"/"config.toml");
+            if !p.is_file() {
+                continue;
+            }
+            cu::debug!("found config file: {}", p.display());
+            return Ok(p);
+        }
+        cu::bail!(
+            "cannot find viking config; please ensure tools/config.toml exists, or set the VIKING_CONFIG environment variable"
+        );
+    }
+    Some(discover_from_current_dir_imp())
 }
 
 /// Load the configuration TOML file from a path (without built-in look up)
