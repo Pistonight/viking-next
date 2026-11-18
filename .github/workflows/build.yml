@@ -26,7 +26,6 @@ jobs:
         with:
           mono-dev: false
           rust: stable
-          python: uv
       - uses: Pistonight/mono-dev/actions/rust-xplat@main
         with:
           arch: ${{ matrix.target }}

@@ -110,12 +110,13 @@ pub fn run_check_single(
     Ok(())
 }
 
-/// Resolve the function from the CLI input both from the file list
-/// and within the decomp ELF, to establish a relationship between
-/// the name and address of the function in the file list and the canonical,
-/// mangled symbol in the decomp ELF
+/// Resolve the function name from the CLI input in both the file list
+/// and the decomp ELF.
 ///
-/// Error if no match is found
+/// This links the function's name and address in the file list to its
+/// canonical, mangled symbol in the decomp ELF.
+///
+/// Errors if no match is found
 #[cu::context("failed to resolve function to check")]
 fn fuzzy_resolve_function(
     query: &str,

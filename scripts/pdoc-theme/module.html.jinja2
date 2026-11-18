@@ -4,6 +4,22 @@
 {% extends "default/module.html.jinja2" %}
 
 {#
+  Link to the project home page (README rendered by
+  scripts/build-markdown-doc.py to dist/docs/index.html), next to the
+  "<- parent module" button. On the root module there is no parent button,
+  so the link is alone above the search box. See custom.css.
+
+  Module pages are at python/<module path>.html, e.g. viking.core is at
+  python/viking/core.html, so the home page is one level up per path segment.
+#}
+{% block module_list_link %}
+    <div class="nav-top-links">
+        {{ super() }}
+        <a class="pdoc-button module-list-button" href="{{ "../" * (module.modulename.count(".") + 1) }}index.html">Home</a>
+    </div>
+{% endblock %}
+
+{#
   Only show the "API Documentation" heading above the member list when the
   sidebar has other sections (Contents or Submodules) to separate it from.
   Otherwise (e.g. leaf submodules) the member list is the only thing in the

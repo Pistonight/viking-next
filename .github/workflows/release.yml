@@ -10,17 +10,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: dawidd6/action-download-artifact@v28
-        with:
-          workflow: build.yml
-          ref: ${{ github.ref }}
-          name_is_regexp: true
-          name: ^(viking|wheel)
-          path: dist
       - uses: Pistonight/mono-dev/actions/release@main
         with:
+          artifacts-workflow: build.yml
+          artifacts-path: release
           pack: viking-*
-          files: dist/*.whl
+          files: release/wheel-*/*.whl
 
 

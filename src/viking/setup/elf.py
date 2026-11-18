@@ -11,10 +11,10 @@ def convert_nso_to_elf(
     elf_out_path: str | Path = "",
     uncompressed_nso_out_path: str | Path | None = None,
 ):
-    """Convert (compressed) NSO to ELF, optionally exporting uncompressed NSO
+    """Convert a (compressed) NSO to ELF, optionally exporting the uncompressed NSO
 
     If elf_out_path is not given, defaults to the versionless original elf path
-    as defined in the config TOML (see config.rs)
+    as defined in the config TOML (see `viking.core.ConfigRepo`)
     """
 
     ui.step("converting NSO to ELF...")

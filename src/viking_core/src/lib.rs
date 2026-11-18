@@ -1,14 +1,14 @@
-//! This is the Rust API Documentation. See the [project home page](../index.html)
+//! This is the Rust API Documentation. See the [project home page](../../index.html)
 //! for more information.
 //!
 //! ## Feature flags
 //!
-//! The Rust crate hosts all utils and command line tools, so the dependency list
-//! is a bit chunky. The feature flags exist so you don't need to pull in all the
+//! The Rust crate hosts all utils and command line tools, so it has a lot of
+//! dependencies. The feature flags exist so you don't need to pull in all the
 //! dependencies if you only depend on a subset of utils. By default, no feature
 //! flags are enabled.
 //!
-//! - If you only work core utilities like the config file and the file list, no feature flag is needed
+//! - If you only work with core utilities like the config file and the file list, no feature flag is needed
 //! - The `elf` feature enables utils parsing ELF files
 //! - Each CLI command has a `cmd-*` feature to enable it, or use `cmd-all` feature to enable
 //!   all of them.
@@ -21,9 +21,14 @@
 //!
 //! Unlike the Python API, the config file is not loaded automatically.
 //! Call [`config::load_config`] directly in Rust.
+//!
+//! ## Error handling
+//!
+//! The Rust APIs use the [`anyhow`](https://docs.rs/anyhow) crate
+//! for error handling. All fallible APIs return `anyhow::Result<T>`.
 #![cfg_attr(feature = "nightly", feature(doc_cfg))]
 
-extern crate self as viking;
+extern crate self as viking; // for macros to reference ourself
 
 #[cfg(feature = "global-allocator")]
 #[global_allocator]
@@ -53,7 +58,7 @@ pub mod elf;
 
 pub mod fl;
 
-/// CPP symbol demangle utils
+/// C++ symbol demangle utils
 pub mod demangle;
 
 /// Terminal UI utils

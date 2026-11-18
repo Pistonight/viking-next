@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
+    viking::ui::init_logger();
     let mut args = std::env::args();
     let Some(arg0) = args.next() else {
         print_multicall_help();

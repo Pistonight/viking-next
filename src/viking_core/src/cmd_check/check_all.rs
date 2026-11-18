@@ -18,7 +18,7 @@ use crate::cmd_check::check_util;
 use crate::cmd_check::{Args, FunctionChecker};
 
 enum CheckResult {
-    /// If a function does not match, but is marked as such, return this error to show an appropriate exit message.
+    /// If a function does not match, but is marked as matching, return this error to show an appropriate exit message.
     MismatchError,
     /// If a function does match, but is marked as mismatching, return this warning to indicate this and fix its status.
     MatchWarn,

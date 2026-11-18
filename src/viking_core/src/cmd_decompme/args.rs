@@ -4,7 +4,7 @@ use cu::pre::*;
 #[derive(Debug, clap::Parser)]
 #[clap(bin_name = "decompme")]
 pub struct Args {
-    /// Specify the version to check
+    /// Specify the version to use
     #[clap(long)]
     pub version: Option<String>,
 
@@ -30,8 +30,8 @@ pub struct Args {
     pub function_name: String,
 }
 
-/// Parse the arg. If None is returned, the help or error message
-/// is already printed
+/// Parse the args. If None is returned, the help or error message
+/// has already been printed
 pub fn parse_args(cli_args: &[String]) -> Option<Args> {
     // need to put a arg[0] as the placeholder for the binary
     cu::cli::try_parse(

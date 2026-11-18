@@ -24,7 +24,7 @@ pub struct Function<'a> {
     /// The ELF this function comes from.
     pub owner_elf: &'a OwnedElf,
     /// The virtual address of the function in its containing executable.
-    /// *Note*: does not contain the IDA base (0x7100000000).
+    /// *Note*: does not contain the base address (per defined in the config file).
     pub addr: u64,
     /// The bytes that make up the code for this function.
     pub code: &'a [u8],

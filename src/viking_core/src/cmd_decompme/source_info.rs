@@ -154,7 +154,7 @@ fn load_compilation_database(config: &Config, args: &Args) -> cu::Result<CompDbE
     json::parse::<CompDbEntries>(&data_str)
 }
 
-/// remove -c and -o flags
+/// Remove -c and -o flags
 fn remove_output_flags(command: &mut Vec<String>) {
     let mut remove_next = false;
     command.retain(|arg| {

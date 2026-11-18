@@ -6,11 +6,11 @@ use crate::python;
 
 /// Global (per-module) state of the module
 ///
-/// Pyo3 does not yet support per-module state (for multi-interpreter),
-/// so we leak a pointer to let python hold it as a module scope variable.
+/// PyO3 does not yet support per-module state (for multi-interpreter),
+/// so we leak a pointer to let Python hold it as a module scope variable.
 ///
-/// We choose leaking the pointer to make it explicit that the Rust object
-/// has static lifetime (as long as the python object exists)
+/// We chose to leak the pointer to make it explicit that the Rust object
+/// has static lifetime (as long as the Python object exists)
 struct RustState {
     /// Configuration file
     pub config: Config,
@@ -30,9 +30,9 @@ impl State {
     }
 }
 
-/// The low-level Python-rust bindings
+/// The low-level Python-Rust bindings
 ///
-/// In python, please use the `_core`-prefixed module to call and reference
+/// In Python, please use the `_core`-prefixed module to call and reference
 /// bindings, so it's obvious you are calling into Rust
 ///
 /// ## Example
@@ -50,19 +50,17 @@ mod _core {
     #[pymodule_export]
     use State;
 
-    /// Initialize the rust extension module
+    /// Initialize the Rust extension module
     #[pyfunction]
-    pub fn init_core_state(python_command: Vec<String>) -> PyResult<State> {
-        python::set_python_command(python_command);
-        // this isn't per-module state but not really anything we can do
-        // since it's in 3rd party state, but shouldn't really matter
-        crate::ui::init_prompt_settings();
+    pub fn init_core_state(sys_executable: &str, sys_argv0: &str) -> PyResult<State> {
+        ui::init_logger();
+        python::into_pyresult(python::set_python_program_args(sys_executable, [sys_argv0]))?;
 
         let config = python::into_pyresult(crate::config::load_config())?;
         Ok(State::new(RustState { config }))
     }
 
-    /// Finalize the rust extension module
+    /// Finalize the Rust extension module
     #[pyfunction]
     pub fn fini_core_state(state: State) {
         let _ = unsafe { state.claim() };
@@ -174,4 +172,5 @@ mod _core {
 
     #[pymodule_export]
     use crate::demangle::{demangle_or_as_is, raw_or_demangled_contains};
+    use crate::ui;
 }

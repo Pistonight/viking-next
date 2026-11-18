@@ -65,6 +65,18 @@ nav.pdoc input[type=search]:focus {
     outline: 1px solid var(--botw-sheikah);
 }
 
+/* Parent module button and home link, in a row (see module.html.jinja2) */
+nav.pdoc .nav-top-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+nav.pdoc .nav-top-links .module-list-button {
+    margin-bottom: 0;
+}
+
 /* Replaces the "API Documentation" heading on pages where it's hidden
  * (see module.html.jinja2) */
 nav.pdoc .nav-members-spacer {
@@ -85,10 +97,6 @@ nav.pdoc .nav-members-spacer {
         min-height: 100%;
         box-sizing: border-box;
         padding-bottom: 0;
-    }
-    /* flex items stretch to full width by default, keep the button compact */
-    nav.pdoc .module-list-button {
-        align-self: flex-start;
     }
     /* push to the bottom when the list is short */
     nav.pdoc .attribution {

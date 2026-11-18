@@ -8,7 +8,7 @@ def add_custom_arguments(parser: ArgumentParser):
     _ = parser.add_argument(
         "--version",
         dest="version",
-        help="Specify which version should be recompiled on source changes",
+        help="Specify which version is checked",
     )
 
 
@@ -39,8 +39,8 @@ def apply(config: dict[str, typing.Any], args: typing.Any):  # pyright: ignore[r
     config["source_directories"] = [str(root / x) for x in source_directories]
     config["objdump_executable"] = str(find_tool("llvm-objdump"))
     config["objdump_flags"] = [
-        # Tell llvm-objdump to not contact debuginfod server
-        # even if the llvm-objdump is built with curl enabled.
+        # Tell llvm-objdump not to contact the debuginfod server
+        # even if llvm-objdump is built with curl enabled.
         # Note for GNU binutils, the flag is -WE
         #
         # Alternatively we could clear the DEBUGINFOD_URLS env var which would
@@ -58,7 +58,6 @@ def apply(config: dict[str, typing.Any], args: typing.Any):  # pyright: ignore[r
 
 
 def map_build_target(make_target: str):
-    # this is just mapping the path to relative inside build_dir right (for ninja)??
     viking_config = get_config()
     build_dir = str(viking_config.repo.build_path)
     if using_version:
@@ -68,9 +67,6 @@ def map_build_target(make_target: str):
 
     if make_target.startswith(build_dir):
         return make_target[len(build_dir) :].lstrip("/\\")
-
-    # if make_target == util.config.get_decomp_elf():
-    #     return util.config.get_build_target()
 
     # TODO: When support for directly diffing object files is added, this needs to strip
     # the build/ prefix from the object file targets.
