@@ -15,6 +15,7 @@ license = "MIT"
 viking-macro.path = "src/viking_macro"
 
 [profile.release]
-debug = true
+# the debug binaries are a bit too large (+25MB compressed and +100MB uncompressed)
+# debug = true
 lto = "thin"
 codegen-units = 1
