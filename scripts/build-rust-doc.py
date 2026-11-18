@@ -102,7 +102,7 @@ def run_cargo_doc() -> None:
         # explicitly request any nightly toolchain
         cmd.insert(1, "+nightly")
     print(" ".join(cmd), flush=True)
-    result = subprocess.run(cmd, cwd=ROOT)
+    result = subprocess.run(cmd, check=False, cwd=ROOT)
     if result.returncode != 0:
         sys.exit(result.returncode)
 

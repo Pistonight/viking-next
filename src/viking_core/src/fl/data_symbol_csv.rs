@@ -11,7 +11,7 @@ use crate::fl;
 #[cu::context("failed to load data symbols")]
 pub fn load_data_symbols_at(
     config: &Config,
-    paths: impl IntoIterator<Item=impl AsRef<Path>>,
+    paths: impl IntoIterator<Item = impl AsRef<Path>>,
 ) -> cu::Result<DataSymbolMap> {
     let mut symbols = vec![];
     for path in paths {

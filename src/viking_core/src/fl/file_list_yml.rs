@@ -45,7 +45,10 @@ fn load_file_list_yml_at_imp(config: &Config, path: &Path) -> cu::Result<FileLis
 ///
 /// Note you can pass in a reference of [`fl::FileList`] directly because it implements `Deref`.
 #[inline(always)]
-pub fn write_file_list_yml_at(path: impl AsRef<Path>, file_list_data: &[(String, Object)]) -> cu::Result<()> {
+pub fn write_file_list_yml_at(
+    path: impl AsRef<Path>,
+    file_list_data: &[(String, Object)],
+) -> cu::Result<()> {
     write_file_list_yml_at_imp(path.as_ref(), file_list_data)
 }
 fn write_file_list_yml_at_imp(path: &Path, file_list_data: &[(String, Object)]) -> cu::Result<()> {

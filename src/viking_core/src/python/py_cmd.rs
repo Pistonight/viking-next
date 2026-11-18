@@ -179,7 +179,9 @@ fn set_python_command_automatic() -> cu::Result<()> {
         }
     }
 
-    cu::bail!("please refer to the setup documentation: https://pistonight.github.io/viking-next/setup.html");
+    cu::bail!(
+        "please refer to the setup documentation: https://pistonight.github.io/viking-next/setup.html"
+    );
 }
 
 fn set_python_command_automatic_for_uv(uv: String, project_dir: &Path) -> cu::Result<()> {

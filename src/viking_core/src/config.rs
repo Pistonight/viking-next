@@ -14,7 +14,7 @@ pub const FILE_LIST_UNKNOWN_FILE: &str = "UNKNOWN";
 pub fn load_config() -> cu::Result<Config> {
     match discover_config_optional() {
         None => Ok(Default::default()),
-        Some(path) => load_config_at(path?)
+        Some(path) => load_config_at(path?),
     }
 }
 
@@ -51,7 +51,10 @@ pub fn discover_config_optional() -> Option<cu::Result<PathBuf>> {
         fn discover_from_env_imp(p: &Path) -> cu::Result<PathBuf> {
             let p = p.normalize()?;
             if !p.is_file() {
-                cu::bail!("config file does not exist (set by VIKING_CONFIG): {}", p.display());
+                cu::bail!(
+                    "config file does not exist (set by VIKING_CONFIG): {}",
+                    p.display()
+                );
             }
             Ok(p)
         }
@@ -61,7 +64,7 @@ pub fn discover_config_optional() -> Option<cu::Result<PathBuf>> {
     #[inline(always)]
     fn discover_from_current_dir_imp() -> cu::Result<PathBuf> {
         for d in Path::new(".").normalize()?.ancestors() {
-            let p = cu::path!(&d / "tools"/"config.toml");
+            let p = cu::path!(&d / "tools" / "config.toml");
             if !p.is_file() {
                 continue;
             }

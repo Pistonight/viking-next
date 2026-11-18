@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "env"))
 import diff_settings  # pyright: ignore[reportMissingImports]
 
-_ = diff_settings  # force used
+_ = diff_settings  # mark as used
 
 from diff import main_early, main_late  # pyright: ignore[reportMissingTypeStubs]
 
@@ -18,7 +18,7 @@ main_early()
 from diff import parser as _asm_differ_cli_parser  # pyright: ignore[reportMissingTypeStubs]
 
 assert _asm_differ_cli_parser is not None, "set by main_early"
-# override it's program argument
+# override its program name
 _asm_differ_cli_parser.prog = "asm-differ"
 
 

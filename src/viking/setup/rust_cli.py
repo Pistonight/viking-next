@@ -32,12 +32,12 @@ def rust_cli_install_source(
     The same version as the installed Python package is installed.
     The binary is installed to `<cargo_root>/bin/viking`, and returned.
     Cargo stores tracking info in `cargo_root`, so re-installing the
-    version that is already installed is a no-op.
+    same git commit is a no-op.
 
     `cargo_flags` are additional flags passed to `cargo install`.
 
-    Use `repo` or `commit` to force a different source than what would be
-    discovered from the current installation
+    `repo` and `commit` override the git repo and commit to build from.
+    Either can be given alone.
     """
     cargo_root = Path(cargo_root)
     command = [
@@ -70,38 +70,39 @@ def _cargo_source_args(repo: str | None, commit: str | None) -> list[str]:
     - installed from a local directory (e.g. development): that directory
     - otherwise (e.g. pre-built wheel): the release tag of the package version
 
+    With an override, it always builds from git. The part not overridden
+    comes from the installation if it was from git, or else defaults to the
+    upstream repo and the release tag.
+
     The info comes from direct_url.json (PEP 610), written by the installer
     when a package is installed from a URL instead of an index
     """
-    if repo and commit:
-        return ["--git", repo, "--rev", commit]
+    vcs_url: str | None = None
+    vcs_commit: str | None = None
+    local_path: Path | None = None
 
     direct_url_json = metadata.distribution(_DIST_NAME).read_text("direct_url.json")
     if direct_url_json:
         direct_url: dict[str, Any] = json.loads(direct_url_json)  # pyright: ignore[reportAny]
+        # for git, url is the repo it was installed from, without the "git+" prefix
+        url = str(direct_url.get("url") or "")
         vcs_info: dict[str, Any] | None = direct_url.get("vcs_info")
         if vcs_info and vcs_info.get("vcs") == "git":
-            vcs_commit = vcs_info.get("commit_id")
-            if vcs_commit is not None:
-                vcs_commit: str | None = str(vcs_commit)
-            vcs_url = direct_url.get("url", "")  # pyright: ignore[reportAny]
-            if vcs_url:
-                vcs_url: str | None = str(vcs_url)
-            the_url = repo or vcs_url
-            the_commit = commit or vcs_commit
-            if the_url and the_commit:
-                # url is the repo it was installed from, without the "git+" prefix
-                return ["--git", the_url, "--rev", the_commit]
-        if "dir_info" in direct_url:
-            url = direct_url.get("url", "")  # pyright: ignore[reportAny]
-            if url:
-                url: str = str(url)
-            if url.startswith("file://"):
-                path = Path(
-                    urllib.request.url2pathname(urllib.parse.urlparse(url).path)
-                )
-                return ["--path", str(path / "src" / "viking_core")]
-    return ["--git", repo if repo else _REPO_URL, "--tag", _version_tag()]
+            vcs_url = url or None
+            vcs_commit = str(vcs_info.get("commit_id") or "") or None
+        elif "dir_info" in direct_url and url.startswith("file://"):
+            local_path = Path(
+                urllib.request.url2pathname(urllib.parse.urlparse(url).path)
+            )
+
+    if local_path is not None and not repo and not commit:
+        return ["--path", str(local_path / "src" / "viking_core")]
+
+    git_url = repo or vcs_url or _REPO_URL
+    rev = commit or vcs_commit
+    if rev:
+        return ["--git", git_url, "--rev", rev]
+    return ["--git", git_url, "--tag", _version_tag()]
 
 
 def rust_cli_install_pre_built(path: str | Path) -> Path:
@@ -148,7 +149,7 @@ def rust_cli_install_pre_built(path: str | Path) -> Path:
 
     path.parent.mkdir(parents=True, exist_ok=True)
     # remove first instead of overwriting, in case the file is hardlinked
-    # (see rust_cli_hardlinks), so the links are not modified
+    # (see rust_cli_create_hardlinks), so the links are not modified
     path.unlink(missing_ok=True)
     _ = path.write_bytes(data)
     path.chmod(path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)

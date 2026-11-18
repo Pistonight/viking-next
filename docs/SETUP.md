@@ -288,7 +288,7 @@ viking.setup.rust_cli_install_pre_built(viking_bin)
 
 # If you want to hardlink the tools, you can do that as well,
 # so you can for example call `tools/check` instead of `tools/viking check`
-viking.setup.rust_cli_hardlinks(viking_bin, ["tools/check", "tools/decompme"])
+viking.setup.rust_cli_create_hardlinks(viking_bin, ["tools/check", "tools/decompme"])
 ```
 
 Please also read the "Point the Rust CLI to Python" section below.

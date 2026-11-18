@@ -7,11 +7,11 @@ from ._core import _core_ui
 
 clear_terminal = _core_ui.clear_terminal
 format_symbol_name = _core_ui.format_symbol_name
-format_address = _core_ui.format_symbol_name
+format_address = _core_ui.format_address
 
 
 def confirm(prompt: typing.Any, default_value: bool = True, help: str | None = None):  # pyright: ignore[reportAny]
-    """Show confirmation prompt. Raise exception on cancel
+    """Show a confirmation prompt. Raises an exception on cancel
 
     ```text
     {prompt} (Y/n)
@@ -65,9 +65,9 @@ def error_detail(msg: typing.Any, detail: typing.Any):  # pyright: ignore[report
 
     ```text
     error: {msg}
-    |  detail...
-    |  detail...
-    |  detail...
+      |  detail...
+      |  detail...
+      |  detail...
     ```
     """
     _core_ui.print_error_with_detail(str(msg), str(detail))  # pyright: ignore[reportAny]

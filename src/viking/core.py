@@ -1,4 +1,4 @@
-"""Core functionality such as loading the configuration file and Python-rust interop."""
+"""Core functionality such as loading the configuration file and Python-Rust interop."""
 
 import atexit
 import sys
@@ -9,9 +9,9 @@ from . import _core, ui
 
 # ======= module =======
 
-# While we could use process-wide static singleton in Rust,
+# While we could use a process-wide static singleton in Rust,
 # it will not play nicely going forward with Python's
-# multi-interpreter. See pyapi.rs for more information
+# multi-interpreter support. See pyapi.rs for more information
 
 # Any Rust code that needs this global state should
 # take core_state (State in Rust) as the first parameter
@@ -46,7 +46,7 @@ def get_config() -> Config:
 
 
 def run_json_command(cmd: _core.PyCmd) -> typing.NoReturn:
-    """@private Execute command received from Rust"""
+    """@private Execute a command received from Rust"""
     match cmd:
         case _core.PyCmd.AsmDiffer(args):
             try:

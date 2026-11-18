@@ -172,5 +172,5 @@ mod _core {
 
     #[pymodule_export]
     use crate::demangle::{demangle_or_as_is, raw_or_demangled_contains};
-use crate::ui;
+    use crate::ui;
 }

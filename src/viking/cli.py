@@ -34,7 +34,7 @@ def print_help():
 
 
 def main() -> typing.NoReturn:
-    """Main entrypoint parsing args from `sys.argv`"""
+    """Main entry point, parsing args from `sys.argv`"""
     try:
         main_argv(sys.argv[1:])
     except SystemExit as e:
@@ -51,7 +51,7 @@ def main() -> typing.NoReturn:
 
 
 def main_argv(args: list[str]) -> typing.NoReturn:
-    """Main entrypoint. The args should not contain the executable"""
+    """Main entry point. The args should not contain the executable"""
     if len(args) < 1:
         print_help()
         sys.exit(0)
@@ -76,9 +76,7 @@ def main_argv(args: list[str]) -> typing.NoReturn:
 
 
 def py_json_call(args: list[str]) -> typing.NoReturn:
-    """@private Execute a json-serialized command"""
-    # In this path we don't import .core to skip config loading
-    # which saves point something ms
+    """@private Execute a JSON-serialized command"""
     if len(args) == 0:
         from . import ui
 
@@ -91,7 +89,7 @@ def py_json_call(args: list[str]) -> typing.NoReturn:
 
 
 def check(args: list[str]) -> typing.NoReturn:
-    """Check compiled bytecode of a function matches the assembly found within the game"""
+    """Check if the compiled bytecode of a function matches the assembly found within the game"""
     from ._core import _core_cmd_check
     from .core import core_state
 
