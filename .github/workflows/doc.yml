@@ -3,15 +3,18 @@ on:
   pull_request:
     branches:
       - main
-  push:
-    branches:
-      - main
+  # Use the workflow_dispatch instead of auto-publishing docs
+  # on every push to main. This is because GitHub Pages drops deployment
+  # from the same commit if it matches the current deployed commit.
+  # However, our website hosts the wheels index, which needs to rebuild
+  # to include the latest release.
+  # The website is still deployed automatically with a new release,
+  # but if an update is made without a new release, deployment needs to be manually
+  # triggered.
+  workflow_dispatch: {}
   release:
     types:
       - published
-      - released
-      - unpublished
-      - deleted
 
 jobs:
   # Builds the Rust API Docs

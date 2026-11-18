@@ -148,10 +148,17 @@ pip install 'nx-decomp-tools-viking @ git+https://github.com/Pistonight/viking-n
 
 ### From pre-built wheels with `uv`
 
-Add the wheel index to `pyproject.toml`, and pin the package to it.
+Add the dependency and wheel index to `pyproject.toml`, and pin the package to it.
 Marking the index as `explicit` means `uv` only uses it for packages
-that are pinned to it, and the package will never be resolved from PyPI.
+that are pinned to it, and the package will never be resolved from PyPI. Replace
+`<version>` with whatever version you want to pin.
+
 ```toml
+[project]
+dependencies = [
+    "nx-decomp-tools-viking==<version>"
+]
+
 [[tool.uv.index]]
 name = "viking"
 url = "https://pistonight.github.io/viking-next/wheels/"
@@ -161,9 +168,16 @@ explicit = true
 nx-decomp-tools-viking = { index = "viking" }
 ```
 
-Then add the package, pinning a version:
-```shell
-uv add "nx-decomp-tools-viking==<version>"
+Then run `uv sync`. You will see an error about `asm-differ` not being added explicitly.
+UV does not allow wheels to contain URL dependencies, so you need to also add it and keep
+it synced to the same commit referrenced by `nx-decomp-tools-viking`, which will be
+in the error message.
+
+```diff
+dependencies = [
+    "nx-decomp-tools-viking==<version>",
++++ "asm-differ @ git+https://github.com/..." # whatever uv tells you to add
+]
 ```
 
 ### From pre-built wheels with `pip`
