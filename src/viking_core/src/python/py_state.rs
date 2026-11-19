@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 
-use crate::python;
 use crate::config::Config;
+use crate::python;
 
 /// Global (per-module) state of the module
 ///

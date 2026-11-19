@@ -1,7 +1,5 @@
 use crate::python::PyCmd;
 
-
-
 /// Call asm-differ with the given args
 #[cu::context("failed to run asm-differ")]
 pub fn asm_differ(args: impl IntoIterator<Item = impl Into<String>>) -> cu::Result<()> {

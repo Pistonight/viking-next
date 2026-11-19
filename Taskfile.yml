@@ -132,6 +132,8 @@ tasks:
       - Cargo.lock
       - src/**/*.rs
       - src/**/Cargo.toml
+    generates:
+      - .venv/bin/viking # this ensures we rebuild if install-deps removes the dependency
     cmds:
       # build the extension module so we can extract the doc string out of it
       - task: install-dev

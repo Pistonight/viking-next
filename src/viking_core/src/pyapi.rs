@@ -89,8 +89,81 @@ mod _core {
     mod _core_fl {
         use super::*;
 
+        #[pyfunction]
+        fn load_file_list(state: State, version: Option<&str>) -> PyResult<FileList> {
+            python::into_pyresult(crate::fl::load_file_list(&state.config, version))
+        }
+        #[pyfunction]
+        fn load_file_list_at(state: State, path: &str) -> PyResult<FileList> {
+            python::into_pyresult(crate::fl::load_file_list_at(&state.config, path))
+        }
+        #[pyfunction]
+        fn load_file_list_csv_at(state: State, path: &str) -> PyResult<FileList> {
+            python::into_pyresult(crate::fl::load_file_list_csv_at(&state.config, path))
+        }
+        #[pyfunction]
+        fn load_file_list_yml_at(state: State, path: &str) -> PyResult<FileList> {
+            python::into_pyresult(crate::fl::load_file_list_yml_at(&state.config, path))
+        }
+        #[pyfunction]
+        fn write_file_list_csv(
+            state: State,
+            file_list: &mut FileList,
+            version: Option<&str>,
+        ) -> PyResult<()> {
+            file_list.reload_info_list();
+            python::into_pyresult(cu::check!(
+                file_list.validate(0),
+                "failed to validate file list before write (write_file_list_csv called from Python)"
+            ))?;
+            python::into_pyresult(crate::fl::write_file_list_csv(
+                &state.config,
+                file_list.info_list(),
+                version,
+            ))
+        }
+        #[pyfunction]
+        fn write_file_list_csv_at(file_list: &mut FileList, path: &str) -> PyResult<()> {
+            file_list.reload_info_list();
+            python::into_pyresult(cu::check!(
+                file_list.validate(0),
+                "failed to validate file list before write (write_file_list_csv_at called from Python)"
+            ))?;
+            python::into_pyresult(crate::fl::write_file_list_csv_at(
+                path,
+                file_list.info_list(),
+            ))
+        }
+        #[pyfunction]
+        fn write_file_list_yml(
+            state: State,
+            file_list: &mut FileList,
+            version: Option<&str>,
+        ) -> PyResult<()> {
+            file_list.reload_info_list();
+            python::into_pyresult(cu::check!(
+                file_list.validate(0),
+                "failed to validate file list before write (write_file_list_yml called from Python)"
+            ))?;
+            python::into_pyresult(crate::fl::write_file_list_yml(
+                &state.config,
+                file_list,
+                version,
+            ))
+        }
+        #[pyfunction]
+        fn write_file_list_yml_at(file_list: &mut FileList, path: &str) -> PyResult<()> {
+            file_list.reload_info_list();
+            python::into_pyresult(cu::check!(
+                file_list.validate(0),
+                "failed to validate file list before write (write_file_list_yml_at called from Python)"
+            ))?;
+            python::into_pyresult(crate::fl::write_file_list_yml_at(path, file_list))
+        }
+        // todo - datasymbols
+
         #[pymodule_export]
-        use crate::fl::{Info, Status};
+        use crate::fl::{FileList, Info, Object, Status};
         #[pyfunction]
         fn is_csv(state: State, version: Option<&str>) -> bool {
             crate::fl::is_csv(&state.config, version)

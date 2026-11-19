@@ -10,6 +10,7 @@ between pdoc and the PyO3 extension module (viking._core).
 
 import ast
 import base64
+import functools
 import importlib.machinery
 import importlib.util
 import sys
@@ -50,6 +51,12 @@ for _name in (
 if not hasattr(pdoc.doc, "_safe_getdoc"):
     raise RuntimeError(
         "pdoc.doc._safe_getdoc no longer exists; scripts/build-pdoc.py needs to be updated for this version of pdoc"
+    )
+if not isinstance(
+    getattr(pdoc.doc.Class, "_member_objects", None), functools.cached_property
+):
+    raise TypeError(
+        "pdoc.doc.Class._member_objects is no longer a cached_property; scripts/build-pdoc.py needs to be updated for this version of pdoc"
     )
 
 
@@ -222,6 +229,7 @@ def _register_core_submodules() -> list[str]:
 
     names: list[str] = []
     _index_core_classes(_core)
+    _index_sorted_classes(_core)  # HACK 7
     for name in _core.__all__:
         member = cast(object, getattr(_core, name))
         if not isinstance(member, types.ModuleType):
@@ -232,6 +240,7 @@ def _register_core_submodules() -> list[str]:
         sys.modules[full_name] = member
         names.append(full_name)
         _index_core_classes(member)
+        _index_sorted_classes(member)  # HACK 7
     return names
 
 
@@ -301,6 +310,56 @@ def _apply_core_stubs_to_reexports(module: pdoc.doc.Module) -> None:
         _prepare_module(cast(pdoc.doc.Namespace[types.ModuleType | type], member))
         with mock.patch.dict("sys.modules", {core_module: imported_stub}):
             _patch_doc(cast(pdoc.doc.Doc[object], member), stub_doc)
+
+
+# HACK 7: Sort members of _core classes alphabetically
+#
+# pdoc orders class members by their position in the source code
+# (pdoc.doc_ast.sort_by_source), falling back to the order of the class
+# __dict__. PyO3 classes have no Python source, so the __dict__ order is used,
+# and PyO3 builds the properties of a class from a Rust HashMap with a random
+# seed (pyo3/src/pyclass/create_type_object.rs, getset_builders). The order of
+# properties therefore changes on every run.
+#
+# We sort the members of each _core class alphabetically instead, which is
+# also the order maturin generates the .pyi stubs in. __init__ stays first
+# like pdoc does.
+
+# ids of every _core class, including nested ones (e.g. complex enum variants)
+_core_class_ids: set[int] = set()
+
+
+def _index_sorted_classes(owner: object) -> None:
+    """Record every class reachable from a _core module or class"""
+    for value in cast(dict[str, object], vars(owner)).values():
+        # variants of complex enums inherit each other as attributes,
+        # so checking for visited classes also breaks the cycles
+        if isinstance(value, type) and id(value) not in _core_class_ids:
+            _core_class_ids.add(id(value))
+            _index_sorted_classes(value)
+
+
+_member_objects_original = cast(
+    Callable[[pdoc.doc.Class], dict[str, object]],
+    pdoc.doc.Class._member_objects.func,
+)
+
+
+def _member_objects(self: pdoc.doc.Class) -> dict[str, object]:
+    members = _member_objects_original(self)
+    if id(self.obj) not in _core_class_ids:
+        return members
+    ordered: dict[str, object] = {}
+    if "__init__" in members:
+        ordered["__init__"] = members["__init__"]
+    for name in sorted(members):
+        _ = ordered.setdefault(name, members[name])
+    return ordered
+
+
+_member_objects_property = functools.cached_property(_member_objects)
+_member_objects_property.__set_name__(pdoc.doc.Class, "_member_objects")
+pdoc.doc.Class._member_objects = _member_objects_property  # pyright: ignore[reportAttributeAccessIssue]
 
 
 # HACK 5: Don't use NoneType's docstring for undocumented functions

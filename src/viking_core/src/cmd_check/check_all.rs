@@ -177,7 +177,7 @@ fn check_function(
 
     if args.check_placement {
         let addr2line_ctx = ctx.addr2line_ctx.as_ref().unwrap();
-        if let Some(object_name_in_file_list) = file_list.object_name_for(function.offset) {
+        if let Some((object_name_in_file_list, _)) = file_list.object_from_offset(function.offset) {
             // skip UNKNOWN
             if object_name_in_file_list.ends_with(".o") {
                 check_placement(

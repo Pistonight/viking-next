@@ -57,11 +57,7 @@ fn strip(attrs: &mut Vec<syn::Attribute>) {
         "classattr",
         "args",
     ];
-    attrs.retain(|attr| {
-        !PYO3_ATTRS
-            .iter()
-            .any(|name| attr.path().is_ident(name))
-    });
+    attrs.retain(|attr| !PYO3_ATTRS.iter().any(|name| attr.path().is_ident(name)));
 }
 
 fn strip_fields(fields: &mut syn::Fields) {

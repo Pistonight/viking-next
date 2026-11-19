@@ -241,7 +241,7 @@ wheels = [
 
 [[package]]
 name = "nx-decomp-tools-viking"
-version = "0.1.4"
+version = "0.1.5"
 source = { editable = "." }
 dependencies = [
     { name = "asm-differ" },

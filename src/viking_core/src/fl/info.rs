@@ -113,7 +113,14 @@ impl InfoList {
     }
 }
 
-/// Clone-on-write handle to an [`InfoData`]
+#[cfg_attr(
+    not(feature = "python"),
+    doc = "Clone-on-write handle to an [`InfoData`]"
+)]
+#[cfg_attr(
+    feature = "python",
+    doc = "Clone-on-write handle to the underlying function info (on the Rust side)"
+)]
 #[derive(Default, Deserialize, Clone, Debug, Display)]
 #[display("{:#?}", self.0)]
 #[pyclass(from_py_object, str)]
@@ -233,40 +240,35 @@ impl Info {
 
     /// The address as offset from the base address defined in the config
     #[getter(offset)] fn py_offset(&self) -> u32 { self.offset }
-    /// Set the offset from the base address
     #[setter(offset)] fn py_set_offset(&mut self, offset: u32) { self.data_mut().offset = offset }
     /// Size of the symbol at the address
     #[getter(size)] fn py_size(&self) -> u32 { self.size }
-    /// Set the size
     #[setter(size)] fn py_set_size(&mut self, size: u32) { self.data_mut().size = size }
     /// Decompilation status of the symbol
     #[getter(status)] fn py_status(&self) -> Status { self.status }
-    /// Set the decompilation status of the symbol
     #[setter(status)] fn py_set_status(&mut self, status: Status) { self.data_mut().status = status }
     /// If the symbol's placement into a TU is lazy. Typically marked with V or W
     /// in the output of llvm-nm.
     #[getter(lazy)] fn py_lazy(&self) -> bool { self.lazy }
-    /// Set if the symbol is lazy
     #[setter(lazy)] fn py_set_lazy(&mut self, lazy: bool) { self.data_mut().lazy = lazy }
     /// If the symbol name is a guess instead of from some string in the original binary
     #[getter(guess)] fn py_guess(&self) -> bool { self.guess }
-    /// Set if the symbol is a guess
     #[setter(guess)] fn py_set_guess(&mut self, guess: bool) { self.data_mut().guess = guess }
     /// Return `true` if the function is not a library function and
     /// has been worked on (i.e. is not `U`)
     #[getter(is_decompiled)] fn py_is_decompiled(&self) -> bool { self.is_decompiled() }
-    /// Get the (absolute) start address in the original ELF
+    /// The (absolute) start address in the original ELF
     #[getter(start)] fn py_get_start(&self) -> u64 { self.get_start() }
-    /// Get the (absolute) end address in the original ELF
+    /// The (absolute) end address in the original ELF
     #[getter(end)] fn py_get_end(&self) -> u64 { self.get_end() }
 
     // -- label (name) bindings --
 
-    /// Get the number of names
+    /// The number of names
     #[getter(names_len)] fn py_names_len(&self) -> usize { self.names().len() }
-    /// Get the name (first if multiple)
+    /// The name (first if multiple)
     #[getter(name)] fn py_name(&self) -> String { self.name().to_string() }
-    /// Get all names
+    /// All names
     #[getter(names)] fn py_names(&self) -> Vec<String> { self.names().to_vec() }
 
     /// Set the names. Raises exception if there are more than one name and any of the name is
@@ -302,7 +304,7 @@ impl AddressLabel {
         match names.len() {
             0 => Ok(Default::default()),
             1 => Ok(Self::new_single(names.into_iter().next().unwrap())),
-            _ => Self::new_many(names)
+            _ => Self::new_many(names),
         }
     }
     /// Create a new address label from a list of names, without validation
