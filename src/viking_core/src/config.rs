@@ -1,7 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use cu::pre::*;
-use pyo3::prelude::*;
+
+use crate::python::pre::*;
 
 /// Used to optimize allocation when loading functions
 pub const FUNCTION_LEN_UPPER_BOUND: usize = 110_000;

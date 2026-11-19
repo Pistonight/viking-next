@@ -1,34 +1,7 @@
 use cu::pre::*;
 use pyo3::prelude::*;
 
-use crate::config::Config;
 use crate::python;
-
-/// Global (per-module) state of the module
-///
-/// PyO3 does not yet support per-module state (for multi-interpreter),
-/// so we leak a pointer to let Python hold it as a module scope variable.
-///
-/// We chose to leak the pointer to make it explicit that the Rust object
-/// has static lifetime (as long as the Python object exists)
-struct RustState {
-    /// Configuration file
-    pub config: Config,
-}
-
-python::make_handle_class! {
-    /// Global (per-module) state of the Rust module
-    #[handle(RustState, module = "viking._core")]
-    struct State;
-}
-
-#[pymethods]
-impl State {
-    /// Clone the config into the Python side
-    pub fn clone_config(&self) -> Config {
-        self.config.clone()
-    }
-}
 
 /// The low-level Python-Rust bindings
 ///
@@ -48,7 +21,7 @@ mod _core {
 
     // ======= module =======
     #[pymodule_export]
-    use State;
+    use python::State;
 
     /// Initialize the Rust extension module
     #[pyfunction]
@@ -57,7 +30,7 @@ mod _core {
         python::into_pyresult(python::set_python_program_args(sys_executable, [sys_argv0]))?;
 
         let config = python::into_pyresult(crate::config::load_config())?;
-        Ok(State::new(RustState { config }))
+        Ok(State::new(python::RustState { config }))
     }
 
     /// Finalize the Rust extension module
@@ -117,7 +90,7 @@ mod _core {
         use super::*;
 
         #[pymodule_export]
-        use crate::fl::{AddressLabel, Status};
+        use crate::fl::{Info, Status};
         #[pyfunction]
         fn is_csv(state: State, version: Option<&str>) -> bool {
             crate::fl::is_csv(&state.config, version)

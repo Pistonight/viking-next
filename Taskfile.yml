@@ -55,7 +55,7 @@ tasks:
     desc: Fix code formatting
     cmds:
       - uv run --no-sync ruff format src
-      - uv run --no-sync ruff check --fix --fixable I001 # only format imports
+      - uv run --no-sync ruff check --fix
       - cargo fmt --all
 
   test:

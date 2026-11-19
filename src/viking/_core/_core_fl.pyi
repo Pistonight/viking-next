@@ -1,51 +1,72 @@
 from . import State
 from collections.abc import Sequence
-from typing import Any, Final, final
+from typing import Final, final
 
-__all__ = ["AddressLabel", "Status", "is_csv", "parse_abs_address", "parse_abs_address_as_offset", "parse_offset"]
+__all__ = ["Info", "Status", "is_csv", "parse_abs_address", "parse_abs_address_as_offset", "parse_offset"]
 
-class AddressLabel:
-    """Label for an address
-
-    ```rust
-    pub enum AddressLabel {
-        /// Address has a single name
-        Single(String),
-        /// Address has multiple names.
-        ///
-        /// For example, constructor C1/C2 or destructor D1/D2
-        /// are usually the same function.
-        Multi(Vec<String>),
-    }
-    ```
-    """
+@final
+class Info:
+    """Clone-on-write handle to an [`InfoData`]"""
+    def __new__(cls, /, state: State, names: Sequence[str]) -> Info: ...
     def __str__(self, /) -> str: ...
-    def all(self, /) -> list[str]:
-        """Get all names"""
-    def contains_name(self, /, name: str) -> bool:
-        """Check if any name matches the input name"""
-    def len(self, /) -> int:
-        """Get the number of names"""
+    @property
+    def end(self, /) -> int:
+        """Get the (absolute) end address in the original ELF"""
+    @property
+    def guess(self, /) -> bool:
+        """If the symbol name is a guess instead of from some string in the original binary"""
+    @guess.setter
+    def guess(self, /, guess: bool) -> None:
+        """If the symbol name is a guess instead of from some string in the original binary"""
+    @property
+    def is_decompiled(self, /) -> bool:
+        """Return `true` if the function is not a library function and
+        has been worked on (i.e. is not `U`)
+        """
+    @property
+    def lazy(self, /) -> bool:
+        """If the symbol's placement into a TU is lazy. Typically marked with V or W
+        in the output of llvm-nm.
+        """
+    @lazy.setter
+    def lazy(self, /, lazy: bool) -> None:
+        """If the symbol's placement into a TU is lazy. Typically marked with V or W
+        in the output of llvm-nm.
+        """
+    @property
     def name(self, /) -> str:
         """Get the name (first if multiple)"""
-    @final
-    class Multi(AddressLabel):
-        """@private"""
-        __match_args__: Final = ("_0",)
-        @property
-        def _0(self, /) -> list[str]: ...
-        def __getitem__(self, /, key: int) -> Any: ...
-        def __len__(self, /) -> int: ...
-        def __new__(cls, /, _0: Sequence[str]) -> AddressLabel.Multi: ...
-    @final
-    class Single(AddressLabel):
-        """@private"""
-        __match_args__: Final = ("_0",)
-        @property
-        def _0(self, /) -> str: ...
-        def __getitem__(self, /, key: int) -> Any: ...
-        def __len__(self, /) -> int: ...
-        def __new__(cls, /, _0: str) -> AddressLabel.Single: ...
+    @property
+    def names(self, /) -> list[str]:
+        """Get all names"""
+    @property
+    def names_len(self, /) -> int:
+        """Get the number of names"""
+    @property
+    def offset(self, /) -> int:
+        """The address as offset from the base address defined in the config"""
+    @offset.setter
+    def offset(self, /, offset: int) -> None:
+        """The address as offset from the base address defined in the config"""
+    def set_names(self, /, names: Sequence[str]) -> None:
+        """Set the names. Raises exception if there are more than one name and any of the name is
+        empty.
+        """
+    @property
+    def size(self, /) -> int:
+        """Size of the symbol at the address"""
+    @size.setter
+    def size(self, /, size: int) -> None:
+        """Size of the symbol at the address"""
+    @property
+    def start(self, /) -> int:
+        """Get the (absolute) start address in the original ELF"""
+    @property
+    def status(self, /) -> Status:
+        """Decompilation status of the symbol"""
+    @status.setter
+    def status(self, /, status: Status) -> None:
+        """Decompilation status of the symbol"""
 
 @final
 class Status:
@@ -60,6 +81,7 @@ class Status:
         /// Decompiled and not matching due to major mismatches
         NonMatchingMajor,
         /// Unnamed or not decompiled
+        #[default]
         NotDecompiled,
         /// Work in progress
         Wip,

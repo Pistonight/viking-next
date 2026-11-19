@@ -205,29 +205,20 @@ fn check_match(
     addr2line_ctx: Result<&elf::Addr2LineContext, &cu::Error>,
     args: &Args,
 ) -> cu::Result<CheckResult> {
-    let (decomp_fn, name) = match &function.label {
-        fl::AddressLabel::Single(label) => {
-            let decomp_fn = checker
-                .decomp_elf
-                .get_function_by_name(checker.decomp_symtab, label);
-            (decomp_fn, label.as_str())
+    let mut name = "";
+    let mut decomp_fn = None;
+    for label in function.label.names() {
+        let f = checker
+            .decomp_elf
+            .get_function_by_name(checker.decomp_symtab, label);
+        if f.is_ok() || decomp_fn.is_none() {
+            name = label;
+            decomp_fn = Some(f);
+            break;
         }
-        fl::AddressLabel::Multi(labels) => {
-            let mut name = "";
-            let mut decomp_fn = Err(cu::fmterr!("Function not found"));
-            for label in labels {
-                let f = checker
-                    .decomp_elf
-                    .get_function_by_name(checker.decomp_symtab, label);
-                if f.is_ok() {
-                    name = label;
-                    decomp_fn = f;
-                    break;
-                }
-            }
-            (decomp_fn, name)
-        }
-    };
+    }
+
+    let decomp_fn = decomp_fn.unwrap_or_else(|| Err(cu::fmterr!("function not found")));
 
     match function.status {
         fl::Status::NotDecompiled if decomp_fn.is_err() => return Ok(CheckResult::Ok),

@@ -3,9 +3,9 @@ use std::process::{Command, ExitStatus, Output};
 use std::sync::Mutex;
 
 use cu::pre::*;
-use pyo3::prelude::*;
 
 use crate::config;
+use crate::python::pre::*;
 
 /// The command to execute the Python interpreter that has viking installed
 ///

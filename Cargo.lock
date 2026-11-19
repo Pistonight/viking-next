@@ -2627,11 +2627,19 @@ dependencies = [
  "tempfile",
  "textwrap",
  "viking-macro",
+ "viking-proc-macro",
 ]
 
 [[package]]
 name = "viking-macro"
 version = "0.1.4"
+
+[[package]]
+name = "viking-proc-macro"
+version = "0.1.4"
+dependencies = [
+ "pistonite-pm",
+]
 
 [[package]]
 name = "walkdir"

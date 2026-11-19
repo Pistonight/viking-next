@@ -1,11 +1,9 @@
-use std::fmt::Write;
 use std::ops::Deref;
 use std::sync::Arc;
 
 use colored::Colorize;
 use cu::pre::*;
-#[cfg(feature = "python")]
-use pyo3::prelude::*;
+use itertools::Itertools;
 use rayon::prelude::*;
 use rustc_hash::FxHashMap;
 
@@ -13,6 +11,7 @@ use crate::demangle;
 use crate::fl;
 #[cfg(feature = "python")]
 use crate::python;
+use crate::python::pre::*;
 use crate::ui;
 
 /// List of all [`Info`]s
@@ -35,18 +34,8 @@ impl InfoList {
             FxHashMap::with_capacity_and_hasher(self.len(), Default::default());
 
         for function in self.iter() {
-            match &function.label {
-                fl::AddressLabel::Single(label) => {
-                    if label.is_empty() {
-                        continue;
-                    }
-                    known_functions.insert(label.as_str(), function.clone());
-                }
-                fl::AddressLabel::Multi(labels) => {
-                    for label in labels {
-                        known_functions.insert(label.as_str(), function.clone());
-                    }
-                }
+            for label in function.label.names() {
+                known_functions.insert(label.as_str(), function.clone());
             }
         }
 
@@ -122,19 +111,12 @@ impl InfoList {
         candidates.sort_by_key(|info| info.offset);
         candidates
     }
-
-    /// Format into YAML file list writer
-    #[doc(hidden)]
-    pub fn fmt_file_list_yml<W: Write>(&self, mut out: W) -> std::fmt::Result {
-        for info in &self.0 {
-            info.fmt_file_list_yml(&mut out)?;
-        }
-        Ok(())
-    }
 }
 
 /// Clone-on-write handle to an [`InfoData`]
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Default, Deserialize, Clone, Debug, Display)]
+#[display("{:#?}", self.0)]
+#[pyclass(from_py_object, str)]
 #[serde(transparent)]
 pub struct Info(Arc<InfoData>);
 impl Deref for Info {
@@ -155,20 +137,21 @@ impl Info {
     pub fn data_mut(&mut self) -> &mut InfoData {
         Arc::make_mut(&mut self.0)
     }
+
+    /// Clone a new copy of the underlying data
     pub fn clone_data(&self) -> InfoData {
         self.0.as_ref().clone()
     }
 }
 
 /// Information about an address
-#[derive(Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Default, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct InfoData {
     /// The address as offset from the base address defined in the config
-    #[serde(serialize_with = "as_hex")]
     pub offset: u32,
-    /// The offset plus the base address
+    /// The base address, loaded from config
     #[serde(skip)]
-    pub absolute_address: u64,
+    pub address_base: u64,
     /// Size of the symbol at the address
     pub size: u32,
     /// Name(s) of the symbol at the address
@@ -188,89 +171,43 @@ impl InfoData {
         address_base: u64,
         offset: u32,
         size: u32,
-        label: impl Into<AddressLabel>,
+        label: AddressLabel,
         status: Status,
     ) -> Self {
         Self {
             offset,
-            absolute_address: offset as u64 + address_base,
+            address_base,
             size,
-            label: label.into(),
+            label,
             status,
             lazy: false,
             guess: false,
         }
     }
-    /// Format into YAML file list writer
-    pub fn fmt_file_list_yml<W: Write>(&self, mut out: W) -> std::fmt::Result {
-        let prefix = "  ";
-        writeln!(out, "{prefix}- offset: 0x{:08x}", self.offset)?;
-        writeln!(out, "{prefix}  size: {}", self.size)?;
-        match &self.label {
-            AddressLabel::Single(label) => {
-                writeln!(
-                    out,
-                    "{prefix}  label: {}",
-                    fl::quote_yaml_string_if_needed(label)
-                )?;
-            }
-            AddressLabel::Multi(labels) => {
-                writeln!(out, "{prefix}  label:")?;
-                for l in labels {
-                    writeln!(out, "{prefix}  - {}", fl::quote_yaml_string_if_needed(l))?;
-                }
-            }
-        }
-        writeln!(
-            out,
-            "{prefix}  status: {}",
-            yaml::stringify(&self.status).unwrap()
-        )?;
-        if self.lazy {
-            writeln!(out, "{prefix}  lazy: true")?;
-        }
-        if self.guess {
-            writeln!(out, "{prefix}  guess: true")?;
-        }
-        Ok(())
-    }
 }
 
 impl InfoData {
+    /// Return `true` if the function is not a library function and
+    /// has been worked on (i.e. is not `U`)
     #[inline(always)]
     pub fn is_decompiled(&self) -> bool {
         !matches!(self.status, Status::NotDecompiled | Status::Library)
     }
-    /// Get the number of names
-    #[inline(always)]
-    pub fn num_names(&self) -> usize {
-        self.label.len()
-    }
-
     /// Get the name (first if multiple)
     #[inline(always)]
     pub fn name(&self) -> &str {
         self.label.name()
     }
-
     /// Get all names
     #[inline(always)]
-    pub fn all_names(&self) -> Vec<String> {
-        self.label.all()
+    pub fn names(&self) -> &[String] {
+        self.label.names()
     }
-
-    /// Check if any name of the function entry matches the input name
-    #[inline(always)]
-    pub fn contains_name(&self, name: &str) -> bool {
-        self.label.contains_name(name)
-    }
-
     /// Get the (absolute) start address in the original ELF
     #[inline(always)]
     pub fn get_start(&self) -> u64 {
-        self.absolute_address
+        self.address_base + self.offset as u64
     }
-
     /// Get the (absolute) end address in the original ELF
     #[inline(always)]
     pub fn get_end(&self) -> u64 {
@@ -278,64 +215,129 @@ impl InfoData {
     }
 }
 
-/// Label for an address
-#[derive(Deserialize, Clone, Debug, PartialEq, Eq, Display)]
-#[display("{self:#?}")]
-#[cfg_attr(feature = "python", pyclass(from_py_object, str))]
-#[serde(untagged)]
-pub enum AddressLabel {
-    /// Address has a single name
-    Single(String),
-    /// Address has multiple names.
-    ///
-    /// For example, constructor C1/C2 or destructor D1/D2
-    /// are usually the same function.
-    Multi(Vec<String>),
-}
-impl From<String> for AddressLabel {
-    fn from(value: String) -> Self {
-        Self::Single(value)
-    }
-}
-impl From<Vec<String>> for AddressLabel {
-    fn from(value: Vec<String>) -> Self {
-        Self::Multi(value)
-    }
-}
-#[cfg_attr(feature = "python", pymethods)]
-impl AddressLabel {
-    /// Get the number of names
-    #[allow(clippy::len_without_is_empty)] // it's guaranteed to be not empty
-    pub fn len(&self) -> usize {
-        match self {
-            Self::Single(_) => 1,
-            Self::Multi(labels) => labels.len(),
-        }
+#[rustfmt::skip]
+#[cfg(feature = "python")]
+#[pymethods]
+impl Info {
+    /// Create a new empty `Info` with the given names
+    #[new]
+    fn py_new(state: &python::State, names: Vec<String>) -> PyResult<Self> {
+        let label = python::into_pyresult(AddressLabel::new(names))?;
+        let info = InfoData {
+            label,
+            address_base: state.config.repo.address_base,
+            ..Default::default()
+        };
+        Ok(info.into())
     }
 
+    /// The address as offset from the base address defined in the config
+    #[getter(offset)] fn py_offset(&self) -> u32 { self.offset }
+    /// Set the offset from the base address
+    #[setter(offset)] fn py_set_offset(&mut self, offset: u32) { self.data_mut().offset = offset }
+    /// Size of the symbol at the address
+    #[getter(size)] fn py_size(&self) -> u32 { self.size }
+    /// Set the size
+    #[setter(size)] fn py_set_size(&mut self, size: u32) { self.data_mut().size = size }
+    /// Decompilation status of the symbol
+    #[getter(status)] fn py_status(&self) -> Status { self.status }
+    /// Set the decompilation status of the symbol
+    #[setter(status)] fn py_set_status(&mut self, status: Status) { self.data_mut().status = status }
+    /// If the symbol's placement into a TU is lazy. Typically marked with V or W
+    /// in the output of llvm-nm.
+    #[getter(lazy)] fn py_lazy(&self) -> bool { self.lazy }
+    /// Set if the symbol is lazy
+    #[setter(lazy)] fn py_set_lazy(&mut self, lazy: bool) { self.data_mut().lazy = lazy }
+    /// If the symbol name is a guess instead of from some string in the original binary
+    #[getter(guess)] fn py_guess(&self) -> bool { self.guess }
+    /// Set if the symbol is a guess
+    #[setter(guess)] fn py_set_guess(&mut self, guess: bool) { self.data_mut().guess = guess }
+    /// Return `true` if the function is not a library function and
+    /// has been worked on (i.e. is not `U`)
+    #[getter(is_decompiled)] fn py_is_decompiled(&self) -> bool { self.is_decompiled() }
+    /// Get the (absolute) start address in the original ELF
+    #[getter(start)] fn py_get_start(&self) -> u64 { self.get_start() }
+    /// Get the (absolute) end address in the original ELF
+    #[getter(end)] fn py_get_end(&self) -> u64 { self.get_end() }
+
+    // -- label (name) bindings --
+
+    /// Get the number of names
+    #[getter(names_len)] fn py_names_len(&self) -> usize { self.names().len() }
     /// Get the name (first if multiple)
-    pub fn name(&self) -> &str {
-        match self {
-            Self::Single(label) => label,
-            // unwrap: when FileList is loaded, it is validated to be non-empty
-            Self::Multi(labels) => labels.first().unwrap(),
+    #[getter(name)] fn py_name(&self) -> String { self.name().to_string() }
+    /// Get all names
+    #[getter(names)] fn py_names(&self) -> Vec<String> { self.names().to_vec() }
+
+    /// Set the names. Raises exception if there are more than one name and any of the name is
+    /// empty.
+    #[pyo3(name = "set_names")]
+    fn py_set_names(&mut self, names: Vec<String>) -> PyResult<()> {
+        let label = python::into_pyresult(AddressLabel::new(names))?;
+        self.data_mut().label = label;
+        Ok(())
+    }
+}
+
+/// Label for an address
+///
+/// Each `AddressLabel` is guaranteed to hold at least one name.
+/// It may hold exactly one name that can be empty or non-empty,
+/// but if it holds more than one name, then every name must be non-empty.
+///
+/// A function might have multiple name when the compiler merges
+/// the C1/C2 constructors or D1/D2 destructors
+#[derive(Clone, Debug, PartialEq, Eq, Display)]
+#[display("{:?}", self.0)]
+#[repr(transparent)]
+pub struct AddressLabel(Vec<String>);
+impl Default for AddressLabel {
+    fn default() -> Self {
+        Self(vec![Default::default()])
+    }
+}
+impl AddressLabel {
+    /// Create a new address label from a list of names, checking the invariants
+    pub fn new(names: Vec<String>) -> cu::Result<Self> {
+        match names.len() {
+            0 => Ok(Default::default()),
+            1 => Ok(Self::new_single(names.into_iter().next().unwrap())),
+            _ => Self::new_many(names)
         }
+    }
+    /// Create a new address label from a list of names, without validation
+    pub fn new_unchecked(name: Vec<String>) -> Self {
+        Self(name)
+    }
+    /// Create a new address label with a single name
+    pub fn new_single(name: impl Into<String>) -> Self {
+        Self(vec![name.into()])
+    }
+    /// Create a new address label with many names
+    pub fn new_many(name: impl IntoIterator<Item = impl Into<String>>) -> cu::Result<Self> {
+        let name = name.into_iter().map(Into::into).collect_vec();
+        if name.len() > 1 {
+            for n in &name {
+                if n.is_empty() {
+                    cu::bail!("AddressLabel with more than one names cannot have empty names")
+                }
+            }
+        }
+        if name.is_empty() {
+            cu::bail!("AddressLabel must have at least one name")
+        }
+
+        Ok(Self(name))
+    }
+    /// Get the name (first if it has multiple names)
+    pub fn name(&self) -> &str {
+        // unwrap: AddressLabel invariant
+        self.0.first().unwrap()
     }
 
     /// Get all names
-    pub fn all(&self) -> Vec<String> {
-        match self {
-            Self::Single(label) => vec![label.to_string()],
-            Self::Multi(labels) => labels.clone(),
-        }
-    }
-
-    /// Check if any name matches the input name
-    pub fn contains_name(&self, name: &str) -> bool {
-        match &self {
-            Self::Single(label) => label == name,
-            Self::Multi(labels) => labels.iter().any(|x| x == name),
-        }
+    pub fn names(&self) -> &[String] {
+        &self.0
     }
 }
 
@@ -343,9 +345,9 @@ impl AddressLabel {
 mod status_imp {
     use super::*;
     /// Decompilation status of a function/symbol
-    #[derive(Clone, Copy, Serialize, Deserialize, Debug, Display, PartialEq, Eq)]
+    #[derive(Default, Clone, Copy, Serialize, Deserialize, Debug, Display, PartialEq, Eq)]
     #[display("{}", self.description())]
-    #[cfg_attr(feature = "python", pyclass(from_py_object, str))]
+    #[pyclass(from_py_object, str)]
     pub enum Status {
         /// Decompiled and matching
         Matching,
@@ -354,6 +356,7 @@ mod status_imp {
         /// Decompiled and not matching due to major mismatches
         NonMatchingMajor,
         /// Unnamed or not decompiled
+        #[default]
         NotDecompiled,
         /// Work in progress
         Wip,
@@ -418,15 +421,15 @@ impl Status {
     /// Parse status string into enum
     #[pyo3(name = "from_name")]
     #[staticmethod]
-    pub fn py_from_name(s: &str) -> PyResult<Self> { python::into_pyresult(Self::from_name(s)) }
+    fn py_from_name(s: &str) -> PyResult<Self> { python::into_pyresult(Self::from_name(s)) }
     /// Parse status code into enum
     #[pyo3(name = "from_code")]
     #[staticmethod]
-    pub fn py_from_code(s: &str) -> PyResult<Self> { python::into_pyresult(Self::from_code(s)) }
+    fn py_from_code(s: &str) -> PyResult<Self> { python::into_pyresult(Self::from_code(s)) }
     /// Get the single-character code representation
     #[pyo3(name = "code")]
-    pub fn py_code(&self) -> char { self.code() }
+    fn py_code(&self) -> char { self.code() }
     /// Get descriptive string
     #[pyo3(name = "description")]
-    pub fn py_description(&self) -> &'static str { self.description() }
+    fn py_description(&self) -> &'static str { self.description() }
 }

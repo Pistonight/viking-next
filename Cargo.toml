@@ -2,7 +2,8 @@
 resolver = "2"
 members = [
     "src/viking_core",
-    "src/viking_macro",
+    "src/viking_core/macro",
+    "src/viking_core/proc_macro",
 ]
 
 [workspace.package]
@@ -12,7 +13,8 @@ rust-version = "1.87"
 license = "MIT"
 
 [workspace.dependencies]
-viking-macro.path = "src/viking_macro"
+viking-macro.path = "src/viking_core/macro"
+viking-proc-macro.path = "src/viking_core/proc_macro"
 
 [profile.release]
 # the debug binaries are a bit too large (+25MB compressed and +100MB uncompressed)

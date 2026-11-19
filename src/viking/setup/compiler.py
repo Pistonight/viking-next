@@ -7,7 +7,7 @@ from .. import ui
 from ..core import get_config
 
 
-def setup_compiler(version: str):
+def install_clang(version: str):
     """Set up a specific version of Clang in the toolchain install path (`repo.toolchain_install_path` in the config)"""
     config = get_config()
     compiler_dir = config.repo.toolchain_install_path / ("clang-" + version)

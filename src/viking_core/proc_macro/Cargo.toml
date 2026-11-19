@@ -1,0 +1,13 @@
+[package]
+name = "viking-proc-macro"
+description = "Rust proc macros for viking"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+pm = { package = "pistonite-pm", version = "0.3.2", features = ["full"] }
+
+[lib]
+proc-macro = true

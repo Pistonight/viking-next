@@ -28,6 +28,13 @@ Common workflows:
 Before opening or updating a PR, run `task fix` and then `task check` to catch
 trivial issues, so the review goes more smoothly.
 
+## Rust feature flags
+
+The default feature set only enables the minimal functionality. For local development,
+you can comment out `default = []` in `Cargo.toml` and set `default = ...`
+to whatever feature set you are working on, to get rust-analyzer pick up those features.
+Remember to change them back when you commit.
+
 ## Architecture
 
 ### Python and Rust split

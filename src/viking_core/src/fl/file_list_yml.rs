@@ -26,7 +26,7 @@ fn load_file_list_yml_at_imp(config: &Config, path: &Path) -> cu::Result<FileLis
         )?;
         object.text_section.sort_by_key(|x| x.offset);
         for info in &mut object.text_section {
-            info.data_mut().absolute_address = config.repo.address_base + info.offset as u64;
+            info.data_mut().address_base = config.repo.address_base;
         }
     }
     data.sort_by_key(|(_, obj)| obj.offset());
@@ -106,31 +106,12 @@ impl FileList {
         for entry in self.info_list.iter() {
             let start = entry.get_start();
             let is_decompiled = entry.is_decompiled();
-            match &entry.label {
-                fl::AddressLabel::Single(name) => {
-                    if is_decompiled && name.is_empty() {
-                        cu::bail!(
-                            "function at 0x{start:016x} is marked as O/M/m but has an empty name",
-                        );
-                    }
-                    if !name.is_empty() && !seen_names.insert(name) {
-                        duplicates.push(name);
-                    }
-                }
-                fl::AddressLabel::Multi(names) => {
-                    cu::ensure!(
-                        !names.is_empty(),
-                        "multi-label list must not be empty; please use a single empty string for unnamed symbols"
-                    )?;
-                    for n in names {
-                        cu::ensure!(
-                            !n.is_empty(),
-                            "multi-label list must not contain empty strings"
-                        )?;
-                        if !seen_names.insert(n) {
-                            duplicates.push(n);
-                        }
-                    }
+            if is_decompiled && entry.label.name().is_empty() {
+                cu::bail!("function at 0x{start:016x} is marked as O/M/m but has an empty name",);
+            }
+            for n in entry.label.names() {
+                if !n.is_empty() && !seen_names.insert(n) {
+                    duplicates.push(n);
                 }
             }
         }
@@ -188,7 +169,7 @@ impl FileList {
         let mut info_list = Vec::with_capacity(config::FUNCTION_LEN_UPPER_BOUND);
         for (_, object) in &self.data {
             for info in &object.text_section {
-                num_names += info.num_names();
+                num_names += info.names().len();
             }
             info_list.extend(object.text_section.iter().cloned());
         }
@@ -229,15 +210,5 @@ impl Object {
     pub fn offset(&self) -> u32 {
         // unwrap: validated when loading FileList
         self.text_section.first().unwrap().offset
-    }
-    /// Format into YAML file list writer
-    #[doc(hidden)]
-    pub fn fmt_file_list_yml<W: Write>(&self, mut out: W) -> std::fmt::Result {
-        let prefix = "  ";
-        writeln!(out, "{prefix}'.text':")?;
-        for info in &self.text_section {
-            info.fmt_file_list_yml(&mut out)?;
-        }
-        Ok(())
     }
 }

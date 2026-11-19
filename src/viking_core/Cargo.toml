@@ -21,6 +21,7 @@ csv = "1.1.0"
 cu = { package = "pistonite-cu", version = "0.9.9", features = ["fs", "yaml", "toml", "json", "derive"] }
 env_logger = "0.11.11"
 inquire = "0.7.4"
+itertools = "0.15.0"
 rayon = "1.12.0"
 rustc-hash = "2.1.3"
 serde = { version = "1", features = ["rc"] }
@@ -28,17 +29,13 @@ serde-tuple-vec-map = "1.0.1"
 shell-words = "1.1.1"
 textwrap = "0.16.4"
 viking-macro.workspace = true
+viking-proc-macro.workspace = true
 
 # -- python deps --
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
 # "abi3-py3xx" specifies the stable ABI and minimum Python version support,
 # instead of require a different wheel per python version
-#
-# Even though pyo3 is not needed when building standalone binaries,
-# The macro API doesn't give us a clean way to conditionally add field attributes
-# without some hacks or writing our own proc-macros. On the other hand, compiling
-# a few extra dependencies isn't the end of the world
-pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py314", "experimental-inspect"] }
+pyo3 = { version = "0.28.2", features = ["extension-module", "abi3-py314", "experimental-inspect"], optional = true }
 
 # -- elf deps --
 addr2line = { version = "0.22.0", optional = true }
@@ -50,7 +47,6 @@ owning_ref = { version = "0.4.1", optional = true }
 bad64 = { version = "0.9.0", optional = true }
 capstone = { git = "https://github.com/leoetlino/capstone-rs", rev = "f5aa278e1982bca86a67ac8b8550ab1dd70f7d9d", optional = true }
 clang = { version = "2.0.0", features = ["runtime", "clang_10_0"], optional = true }
-itertools = { version = "0.15.0", optional = true }
 json_compilation_db = { version = "0.3.0", optional = true }
 lazy-init = { version = "0.5.0", optional = true }
 reqwest = { version = "0.12.3", default-features = false, features = ["http2", "blocking", "json", "rustls-tls"], optional = true }
@@ -60,11 +56,11 @@ tempfile = { version = "3.20.0", optional = true }
 pyo3-build-config = "0.28.2"
 
 [features]
-default = []
+# default = []
 # uncomment below for development for rust-analyzer, or set in your local rust-analyzer
 # config the default feature set it should use
-# default = [ "python" ]
-python = [ "global-allocator", "cmd-all" ]
+default = [ "python" ]
+python = [ "dep:pyo3", "global-allocator", "cmd-all" ]
 cmd-all = [
     "cmd-check",
     "cmd-decompme",
@@ -75,7 +71,6 @@ cmd-check = [
     "cu/cli",
     "elf",
     "dep:capstone",
-    "dep:itertools",
     "dep:lazy-init",
 ]
 cmd-decompme = [
@@ -90,7 +85,6 @@ cmd-decompme = [
 cmd-listsym = [
     "cu/cli",
     "elf",
-    "dep:itertools",
 ]
 elf = [
     "dep:addr2line",
