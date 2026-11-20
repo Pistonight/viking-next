@@ -68,3 +68,6 @@ pub mod ui;
 pub mod config;
 
 pub mod python;
+
+// silence unused dependency warning
+use viking_proc_macro as _;

@@ -306,11 +306,9 @@ impl<'a, 'orig_elf, 'decomp_elf> FunctionChecker<'a, 'orig_elf, 'decomp_elf> {
             let actual_symbol_name = self.translate_decomp_addr_to_name(decomp_addr);
 
             if let Some(call_sym) = actual_symbol_name {
-                if let fl::AddressLabel::Multi(ref labels) = info.label {
-                    for label in &labels[1..] {
-                        if call_sym == label {
-                            return None;
-                        }
+                for label in info.label.names().iter().skip(1) {
+                    if call_sym == label {
+                        return None;
                     }
                 }
             }

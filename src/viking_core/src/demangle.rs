@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use pyo3::prelude::*;
+use crate::python::pre::*;
 
 /// Demangle a C++ symbol.
 #[inline(always)]

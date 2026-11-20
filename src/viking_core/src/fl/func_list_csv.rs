@@ -92,7 +92,7 @@ fn load_csv_flat(config: &Config, path: &Path) -> cu::Result<(Vec<fl::Info>, usi
             parse_csv_record(config, &record),
             "failed to parse CSV record at line {line_number}"
         )?;
-        num_names += entry.num_names();
+        num_names += entry.names().len();
 
         result.push(entry);
         line_number += 1;
@@ -109,7 +109,7 @@ fn parse_csv_record(config: &Config, record: &CsvStringRecord) -> cu::Result<fl:
     let addr = fl::parse_abs_address_as_offset(config, &record[0])?;
     let status = fl::Status::from_code(&record[1])?;
     let size = record[2].parse::<u32>()?;
-    let decomp_name = record[3].to_string();
+    let decomp_name = fl::AddressLabel::new_single(&record[3]);
 
     let data = fl::InfoData::new(config.repo.address_base, addr, size, decomp_name, status);
     // let optional flags remain false when converting legacy CSV

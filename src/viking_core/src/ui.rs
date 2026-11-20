@@ -2,9 +2,9 @@ use std::io::{StderrLock, Write};
 use std::sync::Once;
 
 use colored::*;
-use pyo3::prelude::*;
 
 use crate::demangle;
+use crate::python::pre::*;
 
 /// Print a message using the step formatting
 #[pyfunction]
@@ -14,7 +14,7 @@ pub fn print_step(msg: &str) {
 pub use viking_macro::step;
 
 /// Print a message using the note formatting
-#[cfg_attr(feature = "python", pyfunction)]
+#[pyfunction]
 pub fn print_note(msg: &str) {
     eprintln!("{}{}{}", "note".bold().cyan(), ": ".bold(), msg.bold())
 }

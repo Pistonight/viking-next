@@ -55,7 +55,7 @@ tasks:
     desc: Fix code formatting
     cmds:
       - uv run --no-sync ruff format src
-      - uv run --no-sync ruff check --fix --fixable I001 # only format imports
+      - uv run --no-sync ruff check --fix
       - cargo fmt --all
 
   test:
@@ -132,6 +132,8 @@ tasks:
       - Cargo.lock
       - src/**/*.rs
       - src/**/Cargo.toml
+    generates:
+      - .venv/bin/viking # this ensures we rebuild if install-deps removes the dependency
     cmds:
       # build the extension module so we can extract the doc string out of it
       - task: install-dev

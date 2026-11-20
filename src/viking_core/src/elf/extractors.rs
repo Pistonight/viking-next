@@ -65,7 +65,7 @@ impl elf::OwnedElf {
                 self.address_base,
                 addr.try_into().unwrap(),
                 0x10,
-                name.to_string(),
+                fl::AddressLabel::new_single(name),
                 fl::Status::Library,
             );
             functions.push(data.into());

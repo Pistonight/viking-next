@@ -89,7 +89,7 @@ pub fn run_check_single(
         );
     }
 
-    let name_needs_update = !function.contains_name(name);
+    let name_needs_update = !function.names().contains(name);
     if name_needs_update {
         ui::note!(
             "changing name from {} to {}",
@@ -101,7 +101,7 @@ pub fn run_check_single(
     if status_changed || name_needs_update {
         file_list.update(function.offset, |data| {
             data.status = new_status;
-            data.label = fl::AddressLabel::Single(name.to_string());
+            data.label = fl::AddressLabel::new_single(name);
         })?;
 
         check_util::validate_and_save_file_list(config, version, &mut file_list)?;

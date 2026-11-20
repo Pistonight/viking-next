@@ -3,7 +3,7 @@
 # (and supply-chain attack) because `pip install` always prioritize
 # package on PyPI
 name = "nx-decomp-tools-viking"
-version = "0.1.4"
+version = "0.1.5"
 description = "Rewrite of nx-decomp-tools and viking tools for NX matching reimplementation projects"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -35,6 +35,9 @@ config-settings = { "maturin.build-args" = "--compatibility pypi" }
 
 [tool.ruff]
 extend-exclude = ["src/viking/_core"]
+
+[tool.ruff.lint]
+extend-fixable = ["I001", "RUF022"] # trivial fixes only
 
 # if you need to test asm-differ changes, clone it at ../asm-differ
 # and uncomment this part
